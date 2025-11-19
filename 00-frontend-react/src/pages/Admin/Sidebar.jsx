@@ -79,7 +79,7 @@ const Sidebar = ({ isOpen, onClose, shouldAnimate = false }) => {
                                 {auth?.user?.username || 'Student'}
                             </p>
                             <p className="text-xs text-slate-400 truncate">
-                                {auth?.user?.email || 'student@linglooma.com'}
+                                {auth?.user?.email || 'No email'}
                             </p>
                         </div>
                     </div>

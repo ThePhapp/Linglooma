@@ -1,17 +1,18 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ArrowLeft } from "lucide-react";
 
 const Admin = () => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [pageTransition, setPageTransition] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
 
     // Page transition effect khi chuyển route
     useEffect(() => {
         setPageTransition(true);
-        const timer = setTimeout(() => setPageTransition(false), 300);
+        const timer = setTimeout(() => setPageTransition(false), 150);
         return () => clearTimeout(timer);
     }, [location.pathname]);
 
@@ -57,6 +58,13 @@ const Admin = () => {
                             )}
                         </div>
                     </button>
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-2 rounded-lg hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50 transition-all duration-300 hover:scale-110 active:scale-95 group"
+                        aria-label="Go back"
+                    >
+                        <ArrowLeft className="h-6 w-6 text-gray-600 group-hover:-translate-x-1 transition-transform duration-300" />
+                    </button>
                     <div className="flex-1">
                         <h1 className="text-lg font-semibold text-gray-800">Linglooma English Platform</h1>
                     </div>
@@ -64,8 +72,8 @@ const Admin = () => {
 
                 {/* Page Content với transition effect */}
                 <div className="flex-1 overflow-y-auto">
-                    <div className={`dashboard-main p-4 lg:p-6 transition-all duration-300 ${
-                        pageTransition ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
+                    <div className={`dashboard-main p-4 lg:p-6 transition-opacity duration-200 ${
+                        pageTransition ? 'opacity-0' : 'opacity-100'
                     }`}>
                         <Outlet />
                     </div>
