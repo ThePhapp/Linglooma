@@ -249,7 +249,7 @@ const ReadingList = () => {
                 IELTS Reading Practice
               </h1>
               <p className="text-white/90 text-lg">
-                Luyện tập kỹ năng đọc hiểu với {passages.length} bài đọc đa dạng chủ đề
+                Practice reading comprehension skills with {passages.length} diverse topic passages
               </p>
             </div>
           </div>
@@ -296,7 +296,7 @@ const ReadingList = () => {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm bài đọc theo tiêu đề, chủ đề..."
+              placeholder="Search for readings by title, topic..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
@@ -326,7 +326,7 @@ const ReadingList = () => {
             >
               {difficulties.map(diff => (
                 <option key={diff} value={diff}>
-                  {diff === 'all' ? 'Tất cả độ khó' : diff}
+                  {diff === 'all' ? 'Level' : diff}
                 </option>
               ))}
             </select>
@@ -339,7 +339,7 @@ const ReadingList = () => {
             >
               {uniqueTopics.map(topic => (
                 <option key={topic} value={topic}>
-                  {topic === 'all' ? 'Tất cả chủ đề' : topic}
+                  {topic === 'all' ? 'All Topics' : topic}
                 </option>
               ))}
             </select>
@@ -354,14 +354,14 @@ const ReadingList = () => {
                 }}
                 className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-all"
               >
-                Xóa bộ lọc
+                Clear Filters
               </button>
             )}
 
             {/* Results Count */}
             <div className="ml-auto text-sm text-gray-600 flex items-center">
               <span className="font-semibold text-blue-600">{filteredPassages.length}</span>
-              <span className="ml-1">/ {passages.length} bài đọc</span>
+              <span className="ml-1">/ {passages.length} readings</span>
             </div>
           </div>
         </div>
@@ -377,8 +377,8 @@ const ReadingList = () => {
           <div className="text-6xl mb-4">📚</div>
           <p className="text-xl font-semibold text-gray-700 mb-2">
             {searchTerm || selectedDifficulty !== 'all' || selectedTopic !== 'all'
-              ? 'Không tìm thấy bài đọc phù hợp'
-              : 'Chưa có bài đọc nào'}
+              ? 'No matching readings found'
+              : 'No readings available'}
           </p>
           {(searchTerm || selectedDifficulty !== 'all' || selectedTopic !== 'all') && (
             <button
@@ -389,7 +389,7 @@ const ReadingList = () => {
               }}
               className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
-              Xóa bộ lọc
+              Clear Filters
             </button>
           )}
         </div>
@@ -472,7 +472,7 @@ const ReadingList = () => {
                     navigate(`/admin/features/reading/${passage.id}`);
                   }}
                 >
-                  Bắt đầu làm bài →
+                  Start lesson →
                 </button>
               </div>
 

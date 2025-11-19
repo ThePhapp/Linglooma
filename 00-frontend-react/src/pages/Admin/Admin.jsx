@@ -20,10 +20,10 @@ const Admin = () => {
             <div className={`
                 fixed lg:relative inset-y-0 left-0 z-50 
                 transform transition-transform duration-300 ease-in-out
-                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-                ${sidebarOpen ? 'lg:w-72' : 'lg:w-0'}
+                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                lg:translate-x-0
             `}>
-                <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+                {sidebarOpen && <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
             </div>
 
             {/* Main Content */}

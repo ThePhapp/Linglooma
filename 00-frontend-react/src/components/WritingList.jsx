@@ -117,13 +117,13 @@ const WritingList = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md text-center">
           <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Lỗi kết nối</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Connection Error</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all transform hover:scale-105"
           >
-            Thử lại
+            Retry
           </button>
         </div>
       </div>
@@ -145,7 +145,7 @@ const WritingList = () => {
                   IELTS Writing Practice
                 </h1>
                 <p className="text-white/90 text-sm sm:text-base">
-                  Chọn đề bài viết và nhận đánh giá chi tiết từ AI
+                  Choose an article topic and get detailed feedback from AI
                 </p>
               </div>
             </div>
@@ -154,7 +154,7 @@ const WritingList = () => {
               className="flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold rounded-xl transition-all transform hover:scale-105 border-2 border-white/30"
             >
               <History className="h-5 w-5" />
-              Lịch sử nộp bài
+              History
             </button>
           </div>
 
@@ -200,7 +200,7 @@ const WritingList = () => {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm đề bài theo tiêu đề, chủ đề, nội dung..."
+              placeholder="Search for topics by title, subject, content..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
@@ -232,7 +232,7 @@ const WritingList = () => {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Tất cả
+                All
               </button>
               <button
                 onClick={() => setFilterTaskType('Task 1')}
@@ -264,7 +264,7 @@ const WritingList = () => {
             >
               {difficulties.map(diff => (
                 <option key={diff} value={diff}>
-                  {diff === 'all' ? 'Tất cả độ khó' : diff}
+                  {diff === 'all' ? 'All difficulties' : diff}
                 </option>
               ))}
             </select>
@@ -277,7 +277,7 @@ const WritingList = () => {
             >
               {uniqueTopics.map(topic => (
                 <option key={topic} value={topic}>
-                  {topic === 'all' ? 'Tất cả chủ đề' : topic}
+                  {topic === 'all' ? 'All topics' : topic}
                 </option>
               ))}
             </select>
@@ -293,14 +293,14 @@ const WritingList = () => {
                 }}
                 className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-all"
               >
-                Xóa bộ lọc
+                Clear Filters
               </button>
             )}
 
             {/* Results Count */}
             <div className="ml-auto text-sm text-gray-600 flex items-center">
               <span className="font-semibold text-purple-600">{filteredPrompts.length}</span>
-              <span className="ml-1">/ {prompts.length} đề bài</span>
+              <span className="ml-1">/ {prompts.length} topic</span>
             </div>
           </div>
         </div>
@@ -311,8 +311,8 @@ const WritingList = () => {
             <div className="text-6xl mb-4">✍️</div>
             <p className="text-xl font-semibold text-gray-700 mb-2">
               {searchTerm || selectedDifficulty !== 'all' || selectedTopic !== 'all' || filterTaskType !== 'all'
-                ? 'Không tìm thấy đề bài phù hợp'
-                : 'Chưa có đề bài nào'}
+                ? 'No matching topics found'
+                : 'No topics available'}
             </p>
             {(searchTerm || selectedDifficulty !== 'all' || selectedTopic !== 'all' || filterTaskType !== 'all') && (
               <button
@@ -324,7 +324,7 @@ const WritingList = () => {
                 }}
                 className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
               >
-                Xóa bộ lọc
+                Clear Filters
               </button>
             )}
           </div>
@@ -396,7 +396,7 @@ const WritingList = () => {
                       : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
                   } text-white`}
                 >
-                  Bắt đầu viết →
+                  Start writing →
                 </button>
               </div>
 

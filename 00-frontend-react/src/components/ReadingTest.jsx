@@ -60,7 +60,7 @@ const ReadingTest = () => {
       setTimerActive(false);
     } catch (error) {
       console.error('Error fetching reading:', error);
-      alert('Không thể tải bài đọc. Vui lòng thử lại!');
+      alert('The reading could not be loaded. Please try again!');
     } finally {
       setLoading(false);
     }
@@ -94,20 +94,20 @@ const ReadingTest = () => {
   const handleSubmit = async () => {
     // Kiểm tra đã trả lời hết chưa
     if (Object.keys(answers).length !== questions.length) {
-      alert('Vui lòng trả lời tất cả các câu hỏi trước khi nộp bài!');
+      alert('Please answer all questions before submitting!');
       return;
     }
 
-    // Kiểm tra token
-    const token = localStorage.getItem('access_token'); // Fix: đổi từ 'token' thành 'access_token'
+
+    const token = localStorage.getItem('access_token');
     if (!token) {
-      alert('Bạn chưa đăng nhập! Vui lòng đăng nhập để nộp bài.');
+      alert('You are not logged in! Please log in to submit your answers.');
       navigate('/login');
       return;
     }
 
-    // Confirm trước khi submit
-    if (!window.confirm('Bạn có chắc muốn nộp bài? Bạn sẽ không thể sửa đổi sau khi nộp.')) {
+
+    if (!window.confirm('Are you sure you want to submit? You will not be able to make changes after submitting.')) {
       return;
     }
 
@@ -139,15 +139,14 @@ const ReadingTest = () => {
     } catch (error) {
       console.error('Error submitting reading:', error);
       
-      // Xử lý lỗi cụ thể
       if (error.response?.status === 401) {
-        alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
-        localStorage.removeItem('access_token'); // Fix: đổi từ 'token' thành 'access_token'
+        alert('Your session has expired. Please log in again!');
+        localStorage.removeItem('access_token');
         navigate('/login');
       } else if (error.response?.data?.message) {
-        alert(`Lỗi: ${error.response.data.message}`);
+        alert(`Error: ${error.response.data.message}`);
       } else {
-        alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
+        alert('An error occurred while submitting. Please try again!');
       }
     } finally {
       setSubmitting(false);
@@ -159,8 +158,8 @@ const ReadingTest = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex justify-center items-center p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-xl font-semibold text-gray-700">Đang tải bài đọc...</div>
-          <p className="text-sm text-gray-500 mt-2">Vui lòng đợi trong giây lát</p>
+          <div className="text-xl font-semibold text-gray-700">Loading reading...</div>
+          <p className="text-sm text-gray-500 mt-2">Please wait a moment</p>
         </div>
       </div>
     );
@@ -171,13 +170,13 @@ const ReadingTest = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex justify-center items-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-md">
           <div className="text-6xl mb-4">📚</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Không tìm thấy bài đọc</h2>
-          <p className="text-gray-600 mb-6">Bài đọc không tồn tại hoặc đã bị xóa.</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Reading not found</h2>
+          <p className="text-gray-600 mb-6">The reading does not exist or has been deleted.</p>
           <button
             onClick={() => navigate('/admin/features/reading')}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all transform hover:scale-105"
           >
-            Quay lại danh sách
+            Back to list
           </button>
         </div>
       </div>
@@ -197,7 +196,7 @@ const ReadingTest = () => {
                 className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold transition-colors group"
               >
                 <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-                <span className="hidden sm:inline">Quay lại</span>
+                <span className="hidden sm:inline">Back</span>
               </button>
               <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-800 line-clamp-1">
@@ -232,7 +231,7 @@ const ReadingTest = () => {
           {/* Progress Bar */}
           <div className="mt-4">
             <div className="flex justify-between text-xs text-gray-600 mb-1">
-              <span>Tiến độ hoàn thành</span>
+              <span>Completion Progress</span>
               <span>{Math.round(getProgress())}%</span>
             </div>
             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -257,7 +256,7 @@ const ReadingTest = () => {
                 onClick={scrollToQuestions}
                 className="lg:hidden px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
               >
-                Đến câu hỏi →
+                To the questions →
               </button>
             </div>
             
@@ -294,7 +293,7 @@ const ReadingTest = () => {
                 onClick={scrollToPassage}
                 className="lg:hidden px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
               >
-                ← Đến đoạn văn
+                ← Back to passage
               </button>
             </div>
             
@@ -344,7 +343,7 @@ const ReadingTest = () => {
                             {result && isCorrect && (
                               <span className="ml-2 inline-flex items-center gap-1 text-green-600 font-semibold">
                                 <CheckCircle className="h-4 w-4" />
-                                Đáp án đúng
+                                Correct answer
                               </span>
                             )}
                             {result && isWrong && (
@@ -376,17 +375,17 @@ const ReadingTest = () => {
                   {submitting ? (
                     <span className="flex items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Đang nộp bài...
+                      Submitting...
                     </span>
                   ) : Object.keys(answers).length === questions.length ? (
-                    'Nộp bài ✓'
+                    'Submit'
                   ) : (
-                    `Trả lời ${Object.keys(answers).length}/${questions.length} câu hỏi`
+                    `Answer ${Object.keys(answers).length}/${questions.length} questions  `
                   )}
                 </button>
                 {Object.keys(answers).length !== questions.length && (
                   <p className="text-sm text-gray-500 text-center mt-2">
-                    Vui lòng trả lời tất cả câu hỏi trước khi nộp bài
+                    Please answer all questions before submitting.
                   </p>
                 )}
               </div>
@@ -394,25 +393,25 @@ const ReadingTest = () => {
               <div className="mt-8 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-2xl shadow-2xl p-8 text-white">
                 <div className="text-center mb-6">
                   <Award className="h-16 w-16 mx-auto mb-4 animate-bounce" />
-                  <h2 className="text-3xl font-bold mb-2">Kết quả của bạn</h2>
-                  <p className="text-white/90">Hoàn thành trong {formatTime(timeElapsed)}</p>
+                  <h2 className="text-3xl font-bold mb-2">Your Results</h2>
+                  <p className="text-white/90">Completed in {formatTime(timeElapsed)}</p>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
                     <CheckCircle className="h-8 w-8 mx-auto mb-2" />
                     <div className="text-3xl font-bold">{result.score}</div>
-                    <div className="text-sm opacity-90">Câu đúng</div>
+                    <div className="text-sm opacity-90">Correct Answers</div>
                   </div>
                   <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
                     <BookOpen className="h-8 w-8 mx-auto mb-2" />
                     <div className="text-3xl font-bold">{result.totalQuestions}</div>
-                    <div className="text-sm opacity-90">Tổng số câu</div>
+                    <div className="text-sm opacity-90">Total Questions</div>
                   </div>
                   <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
                     <TrendingUp className="h-8 w-8 mx-auto mb-2" />
                     <div className="text-3xl font-bold">{result.percentage}%</div>
-                    <div className="text-sm opacity-90">Điểm số</div>
+                    <div className="text-sm opacity-90">Score</div>
                   </div>
                 </div>
                 
@@ -422,13 +421,13 @@ const ReadingTest = () => {
                     className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                   >
                     <RefreshCw className="h-5 w-5" />
-                    Làm lại
+                    Retry
                   </button>
                   <button
                     onClick={() => navigate('/admin/features/reading')}
                     className="flex-1 bg-white text-purple-600 hover:bg-gray-100 px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95"
                   >
-                    Danh sách bài đọc
+                    Reading List
                   </button>
                 </div>
               </div>
