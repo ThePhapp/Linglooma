@@ -1,8 +1,175 @@
 # 🌸 Linglooma - AI-Powered English Learning Platform
 
+<details>
+<summary><strong>🇯🇵 日本語</strong></summary>
+
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-22.16-339933?logo=node.js)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Powered-3ECF8E?logo=supabase)](https://supabase.com/)
+
+*AI を活用した IELTS 4 技能（Speaking / Writing / Reading / Listening）評価を提供する総合学習プラットフォーム*
+
+---
+
+## 📖 目次
+
+- [概要](#-概要)
+- [主な特徴](#-主な特徴)
+- [技術スタック](#-技術スタック)
+- [セットアップ](#-セットアップ)
+- [AI 機能](#-ai-機能)
+- [デプロイ](#-デプロイ)
+
+---
+
+## 🎯 概要
+
+**Linglooma IELTS** は、IELTS 受験者向けに設計された高度な Web 学習プラットフォームです。AI による即時フィードバックを活用し、Speaking / Writing / Reading / Listening の 4 技能を総合的に学習できます。
+
+### 🌟 Linglooma の特長
+
+- **AI 自動採点**：Azure Speech Services と Gemini AI による即時評価  
+- **4 技能を網羅**：Speaking / Writing / Reading / Listening  
+- **高度な学習分析**：弱点分析、スコア推移、ダッシュボード  
+- **多言語対応**：英語・ベトナム語・日本語  
+- **モダンな UI/UX**  
+- **PostgreSQL または Supabase に対応した柔軟なデプロイ**
+
+---
+
+## 🚀 主な特徴
+
+### 🗣️ スピーキングモジュール
+- Azure Speech-to-Text による音声評価  
+- IELTS バンドスコア換算  
+- 発音・流暢さ・内容網羅性・イントネーション解析  
+- 音素レベルの誤発音検出  
+- 過去のスピーキング履歴の分析
+
+### ✍️ ライティングモジュール
+- Task 1 / Task 2 に対応  
+- Gemini による採点：Task Achievement / Coherence / Vocabulary / Grammar  
+- 文法誤り検出・修正  
+- 語彙改善提案  
+- ワードカウンター & タイマー
+
+### 📖 リーディングモジュール
+- 多様な問題形式：MCQ, T/F/NG, マッチング, 穴埋め  
+- 即時採点  
+- 豊富なパッセージと難易度設定  
+- 学習履歴・成績推移の追跡
+
+### 🎧 リスニングモジュール
+- 音声再生（速度調整あり）  
+- IELTS 構成（Part 1–4）に準拠  
+- 英・米・豪アクセント  
+- テスト後にスクリプト表示
+
+### 💬 AI ボイスチャット
+- Gemini による会話 AI  
+- 音声認識 / 音声合成  
+- IELTS トピックを使った模擬面接  
+- AI フィードバック付き
+
+### 📊 学習者ダッシュボード
+- パフォーマンスの可視化  
+- バンドスコア推移  
+- 弱点分析  
+- 学習目標・連続学習日数  
+- 最新アクティビティ
+
+---
+
+## ⚙️ 技術スタック
+
+### フロントエンド
+- React 19  
+- Vite 6  
+- Tailwind CSS 3  
+- React Router 7  
+- Axios  
+- Lucide React  
+
+### バックエンド
+- Node.js 22.16  
+- Express.js 5.1  
+- PostgreSQL 16+  
+- Supabase  
+- JWT 認証  
+- Bcrypt ハッシュ化  
+
+### AI サービス
+- Azure Speech Services  
+- Google Gemini  
+
+---
+
+## 🛠 セットアップ
+
+### 必要要件
+- Node.js 22.16+  
+- PostgreSQL 16+ または Supabase  
+- Azure Speech API Key  
+- Google Gemini API Key  
+
+### クイックスタート
+
+## 🤖 AI 機能
+
+### スピーキング評価（Azure）
+```
+Accuracy（発音精度）
+Fluency（流暢さ）
+Completeness（網羅性）
+Prosody（イントネーション）
+音素レベル誤り分析
+IELTS バンドスコア換算
+```
+
+### ライティング評価 (Gemini AI)
+```
+Task Achievement（1〜9）
+Coherence & Cohesion（1〜9）
+Vocabulary（1〜9）
+Grammar（1〜9）
+総合バンドスコア
+文法誤り・修正提案
+語彙強化提案
+```
+
+---
+
+## 🚀 Deployment
+
+### バックエンド（Render.com）
+1. GitHub と接続
+2. 環境変数設定
+3. Build: `npm install`
+4. Start: `node server.js`
+
+### Frontend (Vercel/Netlify)
+1. プロジェクトをインポート
+2. `VITE_BACKEND_URL`を設定
+3. Build: `npm run build`
+4. Output: `dist`
+
+---
+
+## 📄 License
+
+MIT License（詳細は LICENSE を参照）
+
+---
+
 <div align="center">
 
-**English** | [日本語](./README.ja.md)
+**Made with ❤️ by UET - VNU Hanoi students**
+
+</div>
+</details>
+<details>
+<summary><strong>🇺🇸 English</strong></summary>
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-22.16-339933?logo=node.js)](https://nodejs.org/)
@@ -116,50 +283,6 @@
 - Azure Speech API Key
 - Google Gemini API Key
 
-### Quick Start
-
-#### 1️⃣ Clone Repository
-```bash
-git clone https://github.com/ThePhapp/Linglooma-IELTS.git
-cd Linglooma-IELTS
-```
-
-#### 2️⃣ Setup Backend
-```bash
-cd 01-backend-nodejs
-npm install
-
-# Copy and configure .env
-copy .env.example .env
-# Add: DATABASE_URL, GEMINI_API_KEY, AZURE_SPEECH_KEY, JWT_SECRET
-
-npm start
-# Server runs on http://localhost:3000
-```
-
-#### 3️⃣ Setup Frontend
-```bash
-cd 00-frontend-react
-npm install
-
-# Copy and configure .env
-copy .env.example .env
-# Add: VITE_BACKEND_URL=http://localhost:3000
-
-npm run dev
-# Frontend runs on http://localhost:5173
-```
-
-#### 4️⃣ Database Setup (Supabase)
-1. Create account at [supabase.com](https://supabase.com)
-2. Create new project
-3. Run SQL migration: `02-database-postgresql/linglooma_update.sql`
-4. Copy connection string and add to `.env`
-
-📖 **Full Guide**: [SUPABASE_SETUP_GUIDE.md](./SUPABASE_SETUP_GUIDE.md)
-
----
-
 ## 🤖 AI Features
 
 ### Speaking Evaluation (Azure)
@@ -212,3 +335,12 @@ MIT License - see [LICENSE](LICENSE) file
 **Made with ❤️ by UET - VNU Hanoi students**
 
 </div>
+
+
+</details>
+
+---
+
+## 🌐 Preview
+
+**Deploy:** [https://linglooma.vercel.app/](https://linglooma.vercel.app/)
