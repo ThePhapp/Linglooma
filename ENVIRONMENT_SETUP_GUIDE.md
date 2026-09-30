@@ -14,8 +14,10 @@ Project này có thể chạy ở **2 môi trường**:
 ```
 01-backend-nodejs/
 ├── .env              # File đang sử dụng (tự động tạo)
-├── .env.local        # Config cho localhost (DB_HOST=localhost)
-├── .env.docker       # Config cho Docker (DB_HOST=db)
+├── .env.local.example  # Safe template for localhost
+├── .env.docker.example # Safe template for Docker
+├── .env.local          # Local credentials, generated and ignored
+├── .env.docker         # Docker credentials, generated and ignored
 ├── .env.backup       # Backup tự động
 └── db.js             # Đã upgrade lên Pool với connection pooling
 ```
@@ -201,7 +203,7 @@ Host: localhost
 Port: 5432
 Database: linglooma
 User: postgres
-Password: postgres123
+Password: [YOUR-LOCAL-DATABASE-PASSWORD]
 ```
 
 **Tool recommendations:**
@@ -394,20 +396,20 @@ npm run dev
 node_modules/
 ```
 
-**KHÔNG** ignore:
+**KHÔNG** ignore các template an toàn:
 ```
-.env.local
-.env.docker
+.env.local.example
+.env.docker.example
 ```
 
-Vì đây là template cho team.
+Các script tạo `.env.local` và `.env.docker` bị ignore từ những template này.
 
 ---
 
 ## 🔐 Security Notes
 
 1. **KHÔNG** commit file `.env` lên Git
-2. **LƯU Ý:** `.env.local` và `.env.docker` chứa API keys
+2. `.env.local` và `.env.docker` có thể chứa API keys nên luôn phải bị ignore
    - Trong production, dùng environment variables
    - Hoặc secrets management (AWS Secrets, Azure Key Vault)
 3. Đổi `JWT_SECRET` và passwords trong production
@@ -419,7 +421,7 @@ Vì đây là template cho team.
 
 ### Database connection string format:
 ```
-postgresql://postgres:postgres123@localhost:5432/linglooma
+postgresql://postgres:[YOUR-LOCAL-DATABASE-PASSWORD]@localhost:5432/linglooma
 ```
 
 ### Environment variables reference:
@@ -427,7 +429,7 @@ postgresql://postgres:postgres123@localhost:5432/linglooma
 DB_HOST=localhost          # localhost hoặc db
 DB_PORT=5432              # PostgreSQL port
 DB_USER=postgres          # Database user
-DB_PASSWORD=postgres123   # Database password
+DB_PASSWORD=your_local_database_password   # Database password
 DB_NAME=linglooma        # Database name
 JWT_SECRET=xxx           # JWT signing secret
 JWT_EXPIRE=1d           # Token expiration
@@ -470,7 +472,7 @@ docker system prune -a --volumes
 | Start All Docker | `docker-compose up --build` |
 | Stop Docker | `docker-compose down` |
 | View DB logs | `docker-compose logs -f db` |
-| Connect to DB | `localhost:5432` (user: postgres, pass: postgres123) |
+| Connect to DB | `localhost:5432` (user: postgres, pass: your configured local password) |
 | Run migration | `run-reading-migration.bat` |
 | Test API | `test-reading-api.bat` |
 

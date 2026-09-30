@@ -14,7 +14,7 @@ if not defined DATABASE_URL (
     echo [ERROR] DATABASE_URL not found in environment!
     echo.
     echo Please set DATABASE_URL first:
-    echo set DATABASE_URL=postgresql://postgres.xxx:Hd8CVTZm6Hg4VnY4@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres
+    echo set DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres
     echo.
     pause
     exit /b 1

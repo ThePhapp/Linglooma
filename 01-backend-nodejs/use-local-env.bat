@@ -7,10 +7,14 @@ echo.
 cd /d "%~dp0"
 
 if not exist ".env.local" (
-    echo ERROR: .env.local not found!
-    echo Please make sure .env.local exists in this directory.
-    pause
-    exit /b 1
+    if not exist ".env.local.example" (
+        echo ERROR: .env.local.example not found!
+        pause
+        exit /b 1
+    )
+    echo Creating .env.local from the safe example template...
+    copy /Y ".env.local.example" ".env.local" >nul
+    echo Review .env.local and replace placeholder credentials before using AI features.
 )
 
 echo Backing up current .env to .env.backup...

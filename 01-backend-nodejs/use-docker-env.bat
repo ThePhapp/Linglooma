@@ -7,10 +7,14 @@ echo.
 cd /d "%~dp0"
 
 if not exist ".env.docker" (
-    echo ERROR: .env.docker not found!
-    echo Please make sure .env.docker exists in this directory.
-    pause
-    exit /b 1
+    if not exist ".env.docker.example" (
+        echo ERROR: .env.docker.example not found!
+        pause
+        exit /b 1
+    )
+    echo Creating .env.docker from the safe example template...
+    copy /Y ".env.docker.example" ".env.docker" >nul
+    echo Review .env.docker and replace placeholder credentials before using AI features.
 )
 
 echo Backing up current .env to .env.backup...

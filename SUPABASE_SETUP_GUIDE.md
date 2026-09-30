@@ -8,6 +8,8 @@
 5. [Deploy to Render](#5-deploy-to-render)
 6. [Troubleshooting](#6-troubleshooting)
 
+> Nếu credentials thật đã từng được commit, hãy rotate chúng ngay. Xóa khỏi các file hiện tại không vô hiệu hóa credentials đã lộ.
+
 ---
 
 ## 1. Tạo Supabase Project
@@ -49,10 +51,10 @@
 ### Ví dụ Connection String:
 ```
 # Trước khi thay password (từ Supabase)
-postgresql://postgres.abcdefghij:[YOUR-PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres
 
 # Sau khi thay password (sử dụng)
-postgresql://postgres.abcdefghij:MySuper$ecureP@ss123@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+postgresql://postgres.[PROJECT_REF]:[YOUR-URL-ENCODED-PASSWORD]@[POOLER_HOST]:6543/postgres
 ```
 
 ---
@@ -66,7 +68,7 @@ postgresql://postgres.abcdefghij:MySuper$ecureP@ss123@aws-0-ap-southeast-1.poole
 # Mở PowerShell hoặc Git Bash
 
 # Set DATABASE_URL
-set DATABASE_URL=postgresql://postgres.xxx:password@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+set DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres
 
 # Run migration
 psql "%DATABASE_URL%" -f 02-database-postgresql/linglooma_update.sql
@@ -75,7 +77,7 @@ psql "%DATABASE_URL%" -f 02-database-postgresql/linglooma_update.sql
 #### Mac/Linux:
 ```bash
 # Set DATABASE_URL
-export DATABASE_URL="postgresql://postgres.xxx:password@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
+export DATABASE_URL="postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres"
 
 # Run migration
 psql "$DATABASE_URL" -f 02-database-postgresql/linglooma_update.sql
@@ -126,17 +128,17 @@ Kết quả phải có **11 tables**:
 Tạo/Sửa file `.env` trong `01-backend-nodejs/`:
 ```properties
 # Supabase Connection
-DATABASE_URL=postgresql://postgres.xxx:password@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres
 
 # JWT
-JWT_SECRET=0dbbfbb3-5a8c-4657-bdc0-92c3f7d54f25
+JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRE=1d
 
 # Gemini AI
-GEMINI_API_KEY=AIzaSyBcyCeP_T9gMz_9NRld6zPOy1bFtQeBFHI
+GEMINI_API_KEY=your_gemini_api_key_here
 
 # Azure Speech
-AZURE_SPEECH_KEY=DP9zwU29Z1HBSL1Zwr1aSLdrPgm1GavAUxJcpsZfxCFiJf6jIz09JQQJ99BEAC3pKaRXJ3w3AAAYACOGYrCv
+AZURE_SPEECH_KEY=your_azure_speech_key_here
 AZURE_SPEECH_REGION=eastasia
 
 # Server
@@ -188,11 +190,11 @@ Thêm các biến sau:
 
 | Key | Value |
 |-----|-------|
-| `DATABASE_URL` | `postgresql://postgres.xxx:password@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres` |
-| `JWT_SECRET` | `0dbbfbb3-5a8c-4657-bdc0-92c3f7d54f25` |
+| `DATABASE_URL` | `postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres` |
+| `JWT_SECRET` | `replace_with_a_long_random_secret` |
 | `JWT_EXPIRE` | `1d` |
-| `GEMINI_API_KEY` | `AIzaSyBcyCeP_T9gMz_9NRld6zPOy1bFtQeBFHI` |
-| `AZURE_SPEECH_KEY` | `DP9zwU29Z1HBSL1Zwr1aSLdrPgm1GavAUxJcpsZfxCFiJf6jIz09JQQJ99BEAC3pKaRXJ3w3AAAYACOGYrCv` |
+| `GEMINI_API_KEY` | `your_gemini_api_key_here` |
+| `AZURE_SPEECH_KEY` | `your_azure_speech_key_here` |
 | `AZURE_SPEECH_REGION` | `eastasia` |
 | `PORT` | `3000` |
 | `NODE_VERSION` | `22.16.0` |

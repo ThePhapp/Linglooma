@@ -29,7 +29,7 @@ if %ERRORLEVEL% EQU 0 (
     echo   - Port: 5433
     echo   - Database: linglooma
     echo   - User: postgres
-    echo   - Password: postgres123
+    echo   - Password: your configured local database password
     echo.
     echo You can now run backend locally:
     echo   cd 01-backend-nodejs

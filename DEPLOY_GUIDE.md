@@ -11,6 +11,8 @@
 
 ## Prerequisites
 
+> If real credentials were previously committed, rotate them immediately. Removing them from the current files does not invalidate exposed credentials.
+
 ✅ **Before you start:**
 - [ ] Supabase account with database created ([Setup Guide](./SUPABASE_SETUP_GUIDE.md))
 - [ ] Database migration completed (11 tables created)
@@ -53,7 +55,7 @@ Click **"Advanced"** → **"Add Environment Variable"**
 DATABASE_URL=postgresql://postgres.xxxxx:[password]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
 
 # JWT Authentication
-JWT_SECRET=0dbbfbb3-5a8c-4657-bdc0-92c3f7d54f25
+JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRE=1d
 
 # Gemini AI
@@ -128,12 +130,12 @@ const instance = axios.create({
 
 ```properties
 # Use DATABASE_URL for production
-DATABASE_URL=postgresql://postgres.xxxxx:password@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres
 
-JWT_SECRET=0dbbfbb3-5a8c-4657-bdc0-92c3f7d54f25
+JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRE=1d
-GEMINI_API_KEY=AIzaSyBcyCeP_T9gMz_9NRld6zPOy1bFtQeBFHI
-AZURE_SPEECH_KEY=DP9zwU29Z1HBSL1Zwr1aSLdrPgm1GavAUxJcpsZfxCFiJf6jIz09JQQJ99BEAC3pKaRXJ3w3AAAYACOGYrCv
+GEMINI_API_KEY=your_gemini_api_key_here
+AZURE_SPEECH_KEY=your_azure_speech_key_here
 AZURE_SPEECH_REGION=eastasia
 PORT=3000
 NODE_VERSION=22.16.0

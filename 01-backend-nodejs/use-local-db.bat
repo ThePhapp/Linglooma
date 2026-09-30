@@ -33,7 +33,7 @@ echo # ==========================================
 echo DB_HOST=localhost
 echo DB_PORT=5433
 echo DB_USER=postgres
-echo DB_PASSWORD=postgres123
+echo DB_PASSWORD=your_local_database_password
 echo DB_NAME=linglooma
 echo.
 echo # Supabase DATABASE_URL ^(commented out when using local^)
@@ -50,7 +50,7 @@ findstr /B "JWT_SECRET= JWT_EXPIRE= GEMINI_API_KEY= AZURE_SPEECH_KEY= AZURE_SPEE
 REM If keys not found in backup, use defaults
 findstr /B "JWT_SECRET=" .env > nul
 if errorlevel 1 (
-    echo JWT_SECRET=0dbbfbb3-5a8c-4657-bdc0-92c3f7d54f25 >> .env
+    echo JWT_SECRET=replace_with_a_long_random_secret >> .env
     echo JWT_EXPIRE=1d >> .env
     echo GEMINI_API_KEY=your-gemini-api-key-here >> .env
     echo AZURE_SPEECH_KEY=your-azure-speech-key-here >> .env
