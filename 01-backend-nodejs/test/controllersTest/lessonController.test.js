@@ -1,47 +1,27 @@
-const { getLessonController } = require('../../controllers/lessonController');
-const { findLesson } = require('../../models/lessonModel');
+jest.mock('../../models/lessonModel');
+const { findLessons } = require('../../models/lessonModel');
+const { getAllLessonsController } = require('../../controllers/lessonController');
 
-jest.mock('../../models/lessonModel'); // Mock toàn bộ module
+describe('speaking lesson catalog', () => {
+  let res;
 
-describe('Kiểm thử hàm getLessonController', () => {
-    let req, res;
+  beforeEach(() => {
+    res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+  });
 
-    beforeEach(() => {
-        req = {}; // Không cần req cụ thể trong controller này
-        res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn()
-        };
-    });
+  test('returns lessons supplied by the filtered catalog model', async () => {
+    const rows = [{ id: 1, name: 'Technology', difficulty: 'medium' }];
+    findLessons.mockResolvedValue({ rows });
+    await getAllLessonsController({}, res);
+    expect(findLessons).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(rows);
+  });
 
-    afterEach(() => {
-        jest.clearAllMocks(); // Reset lại các hàm mock
-    });
-
-    test('Trả về danh sách bài học khi thành công', async () => {
-        const fakeLessons = {
-            rows: [
-                { id: 1, title: 'Bài học 1' },
-                { id: 2, title: 'Bài học 2' }
-            ]
-        };
-        findLesson.mockResolvedValue(fakeLessons);
-
-        await getLessonController(req, res);
-
-        expect(findLesson).toHaveBeenCalledTimes(1);
-        expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.json).toHaveBeenCalledWith(fakeLessons.rows);
-    });
-
-    test('Trả về lỗi khi truy xuất bài học thất bại', async () => {
-        findLesson.mockRejectedValue(new Error('Lỗi truy xuất'));
-
-        await getLessonController(req, res);
-
-        expect(findLesson).toHaveBeenCalledTimes(1);
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.json).toHaveBeenCalledWith({ message: 'Retriving lesson failed' });
-    });
-
+  test('does not expose database error details', async () => {
+    findLessons.mockRejectedValue(new Error('private database host'));
+    await getAllLessonsController({}, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Unable to retrieve lessons' });
+  });
 });

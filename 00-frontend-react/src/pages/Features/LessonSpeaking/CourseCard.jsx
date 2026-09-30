@@ -1,16 +1,15 @@
-import React from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Play, ChevronRight } from "lucide-react";
 import PropTypes from 'prop-types';
 
-const CourseCard = ({ title, topic, imageUrl, lessonId, gradient }) => {
+const CourseCard = ({ title, topic, description, imageUrl, lessonId, gradient }) => {
     const navigate = useNavigate();
+    const [imageFailed, setImageFailed] = useState(false);
     
     const handleLearnClick = () => {
         if (lessonId) {
             navigate(`/admin/features/practice/${lessonId}`);
-        } else {
-            console.log("Không có lessonId cho:", title);
         }
     }
 
@@ -36,15 +35,12 @@ const CourseCard = ({ title, topic, imageUrl, lessonId, gradient }) => {
                     {title}
                 </h3>
 
-                {/* Image */}
-                <div className="relative mb-4 rounded-xl overflow-hidden shadow-md">
-                    <img
-                        src={imageUrl}
-                        className="object-cover w-full h-48 group-hover:scale-110 transition-transform duration-300"
-                        alt={title}
-                    />
+                <div className="relative mb-4 flex h-48 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-purple-100 to-blue-100 shadow-md">
+                    {imageUrl && !imageFailed ? <img src={imageUrl} onError={() => setImageFailed(true)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" alt="" /> : <span aria-hidden="true" className="text-6xl">🎤</span>}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
+
+                {description && <p className="mb-5 text-sm leading-6 text-gray-600">{description}</p>}
 
                 {/* Button */}
                 <button
@@ -65,8 +61,9 @@ const CourseCard = ({ title, topic, imageUrl, lessonId, gradient }) => {
 CourseCard.propTypes = {
     title: PropTypes.string.isRequired,
     topic: PropTypes.string.isRequired,
-    imageUrl: PropTypes.string.isRequired,
-    lessonId: PropTypes.number.isRequired,
+    description: PropTypes.string,
+    imageUrl: PropTypes.string,
+    lessonId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     gradient: PropTypes.string.isRequired,
 };
 

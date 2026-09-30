@@ -1,24 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import PropTypes from 'prop-types';
 
-export const PracticeCard = ({ title, emoji, description, gradient, bgColor }) => {
+export const PracticeCard = ({ title, emoji, description, gradient, bgColor, href }) => {
     const navigate = useNavigate();
 
     const handleLearnClick = () => {
-        if (title.includes("Speaking")) {
-            navigate("/admin/features/lesson");
-        } else if (title.includes("Reading")) {
-            navigate("/admin/features/reading");
-        } else if (title.includes("Writing")) {
-            navigate("/admin/features/writing");
-        } else if (title.includes("Listening")) {
-            navigate("/admin/features/listening");
-        }
+        navigate(href);
     }
-
-    const isComingSoon = false; // All features are now available
 
     return (
         <article className={`group relative overflow-hidden bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-purple-200 ${bgColor}/30 h-full flex flex-col`}>
@@ -44,28 +34,13 @@ export const PracticeCard = ({ title, emoji, description, gradient, bgColor }) =
 
                 {/* Footer with Button */}
                 <div className="flex items-center justify-between mt-auto pt-6 border-t border-gray-200">
-                    {isComingSoon ? (
-                        <div className="flex-1">
-                            <button
-                                disabled
-                                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gray-300 text-gray-500 cursor-not-allowed font-semibold"
-                            >
-                                <Lock className="h-5 w-5" />
-                                <span>Coming Soon</span>
-                            </button>
-                            <p className="text-xs text-gray-400 text-center mt-2">
-                                This feature is under development
-                            </p>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={handleLearnClick}
-                            className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r ${gradient} text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95`}
-                        >
-                            <span>Start Learning</span>
-                            <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                        </button>
-                    )}
+                    <button
+                        onClick={handleLearnClick}
+                        className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r ${gradient} text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95`}
+                    >
+                        <span>Open practice</span>
+                        <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </button>
                 </div>
             </div>
 
@@ -81,4 +56,5 @@ PracticeCard.propTypes = {
     description: PropTypes.string.isRequired,
     gradient: PropTypes.string.isRequired,
     bgColor: PropTypes.string.isRequired,
+    href: PropTypes.string.isRequired,
 };

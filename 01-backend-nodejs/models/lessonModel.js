@@ -1,14 +1,16 @@
 const client = require('../db');
 
-const findLesson = async (type) => {
+const findLessons = async () => {
     const result = await client.query(
-        'SELECT * FROM lesson WHERE type=$1',
-        [type]
+        `SELECT id, name, type, image, description, difficulty
+         FROM lesson
+         WHERE is_active = true
+         ORDER BY id`
     );
 
     return result;
 }
 
 module.exports = {
-    findLesson
+    findLessons
 }

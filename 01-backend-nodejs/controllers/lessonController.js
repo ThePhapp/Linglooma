@@ -1,24 +1,13 @@
-const client = require('../db');
-const { findLesson } = require('../models/lessonModel');
-
-const getLessonController = async (req, res) => {
-    try {
-        const lessons = await findLesson();
-        res.status(200).json(lessons.rows);
-    } catch (err) {
-        res.status(500).json({ message: 'Retriving lesson failed' });
-    }
-}
+const { findLessons } = require('../models/lessonModel');
 
 const getAllLessonsController = async (req, res) => {
     try {
-        const result = await client.query('SELECT * FROM lesson');
+        const result = await findLessons();
         res.status(200).json(result.rows);
-    } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu:", error);
-        return res.status(500).json({ message: 'Lỗi khi truy vấn dữ liệu bài học' });
+    } catch {
+        return res.status(500).json({ message: 'Unable to retrieve lessons' });
     }
 };
 module.exports = {
-    getLessonController, getAllLessonsController
+    getAllLessonsController
 };

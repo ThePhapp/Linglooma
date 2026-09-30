@@ -1,99 +1,87 @@
-import React from "react";
-import CourseCard from "./CourseCard";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, History, BookOpen } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, BookOpen, History, RefreshCw } from 'lucide-react';
+import axios from '@/utils/axios.customize';
+import CourseCard from './CourseCard';
+
+const gradients = [
+  'from-blue-500 to-cyan-600',
+  'from-green-500 to-emerald-600',
+  'from-purple-500 to-violet-600',
+  'from-pink-500 to-rose-600',
+  'from-orange-500 to-amber-600',
+  'from-red-500 to-pink-600',
+];
 
 const LessonSpeaking = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-    return (
-        <main className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
-            {/* Header Section */}
-            <div className="max-w-7xl mx-auto">
-                {/* Title & Navigation */}
-                <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-rose-500 rounded-2xl shadow-2xl p-8 mb-8">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
-                                <BookOpen className="h-8 w-8 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-3xl font-bold text-white">
-                                    Speaking Practice Lessons
-                                </h1>
-                                <p className="text-white/90 mt-1">
-                                    Choose a topic and start practicing your English speaking skills
-                                </p>
-                            </div>
-                        </div>
+  const loadLessons = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await axios.get('/api/lessons/all');
+      const payload = Array.isArray(response) ? response : response?.data;
+      setLessons(Array.isArray(payload) ? payload : []);
+    } catch {
+      setLessons([]);
+      setError('Speaking lessons could not be loaded. Check the service and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                        <div className="flex gap-3">
-                            <button
-                                className="flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                                onClick={() => navigate("/admin/features")}
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                <span>Back</span>
-                            </button>
-                            <button
-                                className="flex items-center gap-2 px-6 py-3 text-sm font-semibold text-purple-600 bg-white rounded-xl hover:bg-purple-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                                onClick={() => navigate("/admin/features/speaking/history")}
-                            >
-                                <History className="h-4 w-4" />
-                                <span>My History</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+  useEffect(() => {
+    loadLessons();
+  }, []);
 
-                {/* Grid layout for CourseCards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <CourseCard
-                        title="Technology"
-                        topic="Bài 1"
-                        imageUrl="https://cdn.builder.io/api/v1/image/assets/d09fa83e4ab04468bd9329558cd49375/02a90a0b65e66df0963f1b5477527d2ac1445187?placeholderIfAbsent=true"
-                        lessonId={1}
-                        gradient="from-blue-500 to-cyan-600"
-                    />
-                    <CourseCard
-                        title="Environment"
-                        topic="Bài 2"
-                        imageUrl="https://cdn.builder.io/api/v1/image/assets/d09fa83e4ab04468bd9329558cd49375/1236d1d71bbeb3c3824f8ab88eb5159654b5e4d1?placeholderIfAbsent=true"
-                        lessonId={2}
-                        gradient="from-green-500 to-emerald-600"
-                    />
-                    <CourseCard
-                        title="Education"
-                        topic="Bài 3"
-                        imageUrl="https://cdn.builder.io/api/v1/image/assets/d09fa83e4ab04468bd9329558cd49375/50ce905aa9a969e7683a8822bd451ce918855619?placeholderIfAbsent=true"
-                        lessonId={3}
-                        gradient="from-purple-500 to-violet-600"
-                    />
-                    <CourseCard
-                        title="Health"
-                        topic="Bài 4"
-                        imageUrl="https://cdn.builder.io/api/v1/image/assets/d09fa83e4ab04468bd9329558cd49375/ddc2f9e7faf4c399e595e15ab3f987f8785f338f?placeholderIfAbsent=true"
-                        lessonId={4}
-                        gradient="from-pink-500 to-rose-600"
-                    />
-                    <CourseCard
-                        title="Travel"
-                        topic="Bài 5"
-                        imageUrl="https://cdn-images.vtv.vn/2019/12/10/untitled-15759663392891201724352.png"
-                        lessonId={5}
-                        gradient="from-orange-500 to-amber-600"
-                    />
-                    <CourseCard
-                        title="Love & Relationships"
-                        topic="Bài 6"
-                        imageUrl="https://bazaarvietnam.vn/wp-content/uploads/2023/04/HBVN-vuong-tu-ky-vuong-ngoc-van-trong-tinh-yeu-anh-danh-cho-em.jpg"
-                        lessonId={6}
-                        gradient="from-red-500 to-pink-600"
-                    />
-                </div>
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4 sm:p-6">
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-8 rounded-2xl bg-gradient-to-r from-purple-700 via-pink-700 to-rose-600 p-6 text-white shadow-xl sm:p-8">
+          <div className="flex flex-col items-start justify-between gap-5 md:flex-row md:items-center">
+            <div className="flex items-center gap-4">
+              <span className="rounded-xl bg-white/15 p-3"><BookOpen aria-hidden="true" className="h-8 w-8" /></span>
+              <div>
+                <h1 className="text-3xl font-bold">Speaking Practice Lessons</h1>
+                <p className="mt-1 text-white/90">Choose from the active speaking topics currently available.</p>
+              </div>
             </div>
-        </main>
-    );
+            <div className="flex flex-wrap gap-3">
+              <button type="button" onClick={() => navigate('/admin/features')} className="inline-flex items-center gap-2 rounded-xl bg-white/15 px-5 py-3 text-sm font-semibold hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"><ArrowLeft aria-hidden="true" className="h-4 w-4" /> Back</button>
+              <button type="button" onClick={() => navigate('/admin/features/speaking/history')} className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-purple-700 hover:bg-purple-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50"><History aria-hidden="true" className="h-4 w-4" /> Speaking history</button>
+            </div>
+          </div>
+        </header>
+
+        {loading ? (
+          <div aria-label="Loading speaking lessons" className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {[0, 1, 2, 3, 4, 5].map(item => <div key={item} className="h-96 animate-pulse rounded-2xl bg-white/80 shadow" />)}
+          </div>
+        ) : error ? (
+          <section role="alert" className="rounded-2xl border border-red-200 bg-white p-10 text-center shadow-lg">
+            <p className="text-lg font-semibold text-gray-900">{error}</p>
+            <button type="button" onClick={loadLessons} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-purple-700 px-5 py-3 font-semibold text-white hover:bg-purple-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-200"><RefreshCw aria-hidden="true" className="h-4 w-4" /> Try again</button>
+          </section>
+        ) : lessons.length === 0 ? (
+          <section className="rounded-2xl bg-white p-12 text-center shadow-lg">
+            <BookOpen aria-hidden="true" className="mx-auto h-12 w-12 text-gray-400" />
+            <h2 className="mt-4 text-xl font-bold text-gray-900">No speaking lessons are available</h2>
+            <p className="mt-2 text-gray-600">Check back after speaking content has been added.</p>
+          </section>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {lessons.map((lesson, index) => (
+              <CourseCard key={lesson.id} title={lesson.name} topic={lesson.difficulty || 'Speaking'} description={lesson.description} imageUrl={lesson.image} lessonId={lesson.id} gradient={gradients[index % gradients.length]} />
+            ))}
+          </div>
+        )}
+      </div>
+    </main>
+  );
 };
 
 export default LessonSpeaking;
