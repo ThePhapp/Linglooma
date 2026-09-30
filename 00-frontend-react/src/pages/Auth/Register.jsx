@@ -74,16 +74,11 @@ const PageRegister = () => {
                 toast.success("Account created successfully! Please login.");
                 navigate("/login");
             } else {
-                toast.error(res.data.msg || "Register failed");
+                toast.error(res?.msg || res?.message || "Register failed");
             }
         } catch (err) {
             // xử lý lỗi trả về từ backend
-            if (err.response && err.response.data && err.response.data.msg) {
-                toast.error(err.response.data.msg);
-                console.log(">>> Error", err.response.data.msg);
-            } else {
-                toast.error("Register failed");
-            }
+            toast.error(err?.response?.data?.msg || err?.response?.data?.message || "Register failed");
         } finally {
             setIsLoading(false);
         }

@@ -7,7 +7,7 @@ import axios from "@/utils/axios.customize";
 import { Mail, Lock, LogIn, Home, ArrowRight } from "lucide-react";
 
 const PageLogin = () => {
-    const { setAuth } = useContext(AuthContext);
+    const { setAuth, setAuthLoading, setAuthError } = useContext(AuthContext);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -41,14 +41,10 @@ const PageLogin = () => {
         setIsLoading(true);
         try {
             const res = await axios.post(`/api/login`, { email: email.trim().toLowerCase(), password });
-            console.log("res", res);
 
-            if (res.success === true) {
+            if (res.success === true && res?.access_token) {
                 // lưu vào localStorage
-                if (res?.access_token) {
-                    // Lưu access_token
-                    localStorage.setItem("access_token", res.access_token);
-                }
+                localStorage.setItem("access_token", res.access_token);
                 toast.success(
                     "Login success! Welcome to Linglooma", {
                     position: "top-right",
@@ -67,17 +63,15 @@ const PageLogin = () => {
                         nationality: res?.user?.nationality ?? ""
                     }
                 })
+                setAuthError(null);
+                setAuthLoading(false);
 
                 navigate("/admin/dashboard");
             } else {
-                toast.error(res.msg);
+                toast.error(res?.msg || res?.message || "Login failed");
             }
         } catch (err) {
-            if (err?.msg) {
-                toast.error(err.msg);
-            } else {
-                toast.error("Login failed");
-            }
+            toast.error(err?.response?.data?.msg || err?.response?.data?.message || "Login failed");
         } finally {
             setIsLoading(false);
         }

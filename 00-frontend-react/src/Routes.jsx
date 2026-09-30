@@ -1,5 +1,6 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { AuthContext } from './components/context/auth.context';
 
 import HomePage from './pages/Home';
 import PageLogin from './pages/Auth/Login';
@@ -24,6 +25,17 @@ import WritingDetail from './components/WritingDetail';
 import SpeakingHistory from './components/SpeakingHistory';
 import ListeningPractice from './pages/Features/Listening';
 
+const RequireAuth = () => {
+  const { auth, authLoading, authError } = useContext(AuthContext);
+  const location = useLocation();
+
+  if (authLoading) return <div role="status">Checking your session...</div>;
+  if (authError) return <div role="alert">{authError}</div>;
+  return auth.isAuthenticated
+    ? <Outlet />
+    : <Navigate to="/login" state={{ from: location }} replace />;
+};
+
 const AppRoutes = () => {
   return (
     <Router>
@@ -32,24 +44,29 @@ const AppRoutes = () => {
         <Route path="/login" element={<PageLogin />} />
         <Route path="/register" element={<PageRegister />} />
 
-        <Route path="/admin" element={<Admin />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="features" element={<Skill4 />} />
-          <Route path="features/lesson" element={<LessonSpeaking />} />
-          <Route path="features/listening" element={<ListeningPractice />} />
-          <Route path="features/speaking/history" element={<SpeakingHistory />} />
-          <Route path="features/reading" element={<ReadingList />} />
-          <Route path="features/reading/:id" element={<ReadingTest />} />
-          <Route path="features/writing" element={<WritingList />} />
-          <Route path="features/writing/history" element={<WritingHistory />} />
-          <Route path="features/writing/submissions/:submissionId" element={<WritingDetail />} />
-          <Route path="features/writing/:id" element={<WritingEditor />} />
-          <Route path="ai-chat" element={<VoiceChat />} />
-          <Route path="analytics" element={<SmartAnalytics />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="features/practice/:lessonId" element={<IeltsSpeakingPractice />} />
-          <Route path="features/feedback/:lessonId" element={<PronunciationFeedback />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/admin" element={<Admin />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="features" element={<Skill4 />} />
+            <Route path="features/lesson" element={<LessonSpeaking />} />
+            <Route path="features/listening" element={<ListeningPractice />} />
+            <Route path="features/speaking/history" element={<SpeakingHistory />} />
+            <Route path="features/reading" element={<ReadingList />} />
+            <Route path="features/reading/:id" element={<ReadingTest />} />
+            <Route path="features/writing" element={<WritingList />} />
+            <Route path="features/writing/history" element={<WritingHistory />} />
+            <Route path="features/writing/submissions/:submissionId" element={<WritingDetail />} />
+            <Route path="features/writing/:id" element={<WritingEditor />} />
+            <Route path="ai-chat" element={<VoiceChat />} />
+            <Route path="analytics" element={<SmartAnalytics />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="features/practice/:lessonId" element={<IeltsSpeakingPractice />} />
+            <Route path="features/feedback/:lessonId" element={<PronunciationFeedback />} />
+            <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+          </Route>
         </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
 

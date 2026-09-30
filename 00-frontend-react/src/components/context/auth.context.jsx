@@ -1,6 +1,6 @@
 import { createContext, useState } from 'react';
 
-export const AuthContext = createContext({
+const initialAuth = {
     isAuthenticated: false,
     user: {
         email: "",
@@ -9,22 +9,24 @@ export const AuthContext = createContext({
         gender: "",
         nationality: ""
     }
+};
+
+export const AuthContext = createContext({
+    auth: initialAuth,
+    setAuth: () => {},
+    authLoading: true,
+    setAuthLoading: () => {},
+    authError: null,
+    setAuthError: () => {}
 });
 
 export const AuthWrapper = ({ children }) => {
-    const [auth, setAuth] = useState({
-        isAuthenticated: false,
-        user: {
-            email: "",
-            username: "",
-            phonenumber: "",
-            gender: "",
-            nationality: ""
-        }
-    });
+    const [authLoading, setAuthLoading] = useState(() => !!localStorage.getItem('access_token'));
+    const [authError, setAuthError] = useState(null);
+    const [auth, setAuth] = useState(initialAuth);
 
     return (
-        <AuthContext.Provider value={{ auth, setAuth }}>
+        <AuthContext.Provider value={{ auth, setAuth, authLoading, setAuthLoading, authError, setAuthError }}>
             {children}
         </AuthContext.Provider>
     );
