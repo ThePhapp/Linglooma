@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS lesson CASCADE;
 DROP TABLE IF EXISTS writing_submissions CASCADE;
 DROP TABLE IF EXISTS writing_tasks CASCADE;
 DROP TABLE IF EXISTS reading_answers CASCADE;
+DROP TABLE IF EXISTS reading_attempts CASCADE;
 DROP TABLE IF EXISTS reading_questions CASCADE;
 DROP TABLE IF EXISTS reading_passages CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
@@ -174,12 +175,30 @@ CREATE TABLE IF NOT EXISTS reading_questions (
 );
 
 -- ============================================
+-- TABLE: reading_attempts
+-- ============================================
+-- One row per submission; scores are saved at submission time.
+-- ============================================
+CREATE TABLE IF NOT EXISTS reading_attempts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    passage_id INTEGER NOT NULL REFERENCES reading_passages(id) ON DELETE CASCADE,
+    total_score INTEGER NOT NULL CHECK (total_score >= 0),
+    max_score INTEGER NOT NULL CHECK (max_score >= total_score),
+    total_questions INTEGER NOT NULL CHECK (total_questions > 0),
+    submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT reading_attempts_owner_key UNIQUE (id, user_id, passage_id)
+);
+
+-- ============================================
 -- TABLE: reading_answers
 -- ============================================
 -- Description: Stores user answers for reading questions
 -- ============================================
 CREATE TABLE IF NOT EXISTS reading_answers (
     id SERIAL PRIMARY KEY,
+    -- Nullable only to preserve legacy answers with unknown submission boundaries.
+    attempt_id INTEGER,
     user_id INTEGER NOT NULL,
     passage_id INTEGER NOT NULL,
     question_id INTEGER NOT NULL,
@@ -189,7 +208,10 @@ CREATE TABLE IF NOT EXISTS reading_answers (
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (passage_id) REFERENCES reading_passages(id) ON DELETE CASCADE,
-    FOREIGN KEY (question_id) REFERENCES reading_questions(id) ON DELETE CASCADE
+    FOREIGN KEY (question_id) REFERENCES reading_questions(id) ON DELETE CASCADE,
+    CONSTRAINT reading_answers_attempt_fk FOREIGN KEY (attempt_id, user_id, passage_id)
+        REFERENCES reading_attempts(id, user_id, passage_id) ON DELETE CASCADE,
+    CONSTRAINT reading_answers_attempt_question_key UNIQUE (attempt_id, question_id)
 );
 
 -- ============================================
@@ -257,6 +279,7 @@ CREATE INDEX idx_questionresult_student ON questionResult(studentId);
 CREATE INDEX idx_reading_passages_topic ON reading_passages(topic);
 CREATE INDEX idx_reading_questions_passage ON reading_questions(passage_id);
 CREATE INDEX idx_reading_answers_user ON reading_answers(user_id);
+CREATE INDEX idx_reading_attempts_user ON reading_attempts(user_id, submitted_at DESC, id DESC);
 CREATE INDEX idx_writing_submissions_user ON writing_submissions(user_id);
 
 -- ============================================

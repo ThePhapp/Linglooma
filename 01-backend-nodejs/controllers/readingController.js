@@ -49,32 +49,14 @@ const getPassageById = async (req, res) => {
 const submitReading = async (req, res) => {
     try {
         const { id } = req.params; // passageId
-        const { answers } = req.body; // [{questionId, selectedOptionId}, ...]
+        // The model validates both aliases and rejects conflicting values.
+        const { answers } = req.body || {}; // [{questionId, selectedOptionId | userAnswer, timeSpent?}, ...]
         const studentId = req.user?.id; // Lấy từ JWT token
 
         if (!studentId) {
             return res.status(401).json({
                 success: false,
                 message: 'User not authenticated'
-            });
-        }
-
-        if (!Array.isArray(answers) || answers.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Answers must be a non-empty array'
-            });
-        }
-
-        // Validate format của answers
-        const isValidFormat = answers.every(
-            answer => answer.questionId && answer.selectedOptionId
-        );
-
-        if (!isValidFormat) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid answer format. Each answer must have questionId and selectedOptionId'
             });
         }
 
@@ -86,6 +68,9 @@ const submitReading = async (req, res) => {
             data: result
         });
     } catch (error) {
+        if (error.statusCode === 400 || error.statusCode === 404) {
+            return res.status(error.statusCode).json({ success: false, message: error.message });
+        }
         console.error('❌ Error submitting reading:', error.message);
         return res.status(500).json({
             success: false,
@@ -115,6 +100,9 @@ const getStudentResults = async (req, res) => {
             data: result.rows
         });
     } catch (error) {
+        if (error.statusCode === 400) {
+            return res.status(400).json({ success: false, message: error.message });
+        }
         console.error('❌ Error getting student results:', error.message);
         return res.status(500).json({
             success: false,
@@ -151,6 +139,9 @@ const getResultDetail = async (req, res) => {
             data
         });
     } catch (error) {
+        if (error.statusCode === 400) {
+            return res.status(400).json({ success: false, message: error.message });
+        }
         console.error('❌ Error getting result detail:', error.message);
         return res.status(500).json({
             success: false,
