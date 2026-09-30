@@ -14,6 +14,20 @@ The example sets `VITE_BACKEND_URL=http://localhost:3000`. Set this variable to 
 
 Practice catalog reads are public. Chat, submissions, and private results require sign-in and a JWT. The analytics page displays saved speaking results only. Listening exercises currently do not persist progress.
 
+## Source structure
+
+```text
+src/
+├── app/          # Application shell and route definitions
+├── components/   # Reusable, feature-independent UI
+├── contexts/     # React context providers
+├── pages/        # Feature folders containing pages and local components
+├── services/     # Shared API and external-service clients
+└── styles/       # Global and Tailwind styles
+```
+
+Keep a component inside its feature folder when only that feature uses it. Move it to `components/` only when it is shared by multiple features. Page files use descriptive `*Page.jsx` names rather than ambiguous `index.jsx` files.
+
 ## Checks
 
 ```powershell
