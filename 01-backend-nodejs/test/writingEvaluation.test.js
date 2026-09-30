@@ -255,6 +255,19 @@ describe('writing submission persistence and controller', () => {
     expect(service.evaluateWritingWithGemini).not.toHaveBeenCalled();
   });
 
+  test('rejects invalid writing IDs and oversized essays before persistence', async () => {
+    req.params.id = '1;DROP';
+    await controller.submitWriting(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(pool.query).not.toHaveBeenCalled();
+
+    req.params.id = '10';
+    req.body.essayText = 'x'.repeat(12001);
+    await controller.submitWriting(req, res);
+    expect(res.status).toHaveBeenCalledWith(413);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+
   test.each(['update failed', 'submission disappeared'])('does not report success when %s', async failure => {
     pool.query.mockReset()
       .mockResolvedValueOnce({ rows: [{ task_type: 'Task 2', prompt: 'Discuss education.' }] })

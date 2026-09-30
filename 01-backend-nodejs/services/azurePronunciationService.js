@@ -1,6 +1,5 @@
 const sdk = require("microsoft-cognitiveservices-speech-sdk");
 const fs = require("fs").promises;
-const Table = require("cli-table");
 require("dotenv").config();
 
 const speechKey = process.env.AZURE_SPEECH_KEY;
@@ -32,21 +31,34 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
 
   try {
     const result = await new Promise((resolve, reject) => {
-      recognizer.recognizeOnceAsync(
-        (res) => resolve(res),
-        (err) => reject(new Error(`Recognition error: ${err.message}`))
-      );
+      let settled = false;
+      const finish = (error, value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (error) reject(error);
+        else resolve(value);
+      };
+      const timer = setTimeout(() => finish(new Error('Recognition deadline exceeded')), 20000);
+      try {
+        recognizer.recognizeOnceAsync(
+          res => finish(null, res),
+          () => finish(new Error('Recognition unavailable'))
+        );
+      } catch {
+        finish(new Error('Recognition unavailable'));
+      }
     });
 
     if (result.reason !== sdk.ResultReason.RecognizedSpeech) {
-      throw new Error(`Speech recognition failed: ${result.reason}`);
+      throw new Error('Speech recognition failed');
     }
 
     let json;
     try {
       json = JSON.parse(result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult));
-    } catch (e) {
-      throw new Error(`Error parsing JSON result: ${e.message}`);
+    } catch {
+      throw new Error('Invalid recognition result');
     }
 
     const assessment = json.NBest?.[0]?.PronunciationAssessment || { Miscue: [] };
@@ -86,7 +98,7 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
       incorrectPhonemes,
     };
   } finally {
-    recognizer.close();
+    try { recognizer.close(); } catch { /* SDK may have already closed on timeout. */ }
   }
 }
 

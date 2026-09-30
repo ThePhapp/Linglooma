@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs");
-const { saveBase64AudioToFile } = require("../utils/fileUtils");
+const crypto = require('crypto');
+const { saveBase64AudioToFile, audioSize, MAX_AUDIO_BYTES } = require("../utils/fileUtils");
 const { assessPronunciation } = require("../services/azurePronunciationService");
 const { calculateIELTSBand } = require("../services/ieltsScoringService");
 const { findMismatchedWords } = require("../services/miscueService");
@@ -10,31 +11,38 @@ const { countPhonemeErrors } = require('../utils/phonemeErrorCounter');
 const { getGeminiFeedback } = require("../services/geminiFeedbackService");
 
 exports.scoreAudio = async (req, res) => {
+  let filepath;
   try {
-    const { audio, referenceText, questionId, index } = req.body;
+    const { audio, referenceText, questionId, index } = req.body || {};
 
     // Validation
     if (!audio) {
       console.error('❌ scoreAudio: Missing audio data');
       return res.status(400).json({ error: "Thiếu dữ liệu audio" });
     }
-    if (!referenceText || referenceText.trim() === "") {
+    const bytes = audioSize(audio);
+    if (bytes < 0) return res.status(400).json({ error: 'Dữ liệu audio không hợp lệ' });
+    if (bytes > MAX_AUDIO_BYTES) return res.status(413).json({ error: 'Audio quá lớn' });
+    if (!referenceText || typeof referenceText !== 'string' || referenceText.trim() === "") {
       console.error('❌ scoreAudio: Missing referenceText');
       return res.status(400).json({ error: "Thiếu câu mẫu (referenceText)" });
     }
+    if (referenceText.length > 2000) return res.status(413).json({ error: 'Câu mẫu quá dài' });
     if (!questionId) {
       console.error('❌ scoreAudio: Missing questionId');
       return res.status(400).json({ error: "Thiếu questionId" });
     }
+    if (!/^[1-9]\d*$/.test(String(questionId)) || !Number.isSafeInteger(Number(questionId))) return res.status(400).json({ error: 'questionId không hợp lệ' });
     if (index === null || index === undefined) {
       console.error('❌ scoreAudio: Missing index');
       return res.status(400).json({ error: "Thiếu curentIndex" });
     }
+    if (!/^(0|[1-9]\d*)$/.test(String(index)) || !Number.isSafeInteger(Number(index))) return res.status(400).json({ error: 'curentIndex không hợp lệ' });
 
     console.log('🎤 scoreAudio request:', { questionId, index, referenceTextLength: referenceText.length });
 
-    const filename = `audio_${Date.now()}.wav`;
-    const filepath = path.join(__dirname, "..", "temp", filename);
+    const filename = `audio_${crypto.randomUUID()}.wav`;
+    filepath = path.join(__dirname, "..", "temp", filename);
 
     // Check if temp directory exists
     const tempDir = path.join(__dirname, "..", "temp");
@@ -47,15 +55,8 @@ exports.scoreAudio = async (req, res) => {
     console.log('✅ Audio file saved:', filepath);
 
     const { assessment, transcriptText, wordsAssessment } = await assessPronunciation(filepath, referenceText);
-    console.log('✅ Pronunciation assessed, transcript:', transcriptText);
 
     const miscueWordsFromTranscript = findMismatchedWords(referenceText, transcriptText);
-
-    // Xóa file tạm
-    fs.unlink(filepath, (err) => {
-      if (err) console.error("Lỗi xóa file tạm:", err);
-      else console.log('🗑️ Temp file deleted:', filepath);
-    });
 
     const ieltsResult = calculateIELTSBand(assessment);
     const phonemeDetails = analyzePhonemes(assessment);
@@ -87,27 +88,12 @@ exports.scoreAudio = async (req, res) => {
       err: errorMap,
     });
   } catch (error) {
-    console.error("❌ Lỗi khi chấm điểm:", error);
-    console.error("❌ Error stack:", error.stack);
-    
-    // Chi tiết hơn về loại lỗi
-    if (error.message?.includes('Azure')) {
-      return res.status(503).json({ 
-        error: "Dịch vụ Azure Speech không khả dụng",
-        details: "Vui lòng kiểm tra API key và region"
-      });
+    console.error('Score audio failed');
+    res.status(500).json({ error: "Không nhận dạng được giọng nói" });
+  } finally {
+    if (filepath) {
+      try { await fs.promises.unlink(filepath); }
+      catch (error) { if (error.code !== 'ENOENT') console.error('Temp audio cleanup failed'); }
     }
-    
-    if (error.message?.includes('Gemini')) {
-      return res.status(503).json({ 
-        error: "Dịch vụ Gemini AI không khả dụng",
-        details: "Vui lòng kiểm tra API key"
-      });
-    }
-    
-    res.status(500).json({ 
-      error: "Không nhận dạng được giọng nói",
-      details: error.message
-    });
   }
 };

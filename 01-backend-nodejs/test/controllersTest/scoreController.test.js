@@ -1,6 +1,7 @@
 jest.mock("fs");
 jest.mock("../../utils/fileUtils");
 jest.mock("../../services/azurePronunciationService");
+jest.mock("../../services/geminiFeedbackService");
 jest.mock("../../services/ieltsScoringService");
 jest.mock("../../services/miscueService");
 jest.mock("../../utils/analyzePhonemes");
@@ -11,7 +12,7 @@ const fs = require("fs");
 const path = require("path");
 
 const {
-  saveBase64AudioToFile
+  saveBase64AudioToFile, audioSize
 } = require("../../utils/fileUtils");
 
 const {
@@ -39,6 +40,7 @@ const {
 } = require("../../utils/phonemeErrorCounter");
 
 const { scoreAudio } = require("../../controllers/scoreController"); // đường dẫn thay đổi theo bạn
+const { getGeminiFeedback } = require('../../services/geminiFeedbackService');
 
 describe("scoreAudio", () => {
   let req, res;
@@ -54,6 +56,9 @@ describe("scoreAudio", () => {
     };
 
     jest.clearAllMocks();
+    audioSize.mockReturnValue(10);
+    fs.promises = { unlink: jest.fn().mockResolvedValue() };
+    getGeminiFeedback.mockResolvedValue('Good job');
   });
 
   it("Trả về lỗi 400 nếu thiếu audio", async () => {
@@ -133,8 +138,6 @@ describe("scoreAudio", () => {
     vietnameseWordsAssessment.mockReturnValue(["đánh giá"]);
     countPhonemeErrors.mockReturnValue({ p: 2 });
 
-    fs.unlink.mockImplementation((path, cb) => cb(null));
-
     await scoreAudio(req, res);
 
     expect(saveBase64AudioToFile).toHaveBeenCalledWith(expect.any(String), expect.any(String));
@@ -154,7 +157,7 @@ describe("scoreAudio", () => {
     });
     expect(vietnameseWordsAssessment).toHaveBeenCalledWith([{ word: "hello", correct: true }]);
     expect(countPhonemeErrors).toHaveBeenCalledWith([{ word: "hello", correct: true }]);
-    expect(fs.unlink).toHaveBeenCalled();
+    expect(fs.promises.unlink).toHaveBeenCalled();
 
     expect(res.json).toHaveBeenCalledWith({
       score: 7,
@@ -187,5 +190,24 @@ describe("scoreAudio", () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ error: "Không nhận dạng được giọng nói" });
+    expect(fs.promises.unlink).toHaveBeenCalled();
+  });
+
+  it('removes audio when recognition fails without exposing provider details', async () => {
+    req.body = { audio: 'dGVzdA==', referenceText: 'hello', questionId: 1, index: 0 };
+    saveBase64AudioToFile.mockResolvedValue();
+    assessPronunciation.mockRejectedValue(new Error('secret provider body'));
+    await scoreAudio(req, res);
+    expect(fs.promises.unlink).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Không nhận dạng được giọng nói' });
+  });
+
+  it('rejects large decoded audio before saving it', async () => {
+    req.body = { audio: 'dGVzdA==', referenceText: 'hello', questionId: 1, index: 0 };
+    audioSize.mockReturnValue(5 * 1024 * 1024 + 1);
+    await scoreAudio(req, res);
+    expect(res.status).toHaveBeenCalledWith(413);
+    expect(saveBase64AudioToFile).not.toHaveBeenCalled();
   });
 });

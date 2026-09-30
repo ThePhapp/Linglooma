@@ -1,4 +1,5 @@
 const fetch = require("node-fetch"); // Nếu dùng Node <18, còn Node 18+ thì không cần
+const { postJsonWithDeadline } = require('../utils/providerRequest');
 require("dotenv").config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -29,21 +30,15 @@ Notes:
 `;
 
   try {
-    const res = await fetch(
+    const data = await postJsonWithDeadline(fetch,
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-        }),
       }
     );
-
-    const data = await res.json();
     return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
   } catch (error) {
-    console.error("Lỗi khi gọi Gemini API:", error);
+    console.error("Gemini feedback unavailable");
     return null;
   }
 }

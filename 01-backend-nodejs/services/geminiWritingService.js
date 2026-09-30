@@ -1,4 +1,5 @@
 const fetch = require("node-fetch");
+const { postJsonWithDeadline } = require('../utils/providerRequest');
 require("dotenv").config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -118,28 +119,17 @@ Return ONLY a valid JSON object (no markdown, no explanations outside JSON) with
     console.log("Word Count:", wordCount);
     console.log("Essay length:", essayText.length, "characters");
     
-    const res = await fetch(
+    const data = await postJsonWithDeadline(fetch,
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.3,  // Lower temperature for more consistent scoring
             topK: 40,
             topP: 0.95,
-          }
-        }),
+          },
       }
     );
-
-    console.log("📥 Gemini API response status:", res.status);
-    
-    if (!res.ok) {
-      throw new WritingEvaluationError();
-    }
-    const data = await res.json();
     const candidate = data?.candidates?.[0];
     const responseText = candidate?.content?.parts?.[0]?.text;
 

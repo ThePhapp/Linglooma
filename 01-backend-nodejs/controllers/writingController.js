@@ -26,6 +26,7 @@ async function getAllPrompts(req, res) {
 async function getPromptById(req, res) {
   try {
     const { id } = req.params;
+    if (!isPositiveId(id)) return res.status(400).json({ success: false, message: 'Invalid prompt ID' });
     const prompt = await writingModel.getPromptById(id);
     
     if (!prompt) {
@@ -55,15 +56,17 @@ async function getPromptById(req, res) {
 async function submitWriting(req, res) {
   try {
     const { id } = req.params;
-    const { essayText } = req.body;
+    const { essayText } = req.body || {};
     const studentId = req.user.id; // Từ JWT middleware
     
-    if (!essayText || essayText.trim().length === 0) {
+    if (!isPositiveId(id)) return res.status(400).json({ success: false, message: 'Invalid prompt ID' });
+    if (typeof essayText !== 'string' || essayText.trim().length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Essay text is required'
       });
     }
+    if (essayText.length > 12000) return res.status(413).json({ success: false, message: 'Essay too long' });
     
     console.log(`Student ${studentId} submitting essay for prompt ${id}`);
     
@@ -88,7 +91,7 @@ async function submitWriting(req, res) {
         submissionId: error.submissionId
       });
     }
-    console.error('Error submitting writing:', error);
+    console.error('Error submitting writing');
     res.status(500).json({
       success: false,
       message: 'Failed to submit essay'
@@ -124,6 +127,7 @@ async function getStudentSubmissions(req, res) {
 async function getSubmissionDetail(req, res) {
   try {
     const { submissionId } = req.params;
+    if (!isPositiveId(submissionId)) return res.status(400).json({ success: false, message: 'Invalid submission ID' });
     const studentId = req.user.id;
     
     const detail = await writingModel.getSubmissionDetail(submissionId, studentId);
@@ -147,6 +151,10 @@ async function getSubmissionDetail(req, res) {
       error: error.message
     });
   }
+}
+
+function isPositiveId(value) {
+  return /^(?:[1-9]\d*)$/.test(String(value)) && Number.isSafeInteger(Number(value));
 }
 
 module.exports = {
