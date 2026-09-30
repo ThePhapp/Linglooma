@@ -1,14 +1,23 @@
-[
-  {
-    "questionId": 1,
-    "topIncorrectPhonemes": [{ "phoneme": "/θ/" }, { "phoneme": "/ð/" }],
-    "averageScores": { "ieltsBand": 4.5 },
-    "feedback": "Cần luyện lại các âm /θ/ và /ð/."
+{
+  "lessonInfo": {
+    "lessonName": "Technology and Innovation",
+    "lessonType": "Speaking Practice",
+    "finishedTime": "2026-09-29T10:30:00.000Z",
+    "lessonScore": 6.5,
+    "questionCount": 2
   },
-  {
-    "questionId": 2,
-    "topIncorrectPhonemes": [{ "phoneme": "/ʃ/" }],
-    "averageScores": { "ieltsBand": 5.5 },
-    "feedback": "Chú ý cách phát âm /ʃ/ ở cuối câu."
-  }
-]
+  "questions": [
+    {
+      "questionId": 1,
+      "topIncorrectPhonemes": [{ "phoneme": "/θ/" }, { "phoneme": "/ð/" }],
+      "averageScores": { "ieltsBand": 4.5 },
+      "feedback": "Cần luyện lại các âm /θ/ và /ð/."
+    },
+    {
+      "questionId": 2,
+      "topIncorrectPhonemes": [{ "phoneme": "/ʃ/" }],
+      "averageScores": { "ieltsBand": 5.5 },
+      "feedback": "Chú ý cách phát âm /ʃ/ ở cuối câu."
+    }
+  ]
+}

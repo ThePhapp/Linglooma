@@ -1,14 +1,14 @@
 // ScoreBadge.jsx
 const ScoreBadge = ({ level, score }) => {
   const getBadgeColor = (level) => {
-    if (level === 'Pending') return 'bg-red-600';
+    if (level === 'Not scored') return 'bg-slate-600';
     return 'bg-green-600';
   };
 
   const displayScore = score > 10 ? `${score}%` : score;
 
   return (
-    <div className="p-3.5 text-center rounded bg-stone-300 bg-opacity-10 w-[141px] max-md:flex-none max-md:w-auto">
+    <div className="w-fit min-w-24 rounded-lg bg-slate-50 p-2 text-center">
       <div
         className={`px-2 py-1 mb-1.5 text-xs font-bold leading-6 text-white ${getBadgeColor(
           level
