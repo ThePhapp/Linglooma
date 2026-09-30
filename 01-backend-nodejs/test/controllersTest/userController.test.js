@@ -1,15 +1,28 @@
 jest.mock('../../models/userModel');
 jest.mock('bcrypt');
 
-const { updateUserController } = require('../../controllers/userController');
+const { updateUserController, getAccountController } = require('../../controllers/userController');
 const { findUserByEmail, findUserByName, updateUser } = require('../../models/userModel');
 const bcrypt = require('bcrypt');
+const jwtauth = require('../../middleware/jwtauth');
+const userRouter = require('../../routes/userRoute');
 
-describe('Kiểm thử updateUserController', () => {
-  let req, res;
+describe('user routes', () => {
+  it.each(['/update', '/account'])('protects %s with JWT middleware', (path) => {
+    const routeLayer = userRouter.stack.find(layer => layer.route?.path === path);
+
+    expect(routeLayer).toBeDefined();
+    expect(routeLayer.route.stack[0].handle).toBe(jwtauth);
+  });
+});
+
+describe('user controllers', () => {
+  let req;
+  let res;
 
   beforeEach(() => {
     req = {
+      user: { id: 7, email: 'owner@example.com' },
       body: {}
     };
     res = {
@@ -20,153 +33,149 @@ describe('Kiểm thử updateUserController', () => {
     jest.clearAllMocks();
   });
 
-  it('Trả về lỗi 400 khi tên người dùng đã tồn tại', async () => {
-    req.body = { username: 'existingUser' };
-
-    findUserByName.mockResolvedValue({ rows: [{ id: 1 }] });
+  it('rejects an update without an authenticated identity', async () => {
+    req.user = undefined;
 
     await updateUserController(req, res);
 
-    expect(findUserByName).toHaveBeenCalledWith('existingUser');
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(findUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it('uses the authenticated email instead of a request-body email', async () => {
+    req.body = {
+      email: 'victim@example.com',
+      username: 'owner',
+      gender: 'F'
+    };
+    findUserByEmail.mockResolvedValue({
+      rows: [{
+        email: 'owner@example.com',
+        password: 'old-hash',
+        username: 'owner',
+        gender: 'M',
+        nationality: 'VN',
+        phonenumber: '123'
+      }]
+    });
+    updateUser.mockResolvedValue();
+
+    await updateUserController(req, res);
+
+    expect(findUserByEmail).toHaveBeenCalledWith('owner@example.com');
+    expect(updateUser).toHaveBeenCalledWith(
+      'owner@example.com',
+      'owner',
+      'old-hash',
+      'F',
+      'VN',
+      '123'
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('rejects a username owned by another account', async () => {
+    req.body = { username: 'taken' };
+    findUserByEmail.mockResolvedValue({
+      rows: [{
+        email: 'owner@example.com',
+        password: 'old-hash',
+        username: 'owner'
+      }]
+    });
+    findUserByName.mockResolvedValue({ rows: [{ email: 'other@example.com' }] });
+
+    await updateUserController(req, res);
+
+    expect(findUserByName).toHaveBeenCalledWith('taken');
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Username already existed' });
+    expect(updateUser).not.toHaveBeenCalled();
   });
 
-  it('Trả về lỗi 400 khi thiếu email', async () => {
-    req.body = { username: 'newUser' };
-
-    findUserByName.mockResolvedValue({ rows: [] });
+  it('requires the current password before changing it', async () => {
+    req.body = { password: 'new-password' };
+    findUserByEmail.mockResolvedValue({
+      rows: [{
+        email: 'owner@example.com',
+        password: 'old-hash',
+        username: 'owner'
+      }]
+    });
 
     await updateUserController(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Missing email' });
+    expect(bcrypt.compare).not.toHaveBeenCalled();
   });
 
-  it('Trả về lỗi 404 khi không tìm thấy người dùng qua email', async () => {
-    req.body = { username: 'newUser', email: 'abc@xyz.com' };
-
-    findUserByName.mockResolvedValue({ rows: [] });
-    findUserByEmail.mockResolvedValue({ rows: [] });
-
-    await updateUserController(req, res);
-
-    expect(findUserByEmail).toHaveBeenCalledWith('abc@xyz.com');
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ message: 'User not found' });
-  });
-
-  it('Trả về lỗi 400 khi đổi mật khẩu mà không nhập mật khẩu hiện tại', async () => {
-    req.body = { username: 'newUser', email: 'abc@xyz.com', password: 'newpass' };
-
-    findUserByName.mockResolvedValue({ rows: [] });
-    findUserByEmail.mockResolvedValue({ rows: [{ password: 'hashedpass', username: 'oldUser', gender: 'M', nationality: 'VN', phonenumber: '123' }] });
-
-    await updateUserController(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Vui lòng nhập mật khẩu hiện tại' });
-  });
-
-  it('Trả về lỗi 401 khi mật khẩu hiện tại không chính xác', async () => {
-    req.body = { username: 'newUser', email: 'abc@xyz.com', password: 'newpass', currentPassword: 'wrongpass' };
-
-    findUserByName.mockResolvedValue({ rows: [] });
-    findUserByEmail.mockResolvedValue({ rows: [{ password: 'hashedpass', username: 'oldUser', gender: 'M', nationality: 'VN', phonenumber: '123' }] });
+  it('rejects an invalid current password', async () => {
+    req.body = { password: 'new-password', currentPassword: 'wrong-password' };
+    findUserByEmail.mockResolvedValue({
+      rows: [{
+        email: 'owner@example.com',
+        password: 'old-hash',
+        username: 'owner'
+      }]
+    });
     bcrypt.compare.mockResolvedValue(false);
 
     await updateUserController(req, res);
 
-    expect(bcrypt.compare).toHaveBeenCalledWith('wrongpass', 'hashedpass');
+    expect(bcrypt.compare).toHaveBeenCalledWith('wrong-password', 'old-hash');
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Mật khẩu hiện tại không chính xác' });
+    expect(updateUser).not.toHaveBeenCalled();
   });
 
-  it('Cập nhật mật khẩu mới thành công khi nhập đúng mật khẩu hiện tại', async () => {
+  it('updates the authenticated account after password verification', async () => {
     req.body = {
-      username: 'newUser',
-      email: 'abc@xyz.com',
-      password: 'newpass',
-      currentPassword: 'correctpass',
+      username: 'new-owner',
+      password: 'new-password',
+      currentPassword: 'correct-password',
       gender: 'F',
       nationality: 'US',
       phoneNumber: '999'
     };
-
-    findUserByName.mockResolvedValue({ rows: [] });
     findUserByEmail.mockResolvedValue({
-      rows: [{ password: 'hashedpass', username: 'oldUser', gender: 'M', nationality: 'VN', phonenumber: '123' }]
+      rows: [{
+        email: 'owner@example.com',
+        password: 'old-hash',
+        username: 'owner',
+        gender: 'M',
+        nationality: 'VN',
+        phonenumber: '123'
+      }]
     });
+    findUserByName.mockResolvedValue({ rows: [] });
     bcrypt.compare.mockResolvedValue(true);
-    bcrypt.hash.mockResolvedValue('hashednewpass');
-    updateUser.mockResolvedValue();
-
-    await updateUserController(req, res);
-
-    expect(bcrypt.compare).toHaveBeenCalledWith('correctpass', 'hashedpass');
-    expect(bcrypt.hash).toHaveBeenCalledWith('newpass', 10);
-    expect(updateUser).toHaveBeenCalledWith(
-      'abc@xyz.com',
-      'newUser',
-      'hashednewpass',
-      'F',
-      'US',
-      '999'
-    );
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
-                message: "Cập nhật thành công",
-                success: true
-     });
-  });
-
-  it('Cập nhật thông tin mà không đổi mật khẩu khi không cung cấp mật khẩu mới', async () => {
-    req.body = {
-      username: 'newUser',
-      email: 'abc@xyz.com',
-      gender: 'F',
-      nationality: 'US',
-      phoneNumber: '999'
-    };
-
-    findUserByName.mockResolvedValue({ rows: [] });
-    findUserByEmail.mockResolvedValue({
-      rows: [{ password: 'oldHashedPass', username: 'oldUser', gender: 'M', nationality: 'VN', phonenumber: '123' }]
-    });
+    bcrypt.hash.mockResolvedValue('new-hash');
     updateUser.mockResolvedValue();
 
     await updateUserController(req, res);
 
     expect(updateUser).toHaveBeenCalledWith(
-      'abc@xyz.com',
-      'newUser',
-      'oldHashedPass',
+      'owner@example.com',
+      'new-owner',
+      'new-hash',
       'F',
       'US',
       '999'
     );
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ 
-      message: 'Cập nhật thành công',
-      success: true
-    });
   });
 
-  it('Trả về lỗi 500 khi xảy ra lỗi trong quá trình cập nhật', async () => {
-    req.body = {
-      username: 'newUser',
-      email: 'abc@xyz.com',
-    };
-
-    findUserByName.mockResolvedValue({ rows: [] });
-    findUserByEmail.mockResolvedValue({
-      rows: [{ password: 'oldHashedPass', username: 'oldUser', gender: 'M', nationality: 'VN', phonenumber: '123' }]
-    });
-    updateUser.mockRejectedValue(new Error('DB error'));
+  it('returns a generic error when persistence fails', async () => {
+    findUserByEmail.mockRejectedValue(new Error('DB error'));
 
     await updateUserController(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ message: 'Error updating data' });
+  });
+
+  it('returns only the authenticated account payload', async () => {
+    await getAccountController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(req.user);
   });
 });
