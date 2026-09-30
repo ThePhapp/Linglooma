@@ -1,3 +1,9 @@
+-- ARCHIVED: obsolete singular reading_* schema, retained for historical reference.
+-- The app uses reading_passages, reading_questions, reading_attempts, reading_answers.
+-- This deliberate error aborts the transaction before any legacy DDL or seed data.
+BEGIN;
+DO $$ BEGIN RAISE EXCEPTION 'Archived reading_migration.sql must not be executed; use run-migration.bat or run-migration.ps1'; END $$;
+
 -- Bảng chứa các bài đọc (Reading passages)
 CREATE TABLE IF NOT EXISTS reading_passage (
     id SERIAL PRIMARY KEY,

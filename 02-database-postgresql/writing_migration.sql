@@ -1,3 +1,9 @@
+-- ARCHIVED: obsolete singular writing_* schema, retained for historical reference.
+-- The app uses writing_tasks and writing_submissions.
+-- This deliberate error aborts the transaction before any legacy DDL or seed data.
+BEGIN;
+DO $$ BEGIN RAISE EXCEPTION 'Archived writing_migration.sql must not be executed; use run-migration.bat or run-migration.ps1'; END $$;
+
 -- Bảng chứa các đề bài Writing
 CREATE TABLE IF NOT EXISTS writing_prompt (
     id SERIAL PRIMARY KEY,
