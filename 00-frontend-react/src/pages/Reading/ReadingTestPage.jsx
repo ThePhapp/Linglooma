@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '@/services/apiClient';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, BookOpen, CheckCircle, XCircle, Award, TrendingUp, RefreshCw, Eye } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import StatePanel from '@/components/ui/StatePanel';
 
 const ReadingTest = () => {
   const { id } = useParams();
@@ -14,7 +16,8 @@ const ReadingTest = () => {
   const [submitting, setSubmitting] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
-  const [showPassage, setShowPassage] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const questionsRef = useRef(null);
   const passageRef = useRef(null);
 
@@ -43,6 +46,7 @@ const ReadingTest = () => {
   const fetchReading = async () => {
     try {
       setLoading(true);
+      setLoadError('');
       const response = await apiClient.get(`/api/reading/${id}`);
       let payload = response;
       if (response?.data?.data) {
@@ -60,7 +64,8 @@ const ReadingTest = () => {
       setTimerActive(false);
     } catch (error) {
       console.error('Error fetching reading:', error);
-      alert('The reading could not be loaded. Please try again!');
+      setPassage(null);
+      setLoadError('The reading could not be loaded. Check the service and try again.');
     } finally {
       setLoading(false);
     }
@@ -85,6 +90,7 @@ const ReadingTest = () => {
   };
 
   const handleOptionChange = (questionId, optionId) => {
+    setSubmitError('');
     setAnswers(prev => ({
       ...prev,
       [questionId]: optionId
@@ -94,25 +100,20 @@ const ReadingTest = () => {
   const handleSubmit = async () => {
     // Kiểm tra đã trả lời hết chưa
     if (Object.keys(answers).length !== questions.length) {
-      alert('Please answer all questions before submitting!');
+      setSubmitError('Answer every question before submitting your reading attempt.');
       return;
     }
 
 
     const token = localStorage.getItem('access_token');
     if (!token) {
-      alert('You are not logged in! Please log in to submit your answers.');
       navigate('/login');
-      return;
-    }
-
-
-    if (!window.confirm('Are you sure you want to submit? You will not be able to make changes after submitting.')) {
       return;
     }
 
     try {
       setSubmitting(true);
+      setSubmitError('');
       const payload = {
         answers: Object.entries(answers).map(([questionId, selectedOptionId]) => ({
           questionId: parseInt(questionId),
@@ -140,13 +141,12 @@ const ReadingTest = () => {
       console.error('Error submitting reading:', error);
       
       if (error.response?.status === 401) {
-        alert('Your session has expired. Please log in again!');
         localStorage.removeItem('access_token');
         navigate('/login');
       } else if (error.response?.data?.message) {
-        alert(`Error: ${error.response.data.message}`);
+        setSubmitError(error.response.data.message);
       } else {
-        alert('An error occurred while submitting. Please try again!');
+        setSubmitError('We couldn’t submit your answers. Please try again.');
       }
     } finally {
       setSubmitting(false);
@@ -155,51 +155,37 @@ const ReadingTest = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex justify-center items-center p-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-xl font-semibold text-gray-700">Loading reading...</div>
-          <p className="text-sm text-gray-500 mt-2">Please wait a moment</p>
-        </div>
+      <div className="page-shell">
+        <div className="animate-pulse rounded-xl border border-slate-200 bg-white p-6"><div className="h-7 w-2/3 rounded bg-slate-200" /><div className="mt-6 grid gap-6 lg:grid-cols-2"><div className="h-96 rounded-lg bg-slate-100" /><div className="h-96 rounded-lg bg-slate-100" /></div></div>
       </div>
     );
   }
 
   if (!passage) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex justify-center items-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-md">
-          <div className="text-6xl mb-4">📚</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Reading not found</h2>
-          <p className="text-gray-600 mb-6">The reading does not exist or has been deleted.</p>
-          <button
-            onClick={() => navigate('/admin/features/reading')}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all transform hover:scale-105"
-          >
-            Back to list
-          </button>
-        </div>
+      <div className="page-shell">
+        <StatePanel tone={loadError ? 'error' : 'neutral'} icon={<BookOpen className="h-5 w-5" />} title={loadError ? 'We couldn’t load this reading' : 'Reading not found'} description={loadError || 'The reading does not exist or is no longer available.'} action={<div className="flex gap-2"><Button onClick={fetchReading}>Try again</Button><Button variant="secondary" onClick={() => navigate('/admin/features/reading')}>Back to list</Button></div>} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="page-shell">
+      <div className="mx-auto max-w-[1440px]">
         {/* Sticky Header */}
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 mb-6">
+        <div className="sticky top-16 z-20 mb-6 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm backdrop-blur sm:p-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             {/* Back Button & Title */}
             <div className="flex items-center gap-4 flex-1">
               <button
                 onClick={() => navigate('/admin/features/reading')}
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold transition-colors group"
+                className="flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-brand-700 hover:bg-brand-50"
               >
                 <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
                 <span className="hidden sm:inline">Back</span>
               </button>
               <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 line-clamp-1">
+                <h1 className="line-clamp-1 text-lg font-bold text-slate-950 sm:text-xl">
                   {passage.title}
                 </h1>
                 <div className="flex gap-2 mt-1">
@@ -215,11 +201,11 @@ const ReadingTest = () => {
 
             {/* Timer & Progress */}
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-gradient-to-r from-blue-100 to-cyan-100 px-4 py-2 rounded-xl">
+              <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2">
                 <Clock className="h-5 w-5 text-blue-600" />
                 <span className="font-bold text-blue-600">{formatTime(timeElapsed)}</span>
               </div>
-              <div className="flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-2 rounded-xl">
+              <div className="flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2">
                 <CheckCircle className="h-5 w-5 text-purple-600" />
                 <span className="font-bold text-purple-600">
                   {Object.keys(answers).length}/{questions.length}
@@ -236,7 +222,7 @@ const ReadingTest = () => {
             </div>
             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 ease-out"
+                className="h-full bg-brand-600 transition-[width] duration-300 ease-out"
                 style={{ width: `${getProgress()}%` }}
               />
             </div>
@@ -244,9 +230,9 @@ const ReadingTest = () => {
         </div>
 
         {/* Two Column Layout for Desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
           {/* Passage Column */}
-          <div ref={passageRef} className="bg-white rounded-2xl shadow-lg p-6 lg:sticky lg:top-32 lg:self-start">
+          <section ref={passageRef} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:sticky lg:top-48 lg:max-h-[calc(100vh-13rem)] lg:self-start lg:overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                 <BookOpen className="h-6 w-6 text-blue-600" />
@@ -260,14 +246,14 @@ const ReadingTest = () => {
               </button>
             </div>
             
-            <div className="prose max-w-none">
+            <div className="max-w-none text-[1.05rem] leading-8 text-slate-700">
               {(() => {
                 const passageText = passage?.passage ?? passage?.content ?? passage?.passage_text ?? '';
                 if (!passageText) {
                   return <p className="text-gray-500 italic">No passage content available.</p>;
                 }
                 return passageText.split('\n\n').map((paragraph, idx) => (
-                  <p key={idx} className="mb-4 text-justify leading-relaxed text-gray-700">
+                  <p key={idx} className="mb-5 text-left leading-8 text-slate-700">
                     {paragraph}
                   </p>
                 ));
@@ -280,10 +266,10 @@ const ReadingTest = () => {
                 <span>Suggested time: {passage.reading_time}</span>
               </div>
             )}
-          </div>
+          </section>
 
           {/* Questions Column */}
-          <div ref={questionsRef} className="bg-white rounded-2xl shadow-lg p-6">
+          <section ref={questionsRef} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                 <Eye className="h-6 w-6 text-purple-600" />
@@ -296,16 +282,19 @@ const ReadingTest = () => {
                 ← Back to passage
               </button>
             </div>
+            <nav aria-label="Question progress" className="mb-6 flex flex-wrap gap-2">
+              {questions.map((question, index) => <button key={question.id} type="button" onClick={() => document.getElementById(`reading-question-${question.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className={`flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-semibold ${answers[question.id] ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'}`} aria-label={`Question ${index + 1}, ${answers[question.id] ? 'answered' : 'unanswered'}`}>{index + 1}</button>)}
+            </nav>
             
             <div className="space-y-6">
               {questions.map((question, qIdx) => (
-                <div key={question.id} className="pb-6 border-b border-gray-200 last:border-0">
-                  <h3 className="font-semibold text-gray-800 mb-4 flex items-start gap-2">
-                    <span className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                <fieldset id={`reading-question-${question.id}`} key={question.id} className="scroll-mt-48 border-b border-slate-200 pb-6 last:border-0">
+                  <legend className="mb-4 flex items-start gap-2 font-semibold text-slate-900">
+                    <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
                       {qIdx + 1}
                     </span>
                     <span className="flex-1">{question.question_text}</span>
-                  </h3>
+                  </legend>
                   
                   <div className="space-y-2 ml-9">
                     {question.options.map((option) => {
@@ -325,7 +314,7 @@ const ReadingTest = () => {
                       return (
                         <label
                           key={option.id}
-                          className={`group flex items-start p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                          className={`group flex min-h-12 cursor-pointer items-start rounded-lg border p-3 transition-colors ${
                             result
                               ? isCorrect
                                 ? 'bg-green-50 border-green-500 shadow-sm'
@@ -333,8 +322,8 @@ const ReadingTest = () => {
                                 ? 'bg-red-50 border-red-500 shadow-sm'
                                 : 'border-gray-200 bg-gray-50'
                               : isSelected
-                              ? 'bg-blue-50 border-blue-500 shadow-md'
-                              : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'
+                              ? 'border-brand-500 bg-brand-50'
+                              : 'border-slate-200 hover:border-brand-300 hover:bg-brand-50/50'
                           }`}
                         >
                           <input
@@ -364,33 +353,15 @@ const ReadingTest = () => {
                       );
                     })}
                   </div>
-                </div>
+                </fieldset>
               ))}
             </div>
 
             {/* Submit Button or Result */}
             {!result ? (
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting || Object.keys(answers).length !== questions.length}
-                  className={`w-full py-4 rounded-xl text-white font-bold text-lg transition-all transform ${
-                    submitting || Object.keys(answers).length !== questions.length
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95'
-                  }`}
-                >
-                  {submitting ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Submitting...
-                    </span>
-                  ) : Object.keys(answers).length === questions.length ? (
-                    'Submit'
-                  ) : (
-                    `Answer ${Object.keys(answers).length}/${questions.length} questions  `
-                  )}
-                </button>
+              <div className="mt-8 border-t border-slate-200 pt-6">
+                {submitError && <p role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{submitError}</p>}
+                <Button onClick={handleSubmit} isLoading={submitting} disabled={Object.keys(answers).length !== questions.length} className="w-full">{submitting ? 'Submitting answers…' : 'Submit answers'}</Button>
                 {Object.keys(answers).length !== questions.length && (
                   <p className="text-sm text-gray-500 text-center mt-2">
                     Please answer all questions before submitting.
@@ -398,25 +369,25 @@ const ReadingTest = () => {
                 )}
               </div>
             ) : (
-              <div className="mt-8 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-2xl shadow-2xl p-8 text-white">
+              <div className="mt-8 rounded-xl border border-brand-200 bg-brand-50 p-5 sm:p-6">
                 <div className="text-center mb-6">
-                  <Award className="h-16 w-16 mx-auto mb-4 animate-bounce" />
-                  <h2 className="text-3xl font-bold mb-2">Your Results</h2>
-                  <p className="text-white/90">Completed in {formatTime(timeElapsed)}</p>
+                  <Award className="mx-auto mb-3 h-10 w-10 text-brand-700" />
+                  <h2 className="text-2xl font-bold text-slate-950">Your results</h2>
+                  <p className="mt-1 text-sm text-slate-600">Completed in {formatTime(timeElapsed)}</p>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                  <div className="rounded-lg bg-white p-3 text-center shadow-sm">
                     <CheckCircle className="h-8 w-8 mx-auto mb-2" />
                     <div className="text-3xl font-bold">{result.score}</div>
                     <div className="text-sm opacity-90">Correct Answers</div>
                   </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                  <div className="rounded-lg bg-white p-3 text-center shadow-sm">
                     <BookOpen className="h-8 w-8 mx-auto mb-2" />
                     <div className="text-3xl font-bold">{result.totalQuestions}</div>
                     <div className="text-sm opacity-90">Total Questions</div>
                   </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                  <div className="rounded-lg bg-white p-3 text-center shadow-sm">
                     <TrendingUp className="h-8 w-8 mx-auto mb-2" />
                     <div className="text-3xl font-bold">{result.percentage}%</div>
                     <div className="text-sm opacity-90">Score</div>
@@ -426,21 +397,21 @@ const ReadingTest = () => {
                 <div className="flex gap-3">
                   <button
                     onClick={fetchReading}
-                    className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                    className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                   >
                     <RefreshCw className="h-5 w-5" />
                     Retry
                   </button>
                   <button
                     onClick={() => navigate('/admin/features/reading')}
-                    className="flex-1 bg-white text-purple-600 hover:bg-gray-100 px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95"
+                    className="min-h-11 flex-1 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
                   >
                     Reading List
                   </button>
                 </div>
               </div>
             )}
-          </div>
+          </section>
         </div>
       </div>
     </div>

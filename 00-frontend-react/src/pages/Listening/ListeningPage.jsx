@@ -250,27 +250,27 @@ const ListeningPractice = () => {
     const [mode, setMode] = useState(null); // 'dictation' or 'questions'
 
     return (
-        <main className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+        <main className="page-shell">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-pink-600 via-rose-600 to-red-500 rounded-2xl shadow-2xl p-8 mb-8">
+                <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
-                                <Headphones className="h-8 w-8 text-white" />
+                            <div className="rounded-xl bg-brand-50 p-3">
+                                <Headphones className="h-7 w-7 text-brand-700" />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold text-white">
-                                    IELTS Listening Practice
+                                <h1 className="text-2xl font-bold text-slate-950 sm:text-3xl">
+                                    Listening practice
                                 </h1>
-                                <p className="text-white/90 mt-1">
+                                <p className="mt-1 text-slate-600">
                                     Improve your listening skills with video-based exercises
                                 </p>
                             </div>
                         </div>
 
                         <button
-                            className="flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                             onClick={() => navigate("/admin/features")}
                         >
                             <ArrowLeft className="h-4 w-4" />
@@ -281,17 +281,16 @@ const ListeningPractice = () => {
 
                 {/* Mode Selection */}
                 {!mode ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {/* Dictation Mode */}
                         <button
                             type="button"
                             onClick={() => setMode('dictation')}
-                            className="group cursor-pointer overflow-hidden rounded-2xl border-2 border-transparent bg-white/80 text-left shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-pink-300 hover:shadow-2xl focus-visible:border-pink-500"
+                            className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                         >
-                            <div className="h-2 bg-gradient-to-r from-pink-500 to-rose-600"></div>
                             <div className="p-8">
-                                <div className="bg-gradient-to-br from-pink-500 to-rose-600 p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform">
-                                    <Mic2 className="h-12 w-12 text-white" />
+                                <div className="mb-6 w-fit rounded-xl bg-brand-50 p-4">
+                                    <Mic2 className="h-9 w-9 text-brand-700" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
                                     Dictation Practice
@@ -299,7 +298,7 @@ const ListeningPractice = () => {
                                 <p className="text-gray-600 leading-relaxed mb-6">
                                     Watch a video and type exactly what you hear. Perfect for improving spelling, vocabulary, and listening accuracy.
                                 </p>
-                                <div className="flex items-center gap-2 text-pink-600 font-semibold">
+                                <div className="flex items-center gap-2 font-semibold text-brand-700">
                                     <span>Start Dictation</span>
                                     <ArrowLeft className="h-4 w-4 rotate-180 group-hover:translate-x-2 transition-transform" />
                                 </div>
@@ -310,12 +309,11 @@ const ListeningPractice = () => {
                         <button
                             type="button"
                             onClick={() => setMode('questions')}
-                            className="group cursor-pointer overflow-hidden rounded-2xl border-2 border-transparent bg-white/80 text-left shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-purple-300 hover:shadow-2xl focus-visible:border-purple-500"
+                            className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                         >
-                            <div className="h-2 bg-gradient-to-r from-purple-500 to-violet-600"></div>
                             <div className="p-8">
-                                <div className="bg-gradient-to-br from-purple-500 to-violet-600 p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform">
-                                    <MessageCircle className="h-12 w-12 text-white" />
+                                <div className="mb-6 w-fit rounded-xl bg-brand-50 p-4">
+                                    <MessageCircle className="h-9 w-9 text-brand-700" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
                                     Question & Answer
@@ -323,7 +321,7 @@ const ListeningPractice = () => {
                                 <p className="text-gray-600 leading-relaxed mb-6">
                                     Listen to the video and answer comprehension questions. Test your understanding and critical thinking skills.
                                 </p>
-                                <div className="flex items-center gap-2 text-purple-600 font-semibold">
+                                <div className="flex items-center gap-2 font-semibold text-brand-700">
                                     <span>Start Practice</span>
                                     <ArrowLeft className="h-4 w-4 rotate-180 group-hover:translate-x-2 transition-transform" />
                                 </div>
@@ -417,7 +415,7 @@ const DictationMode = ({ onBack }) => {
                         className={`p-2 rounded-lg transition-all ${
                             currentExerciseIndex === 0
                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600'
+                                : 'bg-brand-600 text-white hover:bg-brand-700'
                         }`}
                     >
                         <ChevronLeft className="h-5 w-5" />
@@ -438,7 +436,7 @@ const DictationMode = ({ onBack }) => {
                         className={`p-2 rounded-lg transition-all ${
                             currentExerciseIndex === DICTATION_EXERCISES.length - 1
                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600'
+                                : 'bg-brand-600 text-white hover:bg-brand-700'
                         }`}
                     >
                         <ChevronRight className="h-5 w-5" />
@@ -447,14 +445,14 @@ const DictationMode = ({ onBack }) => {
             </div>
 
             {/* Exercise Title */}
-            <div className="bg-gradient-to-r from-pink-100 to-rose-100 rounded-xl p-4 border-2 border-pink-200">
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
                 <h3 className="text-xl font-bold text-gray-800 text-center">
                     {currentExercise.title}
                 </h3>
             </div>
 
             {/* Video Section */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border-2 border-pink-200">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <Headphones className="h-6 w-6 text-pink-600" />
                     Watch and Listen Carefully
@@ -473,7 +471,7 @@ const DictationMode = ({ onBack }) => {
             </div>
 
             {/* Input Section */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border-2 border-pink-200">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <Mic2 className="h-6 w-6 text-pink-600" />
                     Type What You Hear
@@ -493,7 +491,7 @@ const DictationMode = ({ onBack }) => {
                             disabled={!userInput.trim()}
                             className={`flex-1 py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-200 transform active:scale-95 ${
                                 userInput.trim()
-                                    ? 'bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700'
+                                    ? 'bg-brand-600 hover:bg-brand-700'
                                     : 'bg-gray-300 cursor-not-allowed'
                             }`}
                         >
@@ -507,14 +505,14 @@ const DictationMode = ({ onBack }) => {
                                     setShowAnswer(false);
                                     setScore(null);
                                 }}
-                                className="flex-1 py-4 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg transition-all duration-200 transform active:scale-95"
+                                className="min-h-11 flex-1 rounded-lg bg-brand-600 px-5 font-semibold text-white transition hover:bg-brand-700"
                             >
                                 Try Again
                             </button>
                             {currentExerciseIndex < DICTATION_EXERCISES.length - 1 && (
                                 <button
                                     onClick={nextExercise}
-                                    className="flex-1 py-4 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg transition-all duration-200 transform active:scale-95"
+                                    className="min-h-11 flex-1 rounded-lg bg-emerald-600 px-5 font-semibold text-white transition hover:bg-emerald-700"
                                 >
                                     Next Exercise →
                                 </button>
@@ -526,10 +524,10 @@ const DictationMode = ({ onBack }) => {
 
             {/* Results Section */}
             {showAnswer && (
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border-2 border-pink-200 animate-fade-in">
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 animate-fade-in">
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Results</h2>
                     
-                    <div className="bg-gradient-to-br from-pink-100 to-rose-100 p-6 rounded-xl mb-6">
+                    <div className="mb-6 rounded-xl bg-brand-50 p-6">
                         <div className="text-center">
                             <p className="text-gray-700 mb-2">Your Accuracy</p>
                             <p className="text-5xl font-bold text-pink-600">{score}%</p>
@@ -614,7 +612,7 @@ const QuestionsMode = ({ onBack }) => {
                         className={`p-2 rounded-lg transition-all ${
                             currentExerciseIndex === 0
                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-purple-500 to-violet-500 text-white hover:from-purple-600 hover:to-violet-600'
+                                : 'bg-brand-600 text-white hover:bg-brand-700'
                         }`}
                     >
                         <ChevronLeft className="h-5 w-5" />
@@ -634,7 +632,7 @@ const QuestionsMode = ({ onBack }) => {
                         className={`p-2 rounded-lg transition-all ${
                             currentExerciseIndex === QUESTION_EXERCISES.length - 1
                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-purple-500 to-violet-500 text-white hover:from-purple-600 hover:to-violet-600'
+                                : 'bg-brand-600 text-white hover:bg-brand-700'
                         }`}
                     >
                         <ChevronRight className="h-5 w-5" />
@@ -643,14 +641,14 @@ const QuestionsMode = ({ onBack }) => {
             </div>
 
             {/* Exercise Title */}
-            <div className="bg-gradient-to-r from-purple-100 to-violet-100 rounded-xl p-4 border-2 border-purple-200">
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
                 <h3 className="text-xl font-bold text-gray-800 text-center">
                     {currentExercise.title}
                 </h3>
             </div>
 
             {/* Video Section */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border-2 border-purple-200">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <Headphones className="h-6 w-6 text-purple-600" />
                     Watch the Video
@@ -669,7 +667,7 @@ const QuestionsMode = ({ onBack }) => {
             </div>
 
             {/* Questions Section */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border-2 border-purple-200">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                     <MessageCircle className="h-6 w-6 text-purple-600" />
                     Answer the Questions
@@ -726,7 +724,7 @@ const QuestionsMode = ({ onBack }) => {
                         disabled={Object.keys(answers).length !== questions.length}
                         className={`mt-6 w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-200 transform active:scale-95 ${
                             Object.keys(answers).length === questions.length
-                                ? 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700'
+                                ? 'bg-brand-600 hover:bg-brand-700'
                                 : 'bg-gray-300 cursor-not-allowed'
                         }`}
                     >
@@ -734,7 +732,7 @@ const QuestionsMode = ({ onBack }) => {
                     </button>
                 ) : (
                     <div className="mt-6 space-y-4">
-                        <div className="bg-gradient-to-br from-purple-100 to-violet-100 p-6 rounded-xl text-center">
+                        <div className="rounded-xl bg-brand-50 p-6 text-center">
                             <p className="text-gray-700 mb-2">Your Score</p>
                             <p className="text-5xl font-bold text-purple-600">{calculateScore()}%</p>
                         </div>
@@ -744,14 +742,14 @@ const QuestionsMode = ({ onBack }) => {
                                     setAnswers({});
                                     setShowResults(false);
                                 }}
-                                className="flex-1 px-8 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg transition-all duration-200"
+                                className="min-h-11 flex-1 rounded-lg bg-brand-600 px-6 font-semibold text-white transition hover:bg-brand-700"
                             >
                                 Try Again
                             </button>
                             {currentExerciseIndex < QUESTION_EXERCISES.length - 1 && (
                                 <button
                                     onClick={nextExercise}
-                                    className="flex-1 px-8 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg transition-all duration-200"
+                                    className="min-h-11 flex-1 rounded-lg bg-emerald-600 px-6 font-semibold text-white transition hover:bg-emerald-700"
                                 >
                                     Next Exercise →
                                 </button>

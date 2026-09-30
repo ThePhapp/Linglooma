@@ -1,36 +1,33 @@
-import React, { useState, useRef, useEffect } from "react";
-import RecordRTC from "recordrtc";
-import { FaMicrophone } from "react-icons/fa6";
-import Button from "@/components/ui/Button";
-import HighlightTextWithTooltip from "./HighlightText";
-import TextToSpeechButton from "./TextToSpeechButton";
-import apiClient from "@/services/apiClient";
-import { toast } from "react-toastify";
-import { useParams } from "react-router-dom";
-import ResultPDFDownloader from "./ResultPDFDownloader";
-import { Play, Square, Send, Volume2, Download } from "lucide-react";
+import { useEffect, useRef, useState } from 'react';
+import { Mic, RotateCcw, Send, Square } from 'lucide-react';
+import RecordRTC from 'recordrtc';
+import { toast } from 'react-toastify';
+import { useParams } from 'react-router-dom';
+import Button from '@/components/ui/Button';
+import apiClient from '@/services/apiClient';
+import HighlightTextWithTooltip from './HighlightText';
+import ResultPDFDownloader from './ResultPDFDownloader';
+import TextToSpeechButton from './TextToSpeechButton';
+
+const formatDuration = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 
 const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentIndex, setLoading }) => {
-  const [lessonImage, setLessonImage] = useState(null);
   const [recording, setRecording] = useState(false);
   const [audioURL, setAudioURL] = useState(null);
-  const [status, setStatus] = useState("Ready to record");
+  const [status, setStatus] = useState('Choose a question, then start recording.');
+  const [statusTone, setStatusTone] = useState('neutral');
   const [scoreData, setScoreData] = useState(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
   const recorderRef = useRef(null);
-  const audioRef = useRef(null);
   const audioURLRef = useRef(null);
   const { lessonId } = useParams();
 
   const releaseAudioURL = () => {
-    if (audioURLRef.current) {
-      URL.revokeObjectURL(audioURLRef.current);
-      audioURLRef.current = null;
-    }
+    if (audioURLRef.current) URL.revokeObjectURL(audioURLRef.current);
+    audioURLRef.current = null;
   };
-
-  const stopMediaTracks = (recorder) => {
-    recorder?.stream?.getTracks().forEach((track) => track.stop());
-  };
+  const stopMediaTracks = recorder => recorder?.stream?.getTracks().forEach(track => track.stop());
 
   useEffect(() => () => {
     releaseAudioURL();
@@ -39,54 +36,54 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
   }, []);
 
   useEffect(() => {
-    const fetchLessonImage = async () => {
-      try {
-        const res = await apiClient.get("/api/lessons/all");
+    if (!recording) return undefined;
+    const timer = window.setInterval(() => setElapsed(value => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [recording]);
 
-        const matchedLesson = res.find(
-          (lesson) => lesson.id === parseInt(lessonId)
-        );
+  useEffect(() => {
+    if (!currentQuestion) return;
+    setStatus('Ready to record your response.');
+    setStatusTone('neutral');
+    setScoreData(null);
+    setElapsed(0);
+  }, [currentQuestion?.id]);
 
-        if (matchedLesson) {
-          setLessonImage(matchedLesson.image);
-        } else {
-          toast.warn("Lesson ID not found in data.");
-        }
-      } catch (err) {
-        toast.error("Failed to load lesson data", err);
-      }
-    };
-
-    fetchLessonImage();
-  }, [lessonId]);
+  const resetRecording = () => {
+    stopMediaTracks(recorderRef.current);
+    recorderRef.current?.destroy?.();
+    recorderRef.current = null;
+    releaseAudioURL();
+    setAudioURL(null);
+    setScoreData(null);
+    setElapsed(0);
+    setStatus('Ready to record a new response.');
+    setStatusTone('neutral');
+  };
 
   const startRecording = async () => {
+    if (!currentQuestion) {
+      setStatus('Choose a question before recording.');
+      setStatusTone('error');
+      return;
+    }
     try {
-      stopMediaTracks(recorderRef.current);
-      recorderRef.current?.destroy?.();
+      resetRecording();
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (!stream.active) throw new Error("Microphone stream is unavailable");
-      recorderRef.current = new RecordRTC(stream, {
-        type: "audio",
-        mimeType: "audio/wav",
-        recorderType: RecordRTC.StereoAudioRecorder,
-        desiredSampRate: 16000,
-        numberOfAudioChannels: 1,
-      });
+      if (!stream.active) throw new Error('Microphone stream is unavailable');
+      recorderRef.current = new RecordRTC(stream, { type: 'audio', mimeType: 'audio/wav', recorderType: RecordRTC.StereoAudioRecorder, desiredSampRate: 16000, numberOfAudioChannels: 1 });
       recorderRef.current.startRecording();
-      releaseAudioURL();
-      setAudioURL(null);
       setRecording(true);
-      setStatus("Recording...");
-      setScoreData(null);
-      setAudioURL(null);
-    } catch (err) {
-      setStatus("Error accessing microphone: " + err.message);
+      setStatus('Recording in progress. Speak clearly, then choose Stop recording.');
+      setStatusTone('recording');
+    } catch {
+      setStatus('Microphone access is unavailable. Check your browser permission and try again.');
+      setStatusTone('error');
     }
   };
 
   const stopRecording = () => {
-    if (!recorderRef.current) return;
+    if (!recorderRef.current || !recording) return;
     recorderRef.current.stopRecording(() => {
       const blob = recorderRef.current.getBlob();
       releaseAudioURL();
@@ -94,239 +91,104 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
       audioURLRef.current = url;
       setAudioURL(url);
       setRecording(false);
-      setStatus("Recording stopped");
-
+      setStatus('Recording ready. Review the audio, then submit it for feedback.');
+      setStatusTone('ready');
       stopMediaTracks(recorderRef.current);
     });
   };
 
-  const playAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.play();
-    }
-  };
-
-  const blobToBase64 = (blob) =>
-    new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result.split(",")[1]);
-      reader.readAsDataURL(blob);
-    });
+  const blobToBase64 = blob => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    reader.readAsDataURL(blob);
+  });
 
   const sendAudioToBackend = async () => {
-    if (!recorderRef.current) {
-      setStatus("No recording found");
-      return;
-    }
-
-    setStatus("Sending audio to server...");
+    if (!recorderRef.current || !audioURL || !currentQuestion) return;
+    setSubmitting(true);
     setLoading(true);
+    setStatus('Analyzing your response. Keep this page open.');
+    setStatusTone('processing');
 
     try {
-      const blob = recorderRef.current.getBlob();
-      const base64Audio = await blobToBase64(blob);
-
-      const data = await apiClient.post("/api/score-audio", {
-        audio: base64Audio,
+      const data = await apiClient.post('/api/score-audio', {
+        audio: await blobToBase64(recorderRef.current.getBlob()),
         referenceText,
-        questionId: currentQuestion?.id,
+        questionId: currentQuestion.id,
         index: currentIndex,
       });
+      if (!data?.wordsAssessment) throw new Error('The analysis response was incomplete.');
 
-      if (data?.wordsAssessment) {
-        setScoreData(data);
-        setStatus("Results received");
-        if (onScore) onScore(data);
+      setScoreData(data);
+      onScore?.(data);
+      setStatus('Analysis complete. Your feedback is shown below.');
+      setStatusTone('success');
 
-        try {
-          const lessonResult = await apiClient.post('/api/lessons/results', {
-            lessonId,
-            finishedTime: new Date().toISOString(),
-            averageScore: data.score,
-            feedback: data.feedback,
-          });
-
-          if (!lessonResult?.id) throw new Error('Lesson result was not saved');
-
-          const questionResult = await apiClient.post('/api/questions/results', {
-            lessonResultId: lessonResult.id,
-            questionId: currentQuestion.id,
-            ieltsBand: data.score,
-            accuracy: data.accuracyScore,
-            fluency: data.fluencyScore,
-            completeness: data.completenessScore,
-            pronunciation: data.pronScore,
-            feedback: data.feedback,
-          });
-
-          if (!questionResult?.id) throw new Error('Question result was not saved');
-
-          if (data.err && Object.keys(data.err).length > 0) {
-            await apiClient.post('/api/incorrectphonemes/add', {
-              phoneme: data.err,
-              questionResultId: questionResult.id,
-              lessonResultId: lessonResult.id,
-              questionId: currentQuestion.id,
-            });
-          }
-        } catch (historyError) {
-          setStatus("Results received, but history could not be saved");
-          toast.warning(historyError?.response?.data?.message || "Your score is available, but saving history failed.");
-        }
-
-      } else {
-        setStatus("Error: Invalid response data");
-        toast.error("Invalid response data");
-        setScoreData(null);
+      try {
+        const lessonResult = await apiClient.post('/api/lessons/results', { lessonId, finishedTime: new Date().toISOString(), averageScore: data.score, feedback: data.feedback });
+        if (!lessonResult?.id) throw new Error('Lesson result was not saved');
+        const questionResult = await apiClient.post('/api/questions/results', { lessonResultId: lessonResult.id, questionId: currentQuestion.id, ieltsBand: data.score, accuracy: data.accuracyScore, fluency: data.fluencyScore, completeness: data.completenessScore, pronunciation: data.pronScore, feedback: data.feedback });
+        if (!questionResult?.id) throw new Error('Question result was not saved');
+        if (data.err && Object.keys(data.err).length > 0) await apiClient.post('/api/incorrectphonemes/add', { phoneme: data.err, questionResultId: questionResult.id, lessonResultId: lessonResult.id, questionId: currentQuestion.id });
+      } catch (historyError) {
+        setStatus('Feedback is ready, but this attempt could not be saved to history.');
+        setStatusTone('warning');
+        toast.warning(historyError?.response?.data?.message || 'Your score is available, but saving history failed.');
       }
-
-    } catch (err) {
-      setStatus("Connection error: " + err.message);
-      toast.error(err.message);
+    } catch (error) {
       setScoreData(null);
+      setStatus(error?.response?.data?.message || error.message || 'We couldn’t analyze this recording. Please try again.');
+      setStatusTone('error');
     } finally {
+      setSubmitting(false);
       setLoading(false);
     }
   };
 
+  const toneClasses = {
+    neutral: 'border-slate-200 bg-slate-50 text-slate-700',
+    recording: 'border-red-200 bg-red-50 text-red-800',
+    ready: 'border-blue-200 bg-blue-50 text-blue-800',
+    processing: 'border-brand-200 bg-brand-50 text-brand-800',
+    success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+    warning: 'border-amber-200 bg-amber-50 text-amber-900',
+    error: 'border-red-200 bg-red-50 text-red-800',
+  };
+
   return (
-    <section className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border-2 border-purple-200 h-full flex flex-col">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-2 rounded-lg">
-            <FaMicrophone className="text-white text-xl" />
-          </div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Recording Practice
-          </h2>
-        </div>
+    <section className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="recording-heading">
+      <div className="flex items-center justify-between gap-3">
+        <div><p className="text-sm font-semibold text-brand-700">Response workspace</p><h2 id="recording-heading" className="mt-1 text-xl font-bold text-slate-950">Record your answer</h2></div>
+        <div className={`rounded-full px-3 py-1 text-sm font-semibold ${recording ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-700'}`}>{recording ? `Recording ${formatDuration(elapsed)}` : formatDuration(elapsed)}</div>
       </div>
 
-      {/* Reference Text */}
-      <div className="mb-6 p-5 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-md">
+      <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 text-lg font-medium text-gray-800 select-text leading-relaxed">
-            {scoreData?.wordsAssessment?.length > 0 ? (
-              <HighlightTextWithTooltip
-                text={referenceText}
-                wordsAssessment={scoreData.wordsAssessment}
-              />
-            ) : (
-              <span>{referenceText}</span>
-            )}
+          <div className="min-w-0 flex-1 text-base font-medium leading-7 text-slate-900 sm:text-lg">
+            {scoreData?.wordsAssessment?.length ? <HighlightTextWithTooltip text={referenceText} wordsAssessment={scoreData.wordsAssessment} /> : referenceText}
           </div>
-          <TextToSpeechButton text={referenceText} />
+          {currentQuestion && <TextToSpeechButton text={referenceText} />}
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="flex flex-col items-center gap-6 flex-1">
-        {/* Recording Button */}
-        <div className="relative">
-          {!recording ? (
-            <button
-              onClick={startRecording}
-              className="flex justify-center items-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-2xl transition-all duration-200 transform hover:scale-110 active:scale-95"
-              aria-label="Start Recording"
-            >
-              <FaMicrophone size={40} />
-            </button>
-          ) : (
-            <button
-              onClick={stopRecording}
-              className="flex justify-center items-center w-24 h-24 rounded-full bg-gradient-to-br from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white shadow-2xl transition-all duration-200 transform hover:scale-110 active:scale-95 animate-pulse"
-              aria-label="Stop Recording"
-            >
-              <FaMicrophone size={40} />
-            </button>
-          )}
-          {recording && (
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full animate-ping"></div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 justify-center">
-          <button
-            onClick={stopRecording}
-            disabled={!recording}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200 transform hover:scale-105 ${
-              recording
-                ? "bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            <Square className="h-4 w-4" />
-            <span>Stop</span>
-          </button>
-
-          <button
-            onClick={playAudio}
-            disabled={!audioURL}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200 transform hover:scale-105 ${
-              audioURL
-                ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            <Play className="h-4 w-4" />
-            <span>Play</span>
-          </button>
-
-          <button
-            onClick={sendAudioToBackend}
-            disabled={!audioURL}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200 transform hover:scale-105 ${
-              audioURL
-                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            <Send className="h-4 w-4" />
-            <span>Submit</span>
-          </button>
-
-          <ResultPDFDownloader scoreData={scoreData} />
-        </div>
-
-        {/* Status */}
-        <div className="text-center">
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${
-            recording 
-              ? "bg-red-100 text-red-700" 
-              : audioURL 
-              ? "bg-green-100 text-green-700" 
-              : "bg-gray-100 text-gray-700"
-          }`}>
-            {recording && <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>}
-            <span>{status}</span>
-          </div>
-        </div>
-
-        {/* Audio Player */}
-        {audioURL && (
-          <div className="w-full bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border-2 border-gray-200">
-            <audio
-              ref={audioRef}
-              controls
-              src={audioURL}
-              className="w-full"
-            />
-          </div>
-        )}
-
-        {/* Lesson Image */}
-        {lessonImage && (
-          <div className="w-full flex justify-center mt-4">
-            <img 
-              src={lessonImage} 
-              alt="Lesson illustration" 
-              className="rounded-2xl shadow-lg max-w-md w-full border-2 border-purple-200" 
-            />
-          </div>
-        )}
+      <div className={`mt-5 rounded-lg border px-4 py-3 text-sm leading-6 ${toneClasses[statusTone]}`} aria-live="polite">
+        <span className="flex items-center gap-2">{recording && <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-600" />}{status}</span>
       </div>
+
+      {recording && <div aria-hidden="true" className="mt-5 flex h-12 items-center justify-center gap-1.5">{[3, 7, 5, 10, 6, 12, 8, 4, 9, 5, 11, 7].map((height, index) => <span key={index} className="w-1.5 animate-pulse rounded-full bg-red-500" style={{ height: `${height * 3}px`, animationDelay: `${index * 70}ms` }} />)}</div>}
+
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        {!recording && !audioURL && <Button onClick={startRecording} disabled={!currentQuestion} className="sm:flex-1"><Mic className="h-4 w-4" aria-hidden="true" /> Start recording</Button>}
+        {recording && <Button variant="danger" onClick={stopRecording} className="sm:flex-1"><Square className="h-4 w-4" aria-hidden="true" /> Stop recording</Button>}
+        {!recording && audioURL && <>
+          <Button variant="secondary" onClick={resetRecording}><RotateCcw className="h-4 w-4" aria-hidden="true" /> Record again</Button>
+          <Button onClick={sendAudioToBackend} isLoading={submitting} className="sm:flex-1"><Send className="h-4 w-4" aria-hidden="true" /> {submitting ? 'Analyzing response…' : 'Submit for feedback'}</Button>
+        </>}
+      </div>
+
+      {audioURL && !recording && <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Review recording</p><audio controls src={audioURL} className="w-full" /></div>}
+      {scoreData && <div className="mt-4"><ResultPDFDownloader scoreData={scoreData} /></div>}
     </section>
   );
 };

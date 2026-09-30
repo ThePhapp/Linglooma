@@ -1,4 +1,4 @@
-import { FaVolumeUp } from "react-icons/fa";
+import { Volume2 } from "lucide-react";
 
 const TextToSpeechButton = ({ text }) => {
   const speak = () => {
@@ -26,11 +26,11 @@ const TextToSpeechButton = ({ text }) => {
   return (
     <button
       onClick={speak}
-      className="ml-2 p-1 text-blue-600 hover:text-blue-800"
+      className="ml-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-brand-600 transition-colors hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       aria-label="Play text to speech"
       title="Nghe mẫu giọng đọc"
     >
-      <FaVolumeUp size={20} />
+      <Volume2 aria-hidden="true" className="h-5 w-5" />
     </button>
   );
 };

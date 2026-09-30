@@ -1,139 +1,84 @@
-import React, { useEffect, useState } from "react";
-import Button from "@/components/ui/Button";
-import { useNavigate, useParams } from "react-router-dom";
-import apiClient from "@/services/apiClient";
-import { toast } from "react-toastify";
-import { History, LogOut, Mic } from "lucide-react";
-
-const GridButton = ({ number, active, onClick }) => {
-    return (
-        <button
-            onClick={() => onClick(number)}
-            className={`text-2xl font-bold aspect-square rounded-2xl flex items-center justify-center transition-all duration-200 transform hover:scale-110 shadow-lg ${
-                active
-                    ? "bg-gradient-to-br from-purple-600 to-pink-600 text-white scale-110 shadow-purple-400"
-                    : "bg-white text-gray-700 hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-300"
-            }`}
-        >
-            {number}
-        </button>
-    );
-};
+import { useEffect, useState } from 'react';
+import { History, LogOut, Mic, RefreshCw } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import Button from '@/components/ui/Button';
+import Skeleton from '@/components/ui/Skeleton';
+import apiClient from '@/services/apiClient';
 
 const SpeakingGrid = ({ setCurrentQuestion, setCurrentIndex }) => {
-    const navigate = useNavigate();
-    const { lessonId } = useParams();
+  const navigate = useNavigate();
+  const { lessonId } = useParams();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [questions, setQuestions] = useState([]);
+  const [lessonTitle, setLessonTitle] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-    const [activeNumber, setActiveNumber] = useState(1);
-    const [questions, setQuestions] = useState([]);
-    const [lessonTitle, setLessonTitle] = useState("");
+  const selectQuestion = index => {
+    const question = questions[index];
+    if (!question) return;
+    setActiveIndex(index);
+    setCurrentQuestion(question);
+    setCurrentIndex(index);
+  };
 
-    const handleClick = (index) => {
-        setActiveNumber(index + 1);
-        const question = questions[index];
-        if (question) {
-            setCurrentQuestion(question);
-            setCurrentIndex(index);
-        }
-    };
+  const fetchQuestions = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await apiClient.get(`/api/questions/${lessonId}`);
+      if (!Array.isArray(data?.questions)) throw new Error(data?.message || 'No questions were returned for this lesson.');
+      setQuestions(data.questions);
+      if (data.questions.length) {
+        setCurrentQuestion(data.questions[0]);
+        setCurrentIndex(0);
+        setActiveIndex(0);
+        setLessonTitle(data.questions[0].name || 'Speaking lesson');
+      }
+    } catch (requestError) {
+      setQuestions([]);
+      setCurrentQuestion(null);
+      setError(requestError?.response?.data?.message || requestError.message || 'Questions could not be loaded.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        const fetchQuestions = async () => {
-            try {
-                const data = await apiClient.get(`/api/questions/${lessonId}`);
+  useEffect(() => { fetchQuestions(); }, [lessonId]);
 
-                if (data.message && (!data.questions || !Array.isArray(data.questions))) {
-                    toast.error(data.message);
-                    setQuestions([]);
-                    return;
-                }
+  return (
+    <section className="h-full rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="questions-heading">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700"><Mic className="h-5 w-5" aria-hidden="true" /></span>
+        <div><h2 id="questions-heading" className="text-xl font-bold text-slate-950">Questions</h2><p className="mt-1 text-sm text-slate-600">Lesson {lessonId}{lessonTitle ? ` · ${lessonTitle}` : ''}</p></div>
+      </div>
 
-                if (data.questions && Array.isArray(data.questions)) {
-                    setQuestions(data.questions);
-                    if (data.questions.length > 0) {
-                        setCurrentQuestion(data.questions[0]);
-                        setCurrentIndex(0);
-                        setLessonTitle(data.questions[0].name || "");
-                    }
-                } else {
-                    toast.error("Dữ liệu không hợp lệ từ server");
-                    setQuestions([]);
-                }
-            } catch (err) {
-                console.error("Lỗi fetch API:", err);
-                toast.error("Lỗi fetch API: " + (err.message || err));
-                setQuestions([]);
-            }
-        };
+      {loading ? (
+        <div className="mt-6 grid grid-cols-4 gap-3" aria-label="Loading speaking questions">{[0, 1, 2, 3, 4, 5, 6, 7].map(item => <Skeleton key={item} className="aspect-square" />)}</div>
+      ) : error ? (
+        <div role="alert" className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800"><p>{error}</p><Button size="small" onClick={fetchQuestions} className="mt-3"><RefreshCw className="h-4 w-4" /> Try again</Button></div>
+      ) : questions.length === 0 ? (
+        <p className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No questions are available for this lesson.</p>
+      ) : (
+        <>
+          <div className="mt-6 grid grid-cols-4 gap-3 sm:grid-cols-5 lg:grid-cols-3">
+            {questions.map((question, index) => (
+              <button key={question.id ?? index} type="button" onClick={() => selectQuestion(index)} aria-pressed={activeIndex === index} aria-label={`Select question ${index + 1}`} className={`flex aspect-square min-h-11 items-center justify-center rounded-lg border text-base font-bold transition-colors ${activeIndex === index ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-brand-300 hover:bg-brand-50'}`}>{index + 1}</button>
+            ))}
+          </div>
+          <div className="mt-5">
+            <div className="flex justify-between text-xs text-slate-500"><span>Question progress</span><span>{activeIndex + 1} of {questions.length}</span></div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-brand-600 transition-[width]" style={{ width: `${((activeIndex + 1) / questions.length) * 100}%` }} /></div>
+          </div>
+        </>
+      )}
 
-        fetchQuestions();
-    }, [lessonId]);
-
-    return (
-        <section className="h-full bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border-2 border-purple-200">
-            <div className="flex flex-col items-center gap-6 h-full">
-                {/* Header */}
-                <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 mb-3">
-                        <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-2 rounded-lg">
-                            <Mic className="h-6 w-6 text-white" />
-                        </div>
-                        <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                            Questions
-                        </h2>
-                    </div>
-                    <div className="bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-2 rounded-full">
-                        <h3 className="text-base font-bold text-purple-800">
-                            Lesson {lessonId}: {lessonTitle}
-                        </h3>
-                    </div>
-                </div>
-
-                {/* Question Grid */}
-                <div className="flex-1 flex items-center justify-center w-full">
-                    <div className="grid grid-cols-3 gap-4 w-full max-w-[350px]">
-                        {questions.map((q, index) => (
-                            <GridButton
-                                key={index}
-                                number={index + 1}
-                                active={activeNumber === (index + 1)}
-                                onClick={() => handleClick(index)}
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-3 w-full">
-                    <button
-                        onClick={() => navigate("/admin/features/speaking/history")}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                    >
-                        <History className="h-5 w-5" />
-                        <span>View History</span>
-                    </button>
-                    <button
-                        onClick={() => navigate("/admin/features/lesson")}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                    >
-                        <LogOut className="h-5 w-5" />
-                        <span>Exit Lesson</span>
-                    </button>
-                </div>
-
-                {/* Progress Indicator */}
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${(activeNumber / questions.length) * 100}%` }}
-                    ></div>
-                </div>
-                <p className="text-sm text-gray-600">
-                    Question {activeNumber} of {questions.length}
-                </p>
-            </div>
-        </section>
-    );
+      <div className="mt-6 grid gap-3 border-t border-slate-200 pt-5">
+        <Button variant="secondary" onClick={() => navigate('/admin/features/speaking/history')}><History className="h-4 w-4" aria-hidden="true" /> View history</Button>
+        <Button variant="ghost" onClick={() => navigate('/admin/features/lesson')}><LogOut className="h-4 w-4" aria-hidden="true" /> Exit lesson</Button>
+      </div>
+    </section>
+  );
 };
 
 export default SpeakingGrid;

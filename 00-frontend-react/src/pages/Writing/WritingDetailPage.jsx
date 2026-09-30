@@ -135,7 +135,7 @@ const WritingDetail = () => {
         {detail.overall_band && (
           <>
             {/* Overall Band Score */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-6 mb-6">
+            <div className="mb-6 rounded-xl bg-brand-700 p-6 text-white">
               <div className="text-center">
                 <p className="text-lg mb-2">Overall Band Score</p>
                 <p className="text-6xl font-bold">{detail.overall_band}</p>

@@ -85,7 +85,7 @@ const PronunciationFeedback = () => {
         <Link className="mt-5 inline-flex rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" to={historyPath}>Return to speaking history</Link>
       </section> : <>
         <section className="mb-6 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl bg-gradient-to-br from-blue-700 to-indigo-800 p-5 text-white shadow-sm">
+          <div className="rounded-xl bg-brand-700 p-5 text-white">
             <p className="text-sm text-blue-100">Session overall score</p>
             <p className="mt-1 text-3xl font-bold">{formatBand(data.lessonInfo?.lessonScore)}</p>
           </div>

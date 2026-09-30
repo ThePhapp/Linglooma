@@ -225,7 +225,7 @@ const SpeakingHistory = () => {
 
       {/* Statistics Summary */}
       {results.length > 0 && (
-        <div className="mt-10 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-6">
+        <div className="mt-10 rounded-xl bg-brand-700 p-6 text-white">
           <h2 className="text-2xl font-bold mb-4">📈 Your Progress</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">

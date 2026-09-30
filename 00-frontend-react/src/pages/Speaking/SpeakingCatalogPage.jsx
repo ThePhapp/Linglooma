@@ -4,15 +4,6 @@ import { ArrowLeft, BookOpen, History, RefreshCw } from 'lucide-react';
 import apiClient from '@/services/apiClient';
 import CourseCard from './components/CourseCard';
 
-const gradients = [
-  'from-blue-500 to-cyan-600',
-  'from-green-500 to-emerald-600',
-  'from-purple-500 to-violet-600',
-  'from-pink-500 to-rose-600',
-  'from-orange-500 to-amber-600',
-  'from-red-500 to-pink-600',
-];
-
 const LessonSpeaking = () => {
   const navigate = useNavigate();
   const [lessons, setLessons] = useState([]);
@@ -39,20 +30,20 @@ const LessonSpeaking = () => {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4 sm:p-6">
+    <main className="page-shell">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 rounded-2xl bg-gradient-to-r from-purple-700 via-pink-700 to-rose-600 p-6 text-white shadow-xl sm:p-8">
+        <header className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8">
           <div className="flex flex-col items-start justify-between gap-5 md:flex-row md:items-center">
             <div className="flex items-center gap-4">
-              <span className="rounded-xl bg-white/15 p-3"><BookOpen aria-hidden="true" className="h-8 w-8" /></span>
+              <span className="rounded-xl bg-brand-50 p-3"><BookOpen aria-hidden="true" className="h-7 w-7 text-brand-700" /></span>
               <div>
-                <h1 className="text-3xl font-bold">Speaking Practice Lessons</h1>
-                <p className="mt-1 text-white/90">Choose from the active speaking topics currently available.</p>
+                <h1 className="text-2xl font-bold text-slate-950 sm:text-3xl">Speaking practice</h1>
+                <p className="mt-1 text-slate-600">Choose from the active speaking topics currently available.</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
-              <button type="button" onClick={() => navigate('/admin/features')} className="inline-flex items-center gap-2 rounded-xl bg-white/15 px-5 py-3 text-sm font-semibold hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"><ArrowLeft aria-hidden="true" className="h-4 w-4" /> Back</button>
-              <button type="button" onClick={() => navigate('/admin/features/speaking/history')} className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-purple-700 hover:bg-purple-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50"><History aria-hidden="true" className="h-4 w-4" /> Speaking history</button>
+              <button type="button" onClick={() => navigate('/admin/features')} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"><ArrowLeft aria-hidden="true" className="h-4 w-4" /> Back</button>
+              <button type="button" onClick={() => navigate('/admin/features/speaking/history')} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700"><History aria-hidden="true" className="h-4 w-4" /> Speaking history</button>
             </div>
           </div>
         </header>
@@ -74,8 +65,8 @@ const LessonSpeaking = () => {
           </section>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {lessons.map((lesson, index) => (
-              <CourseCard key={lesson.id} title={lesson.name} topic={lesson.difficulty || 'Speaking'} description={lesson.description} imageUrl={lesson.image} lessonId={lesson.id} gradient={gradients[index % gradients.length]} />
+            {lessons.map((lesson) => (
+              <CourseCard key={lesson.id} title={lesson.name} topic={lesson.difficulty || 'Speaking'} description={lesson.description} imageUrl={lesson.image} lessonId={lesson.id} />
             ))}
           </div>
         )}
