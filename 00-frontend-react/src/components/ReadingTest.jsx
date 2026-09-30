@@ -310,9 +310,17 @@ const ReadingTest = () => {
                   <div className="space-y-2 ml-9">
                     {question.options.map((option) => {
                       const isSelected = answers[question.id] === option.id;
-                      const questionDetail = result?.details?.find(d => d.questionId === question.id);
-                      const isCorrect = questionDetail?.correctOptionId === option.id || questionDetail?.isCorrect === true;
-                      const isWrong = result && isSelected && !isCorrect;
+                      const questionDetail = result?.details?.find(
+                        detail => String(detail.questionId) === String(question.id)
+                      );
+                      const isCorrect = Boolean(
+                        result && questionDetail &&
+                        String(questionDetail.correctAnswer).trim().toLowerCase() ===
+                          String(option.id).trim().toLowerCase()
+                      );
+                      const isWrong = Boolean(
+                        result && isSelected && questionDetail && !questionDetail.isCorrect
+                      );
                       
                       return (
                         <label
