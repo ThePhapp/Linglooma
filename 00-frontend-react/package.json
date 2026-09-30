@@ -3,19 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "proxy": "http://localhost:5000",
   "scripts": {
     "dev": "vite",
-    "start": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "serve": "vite preview",
     "format": "prettier --write \"src/**/*.{js,jsx,css,md,json}\"",
     "test": "cypress open"
   },
   "dependencies": {
     "axios": "^1.20.0",
-    "clsx": "^2.1.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^0.510.0",
@@ -27,11 +23,9 @@
     "react-toastify": "^11.0.5",
     "react-tooltip": "^5.28.1",
     "recharts": "^2.15.3",
-    "recordrtc": "^5.6.2",
-    "tailwind-merge": "^3.3.0"
+    "recordrtc": "^5.6.2"
   },
   "devDependencies": {
-    "@dhiwise/component-tagger": "^1.0.3",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "4.3.4",
