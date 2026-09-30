@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from '@/utils/axios.customize';
 
 const SpeakingHistory = () => {
@@ -7,13 +7,8 @@ const SpeakingHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { questionId } = useParams();
 
-  useEffect(() => {
-    fetchSpeakingHistory();
-  }, []);
-
-  const fetchSpeakingHistory = async () => {
+  const fetchSpeakingHistory = useCallback(async () => {
     const token = localStorage.getItem('access_token');
     if (!token) {
       navigate('/login');
@@ -22,42 +17,34 @@ const SpeakingHistory = () => {
 
     try {
       setLoading(true);
-      console.log('📡 Fetching speaking history...');
-      
-      // API lấy lịch sử speaking của user
-      // axios.customize đã tự động return response.data
-      const data = await axios.get('/api/lessons/results/history', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      setError(null);
+      const data = await axios.get('/api/lessons/results/history');
+      if (!Array.isArray(data)) throw new Error('Invalid speaking history response');
 
-      console.log('✅ Received data:', data);
-      console.log('📊 Number of records:', Array.isArray(data) ? data.length : 'Not an array');
-
-      if (data && Array.isArray(data)) {
-        setResults(data);
-        console.log('✅ Set results with', data.length, 'records');
-      } else if (data) {
-        console.warn('⚠️ Data is not an array:', data);
-        setResults([]);
-      } else {
-        console.error('❌ No data received');
-        setError('Failed to load speaking history');
-      }
+      setResults(data.map((result) => {
+        const score = Number(result.ielts_band);
+        const questionCount = Number(result.question_count);
+        return {
+          ...result,
+          ielts_band: Number.isFinite(score) && score > 0 ? score : null,
+          question_count: Number.isFinite(questionCount) && questionCount > 0 ? questionCount : 0
+        };
+      }));
     } catch (err) {
       console.error('❌ Error fetching speaking history:', err);
-      console.error('Error response:', err.response);
       if (err.response?.status === 401) {
-        alert('Session expired. Please login again.');
         navigate('/login');
       } else {
-        setError('Could not connect to server');
+        setError('Speaking history could not be loaded.');
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchSpeakingHistory();
+  }, [fetchSpeakingHistory]);
 
   const getScoreColor = (score) => {
     if (!score) return 'text-gray-500';
@@ -85,7 +72,9 @@ const SpeakingHistory = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString('en-US', {
+    const date = new Date(dateString);
+    if (!dateString || Number.isNaN(date.getTime())) return 'Date unavailable';
+    return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -94,8 +83,8 @@ const SpeakingHistory = () => {
     });
   };
 
-  const handleViewDetail = (lessonId) => {
-    navigate(`/admin/features/feedback/${1}`);
+  const handleViewDetail = (lessonResultId) => {
+    navigate(`/admin/features/feedback/${lessonResultId}`);
   };
 
   if (loading) {
@@ -108,8 +97,15 @@ const SpeakingHistory = () => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div role="alert" className="flex flex-col gap-4 items-center justify-center min-h-screen px-4 text-center">
         <div className="text-xl text-red-600">{error}</div>
+        <button
+          type="button"
+          onClick={fetchSpeakingHistory}
+          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
@@ -149,7 +145,7 @@ const SpeakingHistory = () => {
               className={`bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden ${getScoreBgColor(result.ielts_band)}`}
             >
               <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-4">
                   {/* Lesson Info */}
                   <div className="flex-1">
                     <h3 className="text-2xl font-bold text-gray-800 mb-2">
@@ -173,7 +169,7 @@ const SpeakingHistory = () => {
                   </div>
 
                   {/* Band Score */}
-                  <div className="ml-4 text-center">
+                  <div className="sm:ml-4 text-center">
                     {result.ielts_band ? (
                       <>
                         <div className={`text-5xl font-bold ${getScoreColor(result.ielts_band)}`}>
@@ -216,7 +212,7 @@ const SpeakingHistory = () => {
 
                 {/* View Detail Button */}
                 <button
-                  onClick={() => handleViewDetail(questionId)}
+                  onClick={() => handleViewDetail(result.id)}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
                 >
                     View Detailed Feedback
