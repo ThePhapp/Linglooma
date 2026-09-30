@@ -11,7 +11,7 @@ const Button = ({
   type = 'button',
   ...props
 }) => {
-  const baseClasses = 'font-medium rounded transition-colors duration-200 focus:outline-none';
+  const baseClasses = 'font-medium rounded transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600';
 
   const variants = {
     primary: 'bg-[#2463eb] text-white hover:bg-blue-700 disabled:bg-gray-400 border border-[#2463eb]',

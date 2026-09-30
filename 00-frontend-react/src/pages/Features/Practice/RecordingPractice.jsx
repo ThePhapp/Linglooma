@@ -18,7 +18,25 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
   const [scoreData, setScoreData] = useState(null);
   const recorderRef = useRef(null);
   const audioRef = useRef(null);
+  const audioURLRef = useRef(null);
   const { lessonId } = useParams();
+
+  const releaseAudioURL = () => {
+    if (audioURLRef.current) {
+      URL.revokeObjectURL(audioURLRef.current);
+      audioURLRef.current = null;
+    }
+  };
+
+  const stopMediaTracks = (recorder) => {
+    recorder?.stream?.getTracks().forEach((track) => track.stop());
+  };
+
+  useEffect(() => () => {
+    releaseAudioURL();
+    stopMediaTracks(recorderRef.current);
+    recorderRef.current?.destroy?.();
+  }, []);
 
   useEffect(() => {
     const fetchLessonImage = async () => {
@@ -44,7 +62,10 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
 
   const startRecording = async () => {
     try {
+      stopMediaTracks(recorderRef.current);
+      recorderRef.current?.destroy?.();
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!stream.active) throw new Error("Microphone stream is unavailable");
       recorderRef.current = new RecordRTC(stream, {
         type: "audio",
         mimeType: "audio/wav",
@@ -53,6 +74,8 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
         numberOfAudioChannels: 1,
       });
       recorderRef.current.startRecording();
+      releaseAudioURL();
+      setAudioURL(null);
       setRecording(true);
       setStatus("Recording...");
       setScoreData(null);
@@ -66,14 +89,14 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
     if (!recorderRef.current) return;
     recorderRef.current.stopRecording(() => {
       const blob = recorderRef.current.getBlob();
+      releaseAudioURL();
       const url = URL.createObjectURL(blob);
+      audioURLRef.current = url;
       setAudioURL(url);
       setRecording(false);
       setStatus("Recording stopped");
 
-      if (recorderRef.current.stream) {
-        recorderRef.current.stream.getTracks().forEach((track) => track.stop());
-      }
+      stopMediaTracks(recorderRef.current);
     });
   };
 
