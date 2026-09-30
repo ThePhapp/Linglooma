@@ -63,7 +63,6 @@ const getRecentlyLessonResult = async (studentId) => {
 
 async function getSpeakingHistory(studentId) {
   try {
-    console.log('🗄️ Database query for studentId:', studentId);
     const query = `
       SELECT 
         lr.id,
@@ -80,10 +79,9 @@ async function getSpeakingHistory(studentId) {
     `;
     
     const res = await client.query(query, [studentId]);
-    console.log('✅ Database returned', res.rows.length, 'rows');
     return res.rows;
   } catch (error) {
-    console.error('❌ Database error in getSpeakingHistory:', error.message);
+    console.error('Failed to query speaking history');
     throw error;
   }
 }

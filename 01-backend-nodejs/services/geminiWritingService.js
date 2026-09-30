@@ -5,7 +5,7 @@ require("dotenv").config();
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
-  console.error("GEMINI_API_KEY not found in environment variables!");
+  console.error("Writing evaluation provider is not configured");
 }
 
 class WritingEvaluationError extends Error {
@@ -114,10 +114,6 @@ Return ONLY a valid JSON object (no markdown, no explanations outside JSON) with
     if (!GEMINI_API_KEY) {
       throw new WritingEvaluationError();
     }
-    console.log("🤖 Calling Gemini API for essay evaluation...");
-    console.log("Task Type:", taskType);
-    console.log("Word Count:", wordCount);
-    console.log("Essay length:", essayText.length, "characters");
     
     const data = await postJsonWithDeadline(fetch,
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -138,7 +134,6 @@ Return ONLY a valid JSON object (no markdown, no explanations outside JSON) with
       throw new WritingEvaluationError();
     }
 
-    console.log("✅ Got response from Gemini, length:", responseText.length);
     
     // Extract JSON from response (remove markdown code blocks if present)
     let jsonText = responseText.trim();
@@ -147,11 +142,8 @@ Return ONLY a valid JSON object (no markdown, no explanations outside JSON) with
       jsonText = fenced[1];
     }
 
-    console.log("📝 Parsing JSON response...");
     const evaluation = validateWritingEvaluation(JSON.parse(jsonText));
 
-    console.log("✅ Essay evaluated successfully!");
-    console.log("Overall band:", evaluation.scores.overall_band);
     return evaluation;
     
   } catch {

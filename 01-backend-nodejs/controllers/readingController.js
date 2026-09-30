@@ -9,7 +9,7 @@ const getAllPassages = async (req, res) => {
             data: result.rows
         });
     } catch (error) {
-        console.error('❌ Error getting passages:', error.message);
+        console.error('Failed to get reading passages');
         return res.status(500).json({
             success: false,
             message: 'Error fetching reading passages',
@@ -36,7 +36,7 @@ const getPassageById = async (req, res) => {
             data
         });
     } catch (error) {
-        console.error('❌ Error getting passage:', error.message);
+        console.error('Failed to get reading passage');
         return res.status(500).json({
             success: false,
             message: 'Error fetching reading passage',
@@ -71,7 +71,7 @@ const submitReading = async (req, res) => {
         if (error.statusCode === 400 || error.statusCode === 404) {
             return res.status(error.statusCode).json({ success: false, message: error.message });
         }
-        console.error('❌ Error submitting reading:', error.message);
+        console.error('Failed to submit reading answers');
         return res.status(500).json({
             success: false,
             message: 'Error submitting reading answers',
@@ -103,7 +103,7 @@ const getStudentResults = async (req, res) => {
         if (error.statusCode === 400) {
             return res.status(400).json({ success: false, message: error.message });
         }
-        console.error('❌ Error getting student results:', error.message);
+        console.error('Failed to get student reading results');
         return res.status(500).json({
             success: false,
             message: 'Error fetching student results',
@@ -142,7 +142,7 @@ const getResultDetail = async (req, res) => {
         if (error.statusCode === 400) {
             return res.status(400).json({ success: false, message: error.message });
         }
-        console.error('❌ Error getting result detail:', error.message);
+        console.error('Failed to get reading result detail');
         return res.status(500).json({
             success: false,
             message: 'Error fetching result detail',

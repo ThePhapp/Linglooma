@@ -15,7 +15,7 @@ const getQuestionsByLesson = async (req, res) => {
 
         return res.json({ questions: result.rows });
     } catch (err) {
-        console.error("Error fetching questions:", err);
+        console.error("Failed to fetch questions");
         return res.status(500).json({ error: "Internal server error" });
     }
 };

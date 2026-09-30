@@ -7,7 +7,7 @@ describe('Kiểm thử hàm getQuestionsByLesson', () => {
   let req, res;
 
   beforeEach(() => {
-    require('../helpers/expectedConsole')('error', ['Error fetching questions:']);
+    require('../helpers/expectedConsole')('error', ['Failed to fetch questions']);
     req = {
       params: {
         lessonId: '123'

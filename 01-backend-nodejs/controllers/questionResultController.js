@@ -18,12 +18,10 @@ const insertQuestionResultController = async (req, res) => {
         } = req.body;
 
         if (!studentId) {
-            console.error('❌ No studentId found in JWT token');
             return res.status(401).json({ message: "Invalid authentication token" });
         }
 
         if (!lessonResultId || !questionId) {
-            console.error('❌ Missing required fields:', { lessonResultId, questionId });
             return res.status(400).json({ message: "lessonResultId and questionId are required" });
         }
 
@@ -32,7 +30,6 @@ const insertQuestionResultController = async (req, res) => {
             return res.status(404).json({ message: "Lesson result or question not found" });
         }
 
-        console.log('📝 Inserting question result for studentId:', studentId, 'questionId:', questionId);
         const inserted = await insertQuestionResult(
             studentId,
             lessonResultId,
@@ -44,10 +41,9 @@ const insertQuestionResultController = async (req, res) => {
             pronunciation || null,
             feedback || null
         );
-        console.log('✅ Question result inserted successfully');
         res.status(201).json(inserted);
     } catch (err) {
-        console.error("❌ Insert question results failed: ", err);
+        console.error("Insert question result failed");
         res.status(500).json({ message: "Insert question results failed" });
     }
 };
@@ -68,7 +64,7 @@ const getQuestionResultOfLessonController = async (req, res) => {
         const result = await getQuestionResultOfLesson(studentId, lessonResultId);
         res.status(200).json(result.rows);
     } catch (err) {
-        console.error("Get question results failed: ", err);
+        console.error("Get question results failed");
         res.status(500).json({ message: "Get question results failed" });
     }
 };

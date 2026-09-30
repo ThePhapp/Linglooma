@@ -58,7 +58,7 @@ beforeEach(() => {
     'Task Type:', 'Word Count:', 'Essay length:', '✅ Got response from Gemini, length:',
     '📝 Parsing JSON response...', '✅ Essay evaluated successfully!', 'Overall band:',
   ]);
-  require('./helpers/expectedConsole')('error', ['Error submitting writing']);
+  require('./helpers/expectedConsole')('error', ['Failed to submit writing']);
   service.evaluateWritingWithGemini.mockImplementation(actualService.evaluateWritingWithGemini);
   respondWith(JSON.stringify(validEvaluation()));
 });

@@ -7,21 +7,17 @@ const insertLessonResultController = async (req, res) => {
     const { lessonId, finishedTime, averageScore, feedback } = req.body;
 
     if (!studentId) {
-      console.error('❌ No studentId found in JWT token');
       return res.status(401).json({ message: "Invalid authentication token" });
     }
 
     if (!lessonId || !finishedTime || averageScore == null) {
-      console.error('❌ Missing parameters:', { lessonId, finishedTime, averageScore });
       return res.status(400).json({ message: "Missing parameters" });
     }
 
-    console.log('📝 Inserting lesson result for studentId:', studentId, 'lessonId:', lessonId);
     const inserted = await insertLessonResult({ studentId, lessonId, finishedTime, averageScore, feedback });
-    console.log('✅ Lesson result inserted successfully:', inserted);
     res.status(201).json(inserted);
   } catch (error) {
-    console.error('❌ Error inserting lesson result:', error);
+    console.error('Failed to insert lesson result');
     res.status(500).json({ message: "Error inserting lesson result" });
   }
 };
@@ -42,7 +38,7 @@ const getLessonResultController = async (req, res) => {
     const results = await getLessonResult(studentId, lessonId);
     res.status(200).json(results);
   } catch (error) {
-    console.error(error);
+    console.error('Failed to fetch lesson result');
     res.status(500).json({ message: "Error fetching lesson result" });
   }
 };
@@ -58,33 +54,24 @@ const getRecentlyLessonResultController = async (req, res) => {
     const results = await getRecentlyLessonResult(studentId);
     res.status(200).json(results);
   } catch (error) {
-    console.error(error);
+    console.error('Failed to fetch recent lesson results');
     res.status(500).json({ message: "Error fetching recent lesson results" });
   }
 };
 
 const getSpeakingHistoryController = async (req, res) => {
   try {
-    console.log('🔍 Getting speaking history for user:', req.user);
     const studentId = req.user.id; // From JWT middleware
     
     if (!studentId) {
-      console.error('❌ No studentId found in JWT token');
       return res.status(401).json({ message: "Invalid authentication token" });
     }
     
-    console.log('📊 Fetching speaking history for studentId:', studentId);
     const results = await getSpeakingHistory(studentId);
-    console.log('✅ Found', results.length, 'speaking history records');
     res.status(200).json(results);
   } catch (error) {
-    console.error('❌ Error fetching speaking history:', error);
-    console.error('Error details:', error.message);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({ 
-      message: "Error fetching speaking history",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    console.error('Failed to fetch speaking history');
+    res.status(500).json({ message: "Error fetching speaking history" });
   }
 };
 

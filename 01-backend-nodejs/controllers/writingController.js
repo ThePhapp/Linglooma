@@ -11,7 +11,7 @@ async function getAllPrompts(req, res) {
       data: prompts
     });
   } catch (error) {
-    console.error('❌ Error getting writing prompts:', error.message);
+    console.error('Failed to get writing prompts');
     res.status(500).json({
       success: false,
       message: 'Failed to get writing prompts',
@@ -41,7 +41,7 @@ async function getPromptById(req, res) {
       data: prompt
     });
   } catch (error) {
-    console.error('❌ Error getting writing prompt:', error.message);
+    console.error('Failed to get writing prompt');
     res.status(500).json({
       success: false,
       message: 'Failed to get writing prompt',
@@ -68,7 +68,6 @@ async function submitWriting(req, res) {
     }
     if (essayText.length > 12000) return res.status(413).json({ success: false, message: 'Essay too long' });
     
-    console.log(`Student ${studentId} submitting essay for prompt ${id}`);
     
     const result = await writingModel.submitWriting({
       promptId: id,
@@ -91,7 +90,7 @@ async function submitWriting(req, res) {
         submissionId: error.submissionId
       });
     }
-    console.error('Error submitting writing');
+    console.error('Failed to submit writing');
     res.status(500).json({
       success: false,
       message: 'Failed to submit essay'
@@ -112,7 +111,7 @@ async function getStudentSubmissions(req, res) {
       data: submissions
     });
   } catch (error) {
-    console.error('Error getting student submissions:', error);
+    console.error('Failed to get student writing submissions');
     res.status(500).json({
       success: false,
       message: 'Failed to get submission history',
@@ -144,7 +143,7 @@ async function getSubmissionDetail(req, res) {
       data: detail
     });
   } catch (error) {
-    console.error('Error getting submission detail:', error);
+    console.error('Failed to get writing submission detail');
     res.status(500).json({
       success: false,
       message: 'Failed to get submission detail',

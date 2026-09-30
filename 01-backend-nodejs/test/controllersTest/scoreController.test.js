@@ -57,7 +57,7 @@ describe("scoreAudio", () => {
 
     jest.clearAllMocks();
     require('../helpers/expectedConsole')('log', ['🎤 scoreAudio request:', '📁 Creating temp directory:', '✅ Audio file saved:', '🧠 Getting Gemini feedback...', '✅ scoreAudio completed successfully, band:']);
-    require('../helpers/expectedConsole')('error', ['❌ scoreAudio:', 'Score audio failed']);
+    require('../helpers/expectedConsole')('error', ['Audio scoring failed']);
     audioSize.mockReturnValue(10);
     fs.promises = { unlink: jest.fn().mockResolvedValue() };
     getGeminiFeedback.mockResolvedValue('Good job');

@@ -14,12 +14,10 @@ const insertIncorrectPhonemeController = async (req, res) => {
     const { phoneme: errorMap, questionResultId, lessonResultId, questionId } = req.body;
 
     if (!studentId) {
-      console.error('❌ No studentId found in JWT token');
       return res.status(401).json({ message: "Invalid authentication token" });
     }
 
     if (!errorMap || !questionResultId || !lessonResultId || !questionId) {
-      console.warn("❌ Missing required fields in insert request");
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -33,12 +31,10 @@ const insertIncorrectPhonemeController = async (req, res) => {
       return res.status(404).json({ message: "Speaking result not found" });
     }
 
-    console.log('📝 Inserting incorrect phonemes for studentId:', studentId, 'questionId:', questionId);
     await insertOrUpdateIncorrectPhonemes(errorMap, questionResultId, lessonResultId, questionId, studentId);
-    console.log('✅ Incorrect phonemes inserted successfully');
     res.status(200).json({ message: "Insert/Update incorrect phonemes successfully" });
   } catch (err) {
-    console.error("❌ Insert/Update incorrect phonemes failed:", err);
+    console.error("Insert/update incorrect phonemes failed");
     res.status(500).json({ message: "Insert/Update incorrect phonemes failed" });
   }
 };
@@ -57,7 +53,7 @@ const getIncorrectPhonemesOfLessonController = async (req, res) => {
     const result = await getIncorrectPhonemesOfLesson(studentId, lessonResultId);
     res.status(200).json(result);
   } catch (err) {
-    console.error("Get incorrect phonemes failed: ", err);
+    console.error("Get incorrect phonemes failed");
     res.status(500).json({ message: "Get incorrect phonemes failed" });
   }
 };
@@ -127,7 +123,7 @@ const getFeedbackSummaryController = async (req, res) => {
 
     res.json({ lessonInfo, questions: Array.from(questions.values()) });
   } catch (err) {
-    console.error("Failed to get feedback summary:", err);
+    console.error("Failed to get feedback summary");
     res.status(500).json({ message: "Failed to get feedback summary" });
   }
 };
@@ -151,7 +147,7 @@ const getLessonsSummaryController = async (req, res) => {
 
     res.json(formattedData);
   } catch (error) {
-    console.error('Error fetching lessons summary:', error);
+    console.error('Failed to fetch lessons summary');
     res.status(500).json({ message: 'Internal server error' });
   }
 };

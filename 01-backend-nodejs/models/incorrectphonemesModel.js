@@ -80,7 +80,7 @@ const insertOrUpdateIncorrectPhonemes = async (
         studentId
       );
     } catch (error) {
-      console.error(`Error upserting phoneme "${phoneme}":`, error);
+      console.error('Failed to upsert incorrect phoneme');
       throw error;
     }
   }

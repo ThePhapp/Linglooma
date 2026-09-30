@@ -17,29 +17,24 @@ exports.scoreAudio = async (req, res) => {
 
     // Validation
     if (!audio) {
-      console.error('❌ scoreAudio: Missing audio data');
       return res.status(400).json({ error: "Thiếu dữ liệu audio" });
     }
     const bytes = audioSize(audio);
     if (bytes < 0) return res.status(400).json({ error: 'Dữ liệu audio không hợp lệ' });
     if (bytes > MAX_AUDIO_BYTES) return res.status(413).json({ error: 'Audio quá lớn' });
     if (!referenceText || typeof referenceText !== 'string' || referenceText.trim() === "") {
-      console.error('❌ scoreAudio: Missing referenceText');
       return res.status(400).json({ error: "Thiếu câu mẫu (referenceText)" });
     }
     if (referenceText.length > 2000) return res.status(413).json({ error: 'Câu mẫu quá dài' });
     if (!questionId) {
-      console.error('❌ scoreAudio: Missing questionId');
       return res.status(400).json({ error: "Thiếu questionId" });
     }
     if (!/^[1-9]\d*$/.test(String(questionId)) || !Number.isSafeInteger(Number(questionId))) return res.status(400).json({ error: 'questionId không hợp lệ' });
     if (index === null || index === undefined) {
-      console.error('❌ scoreAudio: Missing index');
       return res.status(400).json({ error: "Thiếu curentIndex" });
     }
     if (!/^(0|[1-9]\d*)$/.test(String(index)) || !Number.isSafeInteger(Number(index))) return res.status(400).json({ error: 'curentIndex không hợp lệ' });
 
-    console.log('🎤 scoreAudio request:', { questionId, index, referenceTextLength: referenceText.length });
 
     const filename = `audio_${crypto.randomUUID()}.wav`;
     filepath = path.join(__dirname, "..", "temp", filename);
@@ -47,12 +42,10 @@ exports.scoreAudio = async (req, res) => {
     // Check if temp directory exists
     const tempDir = path.join(__dirname, "..", "temp");
     if (!fs.existsSync(tempDir)) {
-      console.log('📁 Creating temp directory:', tempDir);
       fs.mkdirSync(tempDir, { recursive: true });
     }
 
     await saveBase64AudioToFile(audio, filepath);
-    console.log('✅ Audio file saved:', filepath);
 
     const { assessment, transcriptText, wordsAssessment } = await assessPronunciation(filepath, referenceText);
 
@@ -63,14 +56,12 @@ exports.scoreAudio = async (req, res) => {
     const wordsAssessmentVn = vietnameseWordsAssessment(wordsAssessment);
     const errorMap = countPhonemeErrors(wordsAssessment);
     
-    console.log('🧠 Getting Gemini feedback...');
     const geminiFeedback = await getGeminiFeedback({
       ieltsResult,
       assessment,
       transcriptText,
       miscueWords: miscueWordsFromTranscript,
     });
-    console.log('✅ scoreAudio completed successfully, band:', ieltsResult.band);
 
     res.json({
       score: ieltsResult.band,
@@ -88,7 +79,7 @@ exports.scoreAudio = async (req, res) => {
       err: errorMap,
     });
   } catch (error) {
-    console.error('Score audio failed');
+    console.error('Audio scoring failed');
     res.status(500).json({ error: "Không nhận dạng được giọng nói" });
   } finally {
     if (filepath) {

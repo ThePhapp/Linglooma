@@ -203,7 +203,7 @@ async function getSubmissionDetail(submissionId, studentId) {
         : row.grammar_errors;
     }
   } catch (err) {
-    console.error('Error parsing grammar_errors:', err);
+    console.error('Failed to parse writing grammar feedback');
     grammarErrors = [];
   }
   
@@ -214,7 +214,7 @@ async function getSubmissionDetail(submissionId, studentId) {
         : row.vocabulary_suggestions;
     }
   } catch (err) {
-    console.error('Error parsing vocabulary_suggestions:', err);
+    console.error('Failed to parse writing vocabulary feedback');
     vocabSuggestions = [];
   }
   
