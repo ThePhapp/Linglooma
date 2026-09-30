@@ -25,7 +25,7 @@ const updateUser = async (email, username, password, gender, nationality, phonen
             gender = $3,
             nationality = $4,
             phonenumber = $5
-        WHERE email = $6;
+        WHERE LOWER(email) = LOWER($6);
         `,
         [username, password, gender, nationality, phonenumber, email]
     );
