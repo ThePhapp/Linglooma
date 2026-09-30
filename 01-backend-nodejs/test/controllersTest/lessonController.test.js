@@ -1,6 +1,5 @@
 const { getLessonController } = require('../../controllers/lessonController');
 const { findLesson } = require('../../models/lessonModel');
-const client = require('../../db');
 
 jest.mock('../../models/lessonModel'); // Mock toàn bộ module
 
@@ -45,7 +44,4 @@ describe('Kiểm thử hàm getLessonController', () => {
         expect(res.json).toHaveBeenCalledWith({ message: 'Retriving lesson failed' });
     });
 
-    afterAll(async () => {
-        await client.end(); //Đóng kết nối sau test
-    });
 });

@@ -16,6 +16,8 @@ describe('question result controllers', () => {
   let res;
 
   beforeEach(() => {
+    require('../helpers/expectedConsole')('log', ['📝 Inserting question result', '✅ Question result inserted']);
+    require('../helpers/expectedConsole')('error', ['❌ No studentId', '❌ Missing required fields:']);
     req = {
       user: { id: 7 },
       body: {

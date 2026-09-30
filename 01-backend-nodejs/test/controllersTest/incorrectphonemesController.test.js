@@ -23,6 +23,7 @@ describe('incorrect phoneme controllers', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
+    require('../helpers/expectedConsole')('log', ['📝 Inserting incorrect phonemes', '✅ Incorrect phonemes inserted']);
     req = {
       user: { id: 7 },
       body: {

@@ -56,6 +56,8 @@ describe("scoreAudio", () => {
     };
 
     jest.clearAllMocks();
+    require('../helpers/expectedConsole')('log', ['🎤 scoreAudio request:', '📁 Creating temp directory:', '✅ Audio file saved:', '🧠 Getting Gemini feedback...', '✅ scoreAudio completed successfully, band:']);
+    require('../helpers/expectedConsole')('error', ['❌ scoreAudio:', 'Score audio failed']);
     audioSize.mockReturnValue(10);
     fs.promises = { unlink: jest.fn().mockResolvedValue() };
     getGeminiFeedback.mockResolvedValue('Good job');
@@ -131,8 +133,7 @@ describe("scoreAudio", () => {
     findMismatchedWords.mockReturnValue(["word1", "word2"]);
     calculateIELTSBand.mockReturnValue({
       band: 7,
-      totalScore: 28,
-      feedback: "Good job"
+      totalScore: '6.97'
     });
     analyzePhonemes.mockReturnValue({ some: "data" });
     vietnameseWordsAssessment.mockReturnValue(["đánh giá"]);
@@ -157,11 +158,19 @@ describe("scoreAudio", () => {
     });
     expect(vietnameseWordsAssessment).toHaveBeenCalledWith([{ word: "hello", correct: true }]);
     expect(countPhonemeErrors).toHaveBeenCalledWith([{ word: "hello", correct: true }]);
-    expect(fs.promises.unlink).toHaveBeenCalled();
+    const savedPath = saveBase64AudioToFile.mock.calls[0][1];
+    expect(path.dirname(savedPath)).toBe(path.resolve(__dirname, '../../temp'));
+    expect(fs.promises.unlink).toHaveBeenCalledTimes(1);
+    expect(fs.promises.unlink).toHaveBeenCalledWith(savedPath);
+    expect(getGeminiFeedback).toHaveBeenCalledWith({
+      ieltsResult: { band: 7, totalScore: '6.97' },
+      assessment: { AccuracyScore: 90, FluencyScore: 85, CompletenessScore: 80, PronScore: 88 },
+      transcriptText: 'transcript', miscueWords: ['word1', 'word2'],
+    });
 
     expect(res.json).toHaveBeenCalledWith({
       score: 7,
-      rawScore: 28,
+      rawScore: '6.97',
       feedback: "Good job",
       accuracyScore: 90,
       fluencyScore: 85,
@@ -209,5 +218,21 @@ describe("scoreAudio", () => {
     await scoreAudio(req, res);
     expect(res.status).toHaveBeenCalledWith(413);
     expect(saveBase64AudioToFile).not.toHaveBeenCalled();
+    expect(assessPronunciation).not.toHaveBeenCalled();
+    expect(fs.promises.unlink).not.toHaveBeenCalled();
+  });
+
+  it('removes the saved audio when feedback generation fails', async () => {
+    req.body = { audio: 'dGVzdA==', referenceText: 'hello', questionId: 1, index: 0 };
+    saveBase64AudioToFile.mockResolvedValue();
+    assessPronunciation.mockResolvedValue({ assessment: {}, transcriptText: 'hello', wordsAssessment: [] });
+    calculateIELTSBand.mockReturnValue({ band: 0, totalScore: '0.00' });
+    getGeminiFeedback.mockRejectedValue(new Error('private provider detail'));
+    await scoreAudio(req, res);
+    expect(fs.promises.unlink).toHaveBeenCalledTimes(1);
+    expect(fs.promises.unlink).toHaveBeenCalledWith(saveBase64AudioToFile.mock.calls[0][1]);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledTimes(1);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Không nhận dạng được giọng nói' });
   });
 });

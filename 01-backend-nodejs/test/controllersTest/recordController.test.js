@@ -4,6 +4,7 @@ describe('Kiểm thử hàm uploadRecording', () => {
   let req, res;
 
   beforeEach(() => {
+    require('../helpers/expectedConsole')('log', ['Đã nhận file:']);
     req = {};
     res = {
       status: jest.fn().mockReturnThis(),

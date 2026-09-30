@@ -10,6 +10,14 @@ jest.mock('microsoft-cognitiveservices-speech-sdk', () => ({
 const sdk = require('microsoft-cognitiveservices-speech-sdk');
 const { assessPronunciation } = require('../services/azurePronunciationService');
 
+beforeEach(() => {
+  require('fs').promises.access.mockResolvedValue();
+  require('fs').promises.readFile.mockResolvedValue(Buffer.from('wav'));
+  sdk.SpeechConfig.fromSubscription.mockReturnValue({});
+  sdk.PronunciationAssessmentConfig.fromJSON.mockReturnValue({ applyTo: jest.fn() });
+  sdk.AudioConfig.fromWavFileInput.mockReturnValue({});
+});
+
 afterEach(() => jest.useRealTimers());
 
 test('Azure recognition deadline rejects and closes recognizer once', async () => {
@@ -22,6 +30,7 @@ test('Azure recognition deadline rejects and closes recognizer once', async () =
   jest.advanceTimersByTime(20000);
   await expect(pending).rejects.toThrow('Recognition deadline exceeded');
   expect(recognizer.close).toHaveBeenCalledTimes(1);
+  expect(jest.getTimerCount()).toBe(0);
   // Late SDK callbacks cannot change the settled result.
   expect(() => recognizer.recognizeOnceAsync.mock.calls[0][0]({})).not.toThrow();
 });

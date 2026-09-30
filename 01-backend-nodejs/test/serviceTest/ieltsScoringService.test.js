@@ -9,9 +9,7 @@ describe('calculateIELTSBand', () => {
             PronScore: 92,
         };
         const result = calculateIELTSBand(input);
-        expect(result.band).toBeGreaterThanOrEqual(8);
-        expect(result.totalScore).toBeDefined();
-        expect(result.feedback).toMatch(/Lưu loát|Phát âm|Lời khuyên/);
+        expect(result).toEqual({ band: 8.5, totalScore: '8.49' });
     });
 
     test('Trường hợp điểm trung bình (65-75)', () => {
@@ -22,9 +20,7 @@ describe('calculateIELTSBand', () => {
             PronScore: 68,
         };
         const result = calculateIELTSBand(input);
-        expect(result.band).toBeGreaterThanOrEqual(6);
-        expect(result.band).toBeLessThanOrEqual(7);
-        expect(result.feedback).toContain('Lưu loát và mạch lạc');
+        expect(result).toEqual({ band: 6.5, totalScore: '6.27' });
     });
 
     test('Trường hợp điểm thấp (30-40)', () => {
@@ -35,15 +31,22 @@ describe('calculateIELTSBand', () => {
             PronScore: 38,
         };
         const result = calculateIELTSBand(input);
-        expect(result.band).toBeLessThanOrEqual(5);
-        expect(result.feedback).toMatch(/Lỗi phát âm|ngắt quãng/);
+        expect(result).toEqual({ band: 3, totalScore: '3.23' });
     });
 
     test('Trường hợp không có điểm nào (tất cả là 0)', () => {
         const input = {};
         const result = calculateIELTSBand(input);
-        expect(result.band).toBe(0);
-        expect(result.totalScore).toBe("0.00");
-        expect(result.feedback).toMatch(/Lỗi phát âm|cấu trúc đơn giản/);
+        expect(result).toEqual({ band: 0, totalScore: '0.00' });
+    });
+
+    // Numeric scoring is separate from the Gemini feedback provider.
+    test.each([
+        [0, 0, '0.00'], [69, 6, '6.21'], [70, 6.5, '6.30'],
+        [74, 6.5, '6.66'], [75, 7, '6.75'], [100, 9, '9.00'],
+    ])('uniform score %s rounds to band %s', (score, band, totalScore) => {
+        expect(calculateIELTSBand({
+            AccuracyScore: score, FluencyScore: score, CompletenessScore: score, PronScore: score,
+        })).toEqual({ band, totalScore });
     });
 });

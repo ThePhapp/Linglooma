@@ -16,6 +16,8 @@ describe('lesson result controllers', () => {
   let res;
 
   beforeEach(() => {
+    require('../helpers/expectedConsole')('log', ['📝 Inserting lesson result', '✅ Lesson result inserted']);
+    require('../helpers/expectedConsole')('error', ['❌ No studentId', '❌ Missing parameters:']);
     req = {
       user: { id: 7 },
       body: {},

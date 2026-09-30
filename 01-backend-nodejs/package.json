@@ -4,7 +4,7 @@
   "description": "jwt nodejs react",
   "main": "server.js",
   "scripts": {
-    "test": "npx jest",
+    "test": "jest",
     "start": "node server.js",
     "dev": "nodemon --exec babel-node server.js"
   },

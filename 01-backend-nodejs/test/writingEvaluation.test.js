@@ -51,13 +51,14 @@ function respondWith(text, candidateFields = {}) {
   });
 }
 
-beforeAll(() => {
-  jest.spyOn(console, 'log').mockImplementation(() => {});
-  jest.spyOn(console, 'error').mockImplementation(() => {});
-});
-
 beforeEach(() => {
   jest.resetAllMocks();
+  require('./helpers/expectedConsole')('log', [
+    'Student 20 submitting essay for prompt 10', '🤖 Calling Gemini API for essay evaluation...',
+    'Task Type:', 'Word Count:', 'Essay length:', '✅ Got response from Gemini, length:',
+    '📝 Parsing JSON response...', '✅ Essay evaluated successfully!', 'Overall band:',
+  ]);
+  require('./helpers/expectedConsole')('error', ['Error submitting writing']);
   service.evaluateWritingWithGemini.mockImplementation(actualService.evaluateWritingWithGemini);
   respondWith(JSON.stringify(validEvaluation()));
 });
