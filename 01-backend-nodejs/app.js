@@ -1,6 +1,7 @@
 // server.js
 const express = require("express");
 const cors = require("cors");
+const { createCorsOptions } = require('./configs/cors');
 const app = express();
 require("dotenv").config();
 
@@ -9,25 +10,9 @@ require("dotenv").config();
 app.use(express.json({ limit: "8mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));
 
-// CORS setup
-const allowedOrigins = [
-  "http://localhost",
-  "http://localhost:4028",
-  "https://linglooma.vercel.app",
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // Postman hoặc server internal
-    if (allowedOrigins.includes(origin)) callback(null, true);
-    else callback(new Error("Not allowed by CORS"));
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  optionsSuccessStatus: 200,
-};
-app.use(cors(corsOptions));
+// ALLOWED_ORIGINS is a comma-separated deployment allowlist. Local defaults
+// apply only when it is unset, so a production value replaces them entirely.
+app.use(cors(createCorsOptions()));
 
 // Logging middleware để debug
 app.use((req, res, next) => {

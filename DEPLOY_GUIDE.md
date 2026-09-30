@@ -20,9 +20,10 @@ GEMINI_API_KEY=<your key>
 AZURE_SPEECH_KEY=<your key>
 AZURE_SPEECH_REGION=<your region>
 PORT=3000
+ALLOWED_ORIGINS=https://your-frontend.example.com
 ```
 
-Do not expose provider keys or `JWT_SECRET` to frontend variables. Configure `ALLOWED_ORIGINS` only after adding environment-driven CORS support; the current allowed production origin is defined in `app.js`.
+Do not expose provider keys or `JWT_SECRET` to frontend variables. `ALLOWED_ORIGINS` accepts a comma-separated list and replaces the local defaults when set.
 
 Before deploying application code, back up the database and apply the ordered forward migrations from [RUN_MIGRATION.md](02-database-postgresql/RUN_MIGRATION.md). Never run `linglooma_update.sql` against an existing hosted database.
 
