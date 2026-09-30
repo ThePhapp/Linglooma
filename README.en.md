@@ -1,265 +1,57 @@
-# 🌸 Linglooma IELTS - AI-Powered IELTS Learning Platform
+# Linglooma IELTS
 
-<div align="center">
+[Main README](README.md) · [日本語](README.ja.md) · [Frontend guide](00-frontend-react/README.md)
 
-**English** | [日本語](./README.ja.md)
+Linglooma provides IELTS speaking, writing, reading, and browser-based listening practice. The stack is React 19, Vite 6, Tailwind CSS 3, Node.js 22, Express 5, and PostgreSQL 15 in Docker Compose. Azure Speech assesses speaking; Gemini evaluates writing and powers text chat. The app stores account-specific speaking, writing, and reading submissions. Listening exercise progress is not persisted. The analytics page reports recorded speaking results, not a combined four-skill dashboard.
 
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-22.16-339933?logo=node.js)](https://nodejs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-Powered-3ECF8E?logo=supabase)](https://supabase.com/)
+## Local development (PowerShell)
 
-*A comprehensive IELTS preparation platform with AI-powered evaluation for Speaking, Writing, Reading, and Listening skills*
+Install Node.js 22, npm, and Docker Compose. Set a local database password and start PostgreSQL from the repository root:
 
-[Live Demo](#) • [Documentation](./docs) • [Report Bug](https://github.com/ThePhapp/Linglooma-IELTS/issues)
-
-</div>
-
----
-
-## 📖 Table of Contents
-
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [Tech Stack](#-tech-stack)
-- [Getting Started](#-getting-started)
-- [AI Features](#-ai-features)
-- [Multilingual Support](#-multilingual-support)
-- [Deployment](#-deployment)
-- [Team](#-team)
-
----
-
-## 🎯 Overview
-
-**Linglooma IELTS** is an advanced web-based learning platform designed to help students prepare for the IELTS exam through AI-powered practice and real-time feedback. The platform covers all four IELTS skills (Speaking, Writing, Reading, Listening) and provides personalized learning paths based on student performance.
-
-### 🌟 Why Linglooma?
-
-- **AI-Powered Evaluation**: Instant feedback using Azure Speech Services and Gemini AI
-- **Comprehensive Practice**: All 4 IELTS skills in one platform
-- **Smart Analytics**: Visual dashboards tracking progress and weak points
-- **Multilingual Interface**: Supports English, Vietnamese, and Japanese
-- **Modern UX**: Beautiful, responsive design with smooth animations
-- **Flexible Deployment**: Works with local PostgreSQL or Supabase
-
----
-
-## 🚀 Key Features
-
-### 🗣️ Speaking Module
-- Real-time audio recording and Azure Speech-to-Text evaluation
-- IELTS Band Scoring (1-9) with pronunciation, fluency, completeness analysis
-- Phoneme-level feedback identifying mispronounced sounds
-- Topic categories: Technology, Environment, Education, Health, Travel
-- Complete speaking history with detailed analytics
-
-### ✍️ Writing Module
-- Task 1 & Task 2 support with AI essay evaluation
-- Gemini AI analyzes: Task Achievement, Coherence, Lexical Resource, Grammar
-- Grammar error detection with corrections and explanations
-- Vocabulary enhancement suggestions
-- Real-time word counter and timer
-
-### 📖 Reading Module
-- Multiple question types: Multiple Choice, True/False/Not Given, Matching, Fill-in-blanks
-- Instant scoring with correct/incorrect feedback
-- Diverse passage library (Climate Change, AI, Education, etc.)
-- Difficulty levels: Easy, Medium, Hard, Academic
-- Progress tracking and performance trends
-
-### 🎧 Listening Module
-- Audio playback with controls (play, pause, speed adjustment)
-- Section-based tests matching IELTS structure (Parts 1-4)
-- Multiple accents: British, American, Australian
-- Transcript review after submission
-
-### 💬 AI Voice Chat
-- Conversational AI powered by Gemini
-- Real-time Speech-to-Text and Text-to-Speech
-- IELTS practice topics with structured conversations
-- Chat history and AI feedback
-
-### 📊 Student Dashboard
-- Performance overview with visual charts
-- Band score trends and improvement tracking
-- Weak points analysis
-- Study streak and goal setting
-- Recent activity quick access
-
-### 🌐 Multilingual Interface
-- 3 Languages: English, Vietnamese (Tiếng Việt), Japanese (日本語)
-- Dynamic language switching without reload
-- Persistent preference saved in localStorage
-- Comprehensive UI translation
-
----
-
-## ⚙️ Tech Stack
-
-### Frontend
-- **React 19** - UI framework
-- **Vite 6** - Build tool
-- **Tailwind CSS 3** - Styling
-- **React Router 7** - Routing
-- **Axios** - HTTP client
-- **Lucide React** - Icons
-
-### Backend
-- **Node.js 22.16** - Runtime
-- **Express.js 5.1** - Web framework
-- **PostgreSQL 16+** - Database
-- **Supabase** - Database hosting
-- **JWT** - Authentication
-- **Bcrypt** - Password hashing
-
-### AI Services
-- **Azure Speech Services** - Speech-to-Text, pronunciation assessment
-- **Google Gemini AI** - Essay evaluation, chat AI, feedback generation
-
----
-
-## 🛠 Getting Started
-
-### Prerequisites
-- Node.js 22.16+
-- PostgreSQL 16+ or Supabase account
-- Azure Speech API Key
-- Google Gemini API Key
-
-### Quick Start
-
-#### 1️⃣ Clone Repository
-```bash
-git clone https://github.com/ThePhapp/Linglooma-IELTS.git
-cd Linglooma-IELTS
+```powershell
+$env:DB_PASSWORD = "<choose a local database password>"
+docker compose up -d db
+Copy-Item 01-backend-nodejs/.env.local.example 01-backend-nodejs/.env
 ```
 
-#### 2️⃣ Setup Backend
-```bash
+Edit `01-backend-nodejs/.env`: set `DB_PASSWORD` to the same value, choose a private `JWT_SECRET`, and add your own `GEMINI_API_KEY` and `AZURE_SPEECH_KEY` if using AI features. Do not commit `.env`. For a hosted database, set `DATABASE_URL` instead of the local `DB_*` connection fields.
+
+Start the API in a terminal:
+
+```powershell
 cd 01-backend-nodejs
-npm install
-
-# Copy and configure .env
-copy .env.example .env
-# Add: DATABASE_URL, GEMINI_API_KEY, AZURE_SPEECH_KEY, JWT_SECRET
-
-npm start
-# Server runs on http://localhost:3000
-```
-
-#### 3️⃣ Setup Frontend
-```bash
-cd 00-frontend-react
-npm install
-
-# Copy and configure .env
-copy .env.example .env
-# Add: VITE_BACKEND_URL=http://localhost:3000
-
+npm ci
 npm run dev
-# Frontend runs on http://localhost:5173
 ```
 
-#### 4️⃣ Database Setup (Supabase)
-1. Create account at [supabase.com](https://supabase.com)
-2. Create new project
-3. Run SQL migration: `02-database-postgresql/linglooma_update.sql`
-4. Copy connection string and add to `.env`
+Start the frontend in another terminal from the repository root:
 
-📖 **Full Guide**: [SUPABASE_SETUP_GUIDE.md](./SUPABASE_SETUP_GUIDE.md)
-
----
-
-## 🤖 AI Features
-
-### Speaking Evaluation (Azure)
-```javascript
-✅ Accuracy Score (0-100): Overall pronunciation
-✅ Fluency Score (0-100): Speech smoothness
-✅ Completeness Score (0-100): Coverage of reference text
-✅ Prosody Score (0-100): Intonation patterns
-✅ Phoneme Analysis: Specific mispronounced sounds
-✅ IELTS Band Conversion (1-9)
+```powershell
+cd 00-frontend-react
+Copy-Item .env.example .env
+npm ci
+npm run dev
 ```
 
-### Writing Evaluation (Gemini AI)
-```javascript
-✅ Task Achievement (1-9)
-✅ Coherence & Cohesion (1-9)
-✅ Lexical Resource (1-9)
-✅ Grammatical Range & Accuracy (1-9)
-✅ Overall Band Score
-✅ Grammar Errors with corrections
-✅ Vocabulary Suggestions
+The frontend runs at <http://localhost:4028>, the API at <http://localhost:3000>, and Compose exposes PostgreSQL 15 on host port **5433** (port 5432 inside Docker). The Vite development server proxies `/api` to the local API. The `.env.example` frontend file sets `VITE_BACKEND_URL` to that same local API. Sign in to obtain a JWT before calling chat, submission, or private history/detail endpoints; public practice catalog reads remain available without one.
+
+## Schema and Docker
+
+For a fresh Compose database volume, PostgreSQL initializes from `02-database-postgresql/linglooma_update.sql`. This script **drops tables and resets development data**. Never run it against an existing database or use it as an upgrade. Existing databases must use the ordered, additive forward migration entry point in [RUN_MIGRATION.md](02-database-postgresql/RUN_MIGRATION.md). From `02-database-postgresql`, run `./run-migration.bat` on Windows or `pwsh -File ./run-migration.ps1`; follow that guide for connection variables and backups.
+
+For all services in Docker, copy `01-backend-nodejs/.env.docker.example` to `01-backend-nodejs/.env`, supply your own secrets, set the root-shell `DB_PASSWORD` to the same database password, and run `docker compose up --build`. The frontend is then at <http://localhost/> and the API at <http://localhost:3000>.
+
+## Verification
+
+```powershell
+cd 01-backend-nodejs
+npm test
 ```
 
----
-
-## 🌐 Multilingual Support
-
-Supported: **English 🇬🇧 | Vietnamese 🇻🇳 | Japanese 🇯🇵**
-
-```jsx
-// Usage in components:
-import { useLanguage } from '@/i18n';
-
-const MyComponent = () => {
-  const { t, setLang } = useLanguage();
-  
-  return <h1>{t('welcome')}</h1>;
-};
+```powershell
+cd 00-frontend-react
+npm run build
+npx cypress run
 ```
 
-Add translations in `src/i18n/index.jsx`
-
----
-
-## 🚀 Deployment
-
-### Backend (Render.com)
-1. Connect GitHub repository
-2. Set environment variables
-3. Build: `npm install`
-4. Start: `node server.js`
-
-### Frontend (Vercel/Netlify)
-1. Import project
-2. Set `VITE_BACKEND_URL`
-3. Build: `npm run build`
-4. Output: `dist`
-
----
-
-## 👨‍💻 Team
-
-Developed by **UET - VNU Hanoi** students:
-
-- **Trần Thế Pháp** - Team Lead, Full-stack Developer
-- **Bùi Trung Thanh** - Frontend Developer
-- **Mai Tấn Trung** - Backend Developer
-- **Nguyễn Thành Minh** - AI Integration
-- **Phạm Thế Hùng** - Database & DevOps
-
----
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file
-
----
-
-## 📞 Contact
-
-- **Email**: support@linglooma.com
-- **GitHub Issues**: [Report a bug](https://github.com/ThePhapp/Linglooma-IELTS/issues)
-
----
-
-<div align="center">
-
-**Made with ❤️ by UET - VNU Hanoi students**
-
-⭐ **Star this repo if you find it helpful!**
-
-</div>
+`npm run build` writes to `00-frontend-react/build`. Cypress needs a supported browser and a running app for browser tests.

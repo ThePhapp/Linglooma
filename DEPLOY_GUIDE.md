@@ -1,261 +1,63 @@
-# 🚀 Quick Deploy Guide - Linglooma IELTS
+# Deployment contract
 
-## 📋 Table of Contents
-1. [Prerequisites](#prerequisites)
-2. [Deploy Backend to Render](#deploy-backend-to-render)
-3. [Deploy Frontend to Vercel](#deploy-frontend-to-vercel)
-4. [Environment Variables](#environment-variables)
-5. [Post-Deployment Checklist](#post-deployment-checklist)
+Provider dashboards change over time, so configure any host using these repository-level requirements rather than hard-coded UI steps.
 
----
+## Backend
 
-## Prerequisites
+- Root directory: `01-backend-nodejs`
+- Runtime: Node.js 22
+- Install: `npm ci`
+- Start: `npm start`
+- Health check: `/api/health`
 
-> If real credentials were previously committed, rotate them immediately. Removing them from the current files does not invalidate exposed credentials.
+Required secrets/configuration:
 
-✅ **Before you start:**
-- [ ] Supabase account with database created ([Setup Guide](./SUPABASE_SETUP_GUIDE.md))
-- [ ] Database migration completed (11 tables created)
-- [ ] GitHub repository pushed with latest code
-- [ ] All API keys ready (Gemini, Azure Speech)
-
----
-
-## Deploy Backend to Render
-
-### Step 1: Create Web Service
-
-1. Go to https://render.com
-2. Sign in with GitHub
-3. Click **"New +"** → **"Web Service"**
-4. Select repository: `Linglooma-IELTS`
-5. Click **"Connect"**
-
-### Step 2: Configure Service
-
-| Setting | Value |
-|---------|-------|
-| **Name** | `linglooma-backend` |
-| **Region** | `Singapore` |
-| **Branch** | `master` |
-| **Root Directory** | `01-backend-nodejs` |
-| **Runtime** | `Node` |
-| **Build Command** | `npm install` |
-| **Start Command** | `npm start` |
-| **Instance Type** | `Free` |
-
-### Step 3: Add Environment Variables
-
-Click **"Advanced"** → **"Add Environment Variable"**
-
-**Required Variables:**
-
-```properties
-# Database (from Supabase)
-DATABASE_URL=postgresql://postgres.xxxxx:[password]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
-
-# JWT Authentication
-JWT_SECRET=replace_with_a_long_random_secret
+```dotenv
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+JWT_SECRET=<long random secret>
 JWT_EXPIRE=1d
-
-# Gemini AI
-GEMINI_API_KEY=your-gemini-api-key-here
-
-# Azure Speech
-AZURE_SPEECH_KEY=your-azure-speech-key-here
-AZURE_SPEECH_REGION=eastasia
-
-# Server
+GEMINI_API_KEY=<your key>
+AZURE_SPEECH_KEY=<your key>
+AZURE_SPEECH_REGION=<your region>
 PORT=3000
-NODE_VERSION=22.16.0
 ```
 
-### Step 4: Deploy
+Do not expose provider keys or `JWT_SECRET` to frontend variables. Configure `ALLOWED_ORIGINS` only after adding environment-driven CORS support; the current allowed production origin is defined in `app.js`.
 
-1. Click **"Create Web Service"**
-2. Wait 3-5 minutes for deployment
-3. Copy your backend URL: `https://linglooma-backend.onrender.com`
+Before deploying application code, back up the database and apply the ordered forward migrations from [RUN_MIGRATION.md](02-database-postgresql/RUN_MIGRATION.md). Never run `linglooma_update.sql` against an existing hosted database.
 
-### Step 5: Test Backend
+## Frontend
 
-```bash
-# Test health check
-curl https://linglooma-backend.onrender.com/
+- Root directory: `00-frontend-react`
+- Runtime: Node.js 22
+- Install: `npm ci`
+- Build: `npm run build`
+- Output directory: `build`
 
-# Test database connection (check logs)
-# Should see: ✅ Connected to PostgreSQL database successfully!
-#            Source: Supabase/Cloud (DATABASE_URL)
+Set only the public API origin:
+
+```dotenv
+VITE_BACKEND_URL=https://your-api.example.com
 ```
 
----
+The host must serve the SPA entry point for unknown client-side routes. Build locally before deployment and verify login, a public catalog read, an authenticated chat request, and one private history request.
 
-## Deploy Frontend to Vercel
+## Release checks
 
-### Step 1: Prepare Frontend
-
-1. Update API endpoint in frontend code
-2. Edit `00-frontend-react/src/utils/axios.customize.js`:
-
-```javascript
-const instance = axios.create({
-  baseURL: 'https://linglooma-backend.onrender.com' // Your Render URL
-});
-```
-
-### Step 2: Deploy to Vercel
-
-1. Go to https://vercel.com
-2. Sign in with GitHub
-3. Click **"Add New"** → **"Project"**
-4. Import `Linglooma-IELTS` repository
-5. Configure:
-
-| Setting | Value |
-|---------|-------|
-| **Framework Preset** | `Vite` |
-| **Root Directory** | `00-frontend-react` |
-| **Build Command** | `npm run build` |
-| **Output Directory** | `dist` |
-| **Install Command** | `npm install` |
-
-6. Click **"Deploy"**
-7. Wait 2-3 minutes
-8. Your frontend will be live: `https://linglooma-ielts.vercel.app`
-
----
-
-## Environment Variables
-
-### Backend (.env)
-
-```properties
-# Use DATABASE_URL for production
-DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres
-
-JWT_SECRET=replace_with_a_long_random_secret
-JWT_EXPIRE=1d
-GEMINI_API_KEY=your_gemini_api_key_here
-AZURE_SPEECH_KEY=your_azure_speech_key_here
-AZURE_SPEECH_REGION=eastasia
-PORT=3000
-NODE_VERSION=22.16.0
-```
-
-### Frontend
-
-```javascript
-// src/utils/axios.customize.js
-const instance = axios.create({
-  baseURL: 'https://linglooma-backend.onrender.com'
-});
-```
-
----
-
-## Post-Deployment Checklist
-
-### Backend Verification
-
-- [ ] Backend URL accessible: `https://linglooma-backend.onrender.com`
-- [ ] Health check returns response
-- [ ] Logs show: `✅ Connected to PostgreSQL database successfully!`
-- [ ] Logs show: `Source: Supabase/Cloud (DATABASE_URL)`
-- [ ] API endpoints respond correctly
-
-### Frontend Verification
-
-- [ ] Frontend URL accessible: `https://linglooma-ielts.vercel.app`
-- [ ] Homepage loads with modern gradient design
-- [ ] Can navigate to Login/Register pages
-- [ ] Login works and connects to backend
-- [ ] Can access dashboard after login
-
-### Database Verification
-
-Login to Supabase and run:
-
-```sql
--- Check tables exist
-SELECT tablename FROM pg_tables WHERE schemaname = 'public';
--- Should show 11 tables
-
--- Check sample data
-SELECT COUNT(*) FROM users;     -- Should be 3
-SELECT COUNT(*) FROM lesson;    -- Should be 6
-SELECT COUNT(*) FROM question;  -- Should be 54
-```
-
-### Common Issues
-
-#### ❌ "require is not defined"
-**Solution**: Already fixed! All ES Modules converted to CommonJS.
-
-#### ❌ "Database connection failed"
-**Solution**: 
-1. Check DATABASE_URL in Render environment variables
-2. Verify password is correct (no spaces, special chars encoded)
-3. Use Pooler connection (port 6543), not Direct (5432)
-
-#### ❌ "CORS error on frontend"
-**Solution**: Add your Vercel domain to CORS whitelist in `app.js`:
-```javascript
-app.use(cors({
-  origin: [
-    'http://localhost:4028',
-    'https://linglooma-ielts.vercel.app'  // Add this
-  ]
-}));
-```
-
-#### ❌ Render "Build failed"
-**Solution**:
-1. Check `package.json` has correct `start` script: `"start": "node server.js"`
-2. Set `NODE_VERSION=22.16.0` in environment variables
-3. Make sure `Root Directory` is `01-backend-nodejs`
-
----
-
-## 🎯 Quick Commands
-
-### Local Development
-
-```bash
-# Backend (with local PostgreSQL)
+```powershell
 cd 01-backend-nodejs
-use-local-db.bat
-npm run dev
+npm test
+```
 
-# Backend (with Supabase)
-cd 01-backend-nodejs
-use-supabase-db.bat
-npm run dev
-
-# Frontend
+```powershell
 cd 00-frontend-react
-npm run dev
+npm run build
 ```
 
-### Production URLs
+Also verify:
 
-```bash
-# Backend API
-https://linglooma-backend.onrender.com
-
-# Frontend App
-https://linglooma-ielts.vercel.app
-
-# Supabase Dashboard
-https://supabase.com/dashboard/project/[your-project-id]
-```
-
----
-
-## 📚 Additional Resources
-
-- [Supabase Setup Guide](./SUPABASE_SETUP_GUIDE.md) - Detailed Supabase configuration
-- [Render Documentation](https://render.com/docs) - Deploy Node.js apps
-- [Vercel Documentation](https://vercel.com/docs) - Deploy React apps
-
----
-
-**Made with ❤️ by Linglooma Team**
+- `/api/health` reports database connectivity without exposing an internal error.
+- Missing/invalid JWTs receive `401` on private routes.
+- Provider timeouts fail cleanly and temporary audio files are removed.
+- Forward migrations are recorded in `schema_migrations` with unchanged hashes.
+- Formerly committed Gemini, Azure, JWT, and database credentials have been rotated.

@@ -1,217 +1,44 @@
-# 🌸 Linglooma IELTS - AI搭載IELTS学習プラットフォーム
+# Linglooma IELTS
 
-<div align="center">
+[English](README.en.md) · [メイン README](README.md) · [フロントエンド](00-frontend-react/README.md)
 
-[English](./README.md) | **日本語**
+Linglooma は IELTS の Speaking、Writing、Reading とブラウザー上の Listening 練習を提供します。構成は React 19、Vite 6、Tailwind CSS 3、Node.js 22、Express 5、Docker Compose 上の PostgreSQL 15 です。Speaking の評価には Azure Speech、Writing の評価とテキストチャットには Gemini を使用します。Speaking、Writing、Reading の提出結果はアカウントごとに保存されます。Listening の進捗は保存されません。分析画面は保存済みの Speaking 結果を表示します。
 
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-22.16-339933?logo=node.js)](https://nodejs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-Powered-3ECF8E?logo=supabase)](https://supabase.com/)
+## ローカル開発（PowerShell）
 
-*スピーキング、ライティング、リーディング、リスニングのAI評価機能を備えた総合的なIELTS準備プラットフォーム*
+Node.js 22、npm、Docker Compose を用意し、リポジトリのルートで実行します。
 
-</div>
-
----
-
-## 📖 目次
-
-- [概要](#-概要)
-- [主な機能](#-主な機能)
-- [技術スタック](#-技術スタック)
-- [始め方](#-始め方)
-- [AI機能](#-ai機能)
-- [デプロイメント](#-デプロイメント)
-
----
-
-## 🎯 概要
-
-**Linglooma IELTS**は、AI搭載の練習とリアルタイムフィードバックを通じて、学生がIELTS試験の準備をするのを支援する高度なWebベースの学習プラットフォームです。このプラットフォームは、IELTSの4つのスキル（スピーキング、ライティング、リーディング、リスニング）すべてをカバーし、学生のパフォーマンスに基づいたパーソナライズされた学習パスを提供します。
-
-### 🌟 Lingloomaの特徴
-
-- **AI搭載評価**: Azure Speech ServicesとGemini AIによる即時フィードバック
-- **包括的な練習**: 1つのプラットフォームで4つのIELTSスキルすべてを練習
-- **スマート分析**: 進捗状況と弱点を追跡するビジュアルダッシュボード
-- **多言語インターフェース**: 英語、ベトナム語、日本語をサポート
-- **モダンなUX**: スムーズなアニメーションを備えた美しいレスポンシブデザイン
-- **柔軟なデプロイメント**: ローカルPostgreSQLまたはSupabaseで動作
-
----
-
-## 🚀 主な機能
-
-### 🗣️ スピーキングモジュール
-- リアルタイム音声録音とAzure Speech-to-Text評価
-- IELTSバンドスコア（1-9）と発音、流暢さ、完全性の分析
-- 誤って発音された音を特定する音素レベルのフィードバック
-- トピックカテゴリー：テクノロジー、環境、教育、健康、旅行
-- 詳細な分析を含む完全なスピーキング履歴
-
-### ✍️ ライティングモジュール
-- Task 1とTask 2のサポートとAIエッセイ評価
-- Gemini AIによる分析：Task Achievement、Coherence、Lexical Resource、Grammar
-- 訂正と説明付きの文法エラー検出
-- 語彙強化の提案
-- リアルタイムの単語カウンターとタイマー
-
-### 📖 リーディングモジュール
-- 複数の質問タイプ：多肢選択、True/False/Not Given、マッチング、空欄補充
-- 正解/不正解フィードバック付きの即座の採点
-- 多様なパッセージライブラリ（気候変動、AI、教育など）
-- 難易度レベル：Easy、Medium、Hard、Academic
-- 進捗追跡とパフォーマンストレンド
-
-### 🎧 リスニングモジュール
-- コントロール付きオーディオ再生（再生、一時停止、速度調整）
-- IELTSの構造に合わせたセクションベースのテスト（Part 1-4）
-- 複数のアクセント：イギリス英語、アメリカ英語、オーストラリア英語
-- 提出後のトランスクリプトレビュー
-
-### 💬ボイスチャット
-- Gemini搭載の会話型AI
-- リアルタイムのSpeech-to-TextとText-to-Speech
-- 構造化された会話を含むIELTS練習トピック
-- チャット履歴とAIフィードバック
-
-### 📊 学生ダッシュボード
-- ビジュアルチャート付きのパフォーマンス概要
-- バンドスコアのトレンドと改善追跡
-- 弱点分析
-- 学習ストリークと目標設定
-- 最近のアクティビティへのクイックアクセス
----
-
-## ⚙️ 技術スタック
-
-### フロントエンド
-- **React 19** - UIフレームワーク
-- **Vite 6** - ビルドツール
-- **Tailwind CSS 3** - スタイリング
-- **React Router 7** - ルーティング
-- **Axios** - HTTPクライアント
-- **Lucide React** - アイコン
-
-### バックエンド
-- **Node.js 22.16** - ランタイム
-- **Express.js 5.1** - Webフレームワーク
-- **PostgreSQL 16+** - データベース
-- **Supabase** - データベースホスティング
-- **JWT** - 認証
-- **Bcrypt** - パスワードハッシング
-
-### AIサービス
-- **Azure Speech Services** - Speech-to-Text、発音評価
-- **Google Gemini AI** - エッセイ評価、チャットAI、フィードバック生成
-
----
-
-## 🛠 始め方
-
-### 前提条件
-- Node.js 22.16以上
-- PostgreSQL 16以上またはSupabaseアカウント
-- Azure Speech APIキー
-- Google Gemini APIキー
-
-### クイックスタート
-
-#### 1️⃣ リポジトリのクローン
-```bash
-git clone https://github.com/ThePhapp/Linglooma-IELTS.git
-cd Linglooma-IELTS
+```powershell
+$env:DB_PASSWORD = "<ローカル用のパスワード>"
+docker compose up -d db
+Copy-Item 01-backend-nodejs/.env.local.example 01-backend-nodejs/.env
 ```
 
-#### 2️⃣ バックエンドのセットアップ
-```bash
+コピーした `01-backend-nodejs/.env` の `DB_PASSWORD` を同じ値にし、非公開の `JWT_SECRET` を設定してください。AI 機能には自身の `GEMINI_API_KEY` と `AZURE_SPEECH_KEY` が必要です。`.env` をコミットしないでください。外部の PostgreSQL を使う場合は `DATABASE_URL` を設定します。
+
+API とフロントエンドを別々のターミナルで起動します。
+
+```powershell
 cd 01-backend-nodejs
-npm install
-
-# .envをコピーして設定
-copy .env.example .env
-# 追加: DATABASE_URL、GEMINI_API_KEY、AZURE_SPEECH_KEY、JWT_SECRET
-
-npm start
-# サーバーは http://localhost:3000 で起動
-```
-
-#### 3️⃣ フロントエンドのセットアップ
-```bash
-cd 00-frontend-react
-npm install
-
-# .envをコピーして設定
-copy .env.example .env
-# 追加: VITE_BACKEND_URL=http://localhost:3000
-
+npm ci
 npm run dev
-# フロントエンドは http://localhost:5173 で起動
 ```
 
-#### 4️⃣ データベースセットアップ（Supabase）
-1. [supabase.com](https://supabase.com)でアカウント作成
-2. 新しいプロジェクトを作成
-3. SQLマイグレーションを実行: `02-database-postgresql/linglooma_update.sql`
-4. 接続文字列をコピーして`.env`に追加
-
-📖 **完全ガイド**: [SUPABASE_SETUP_GUIDE.md](./SUPABASE_SETUP_GUIDE.md)
-
----
-
-## 🤖 AI機能
-
-### スピーキング評価（Azure）
-```javascript
-✅ 正確性スコア（0-100）：全体的な発音
-✅ 流暢さスコア（0-100）：スピーチのスムーズさ
-✅ 完全性スコア（0-100）：参照テキストのカバレッジ
-✅ プロソディスコア（0-100）：イントネーションパターン
-✅ 音素分析：特定の誤発音音
-✅ IELTSバンド変換（1-9）
+```powershell
+cd 00-frontend-react
+Copy-Item .env.example .env
+npm ci
+npm run dev
 ```
 
-### ライティング評価（Gemini AI）
-```javascript
-✅ Task Achievement（1-9）
-✅ Coherence & Cohesion（1-9）
-✅ Lexical Resource（1-9）
-✅ Grammatical Range & Accuracy（1-9）
-✅ 総合バンドスコア
-✅ 訂正付き文法エラー
-✅ 語彙提案
-```
+フロントエンド: <http://localhost:4028>、API: <http://localhost:3000>。Compose の PostgreSQL 15 はホストの **5433** 番ポート（コンテナー内では 5432）を使います。Vite は `/api` をローカル API に転送します。チャット、提出、非公開の履歴・詳細 API にはログインで取得した JWT が必要です。
 
----
+## データベースと Docker
 
-## 🚀 デプロイメント
+新しい Compose データボリュームは `02-database-postgresql/linglooma_update.sql` で初期化されます。この SQL はテーブルを削除する**開発用の破壊的リセット**です。既存データの更新には使わず、[前進マイグレーション手順](02-database-postgresql/RUN_MIGRATION.md) の `run-migration.bat` または `run-migration.ps1` を使ってください。
 
-### バックエンド（Render.com）
-1. GitHubリポジトリを接続
-2. 環境変数を設定
-3. ビルド: `npm install`
-4. 開始: `node server.js`
+全サービスを Docker で起動する場合は `01-backend-nodejs/.env.docker.example` を `01-backend-nodejs/.env` にコピーして秘密情報を設定し、ルートのシェルでも同じ `DB_PASSWORD` を設定して `docker compose up --build` を実行します。フロントエンドは <http://localhost/> で公開されます。
 
-### フロントエンド（Vercel/Netlify）
-1. プロジェクトをインポート
-2. `VITE_BACKEND_URL`を設定
-3. ビルド: `npm run build`
-4. 出力: `dist`
+## 確認
 
----
-
-
-## 📄 ライセンス
-
-MITライセンス - [LICENSE](LICENSE)ファイルを参照
-
----
-
-<div align="center">
-
-**UET - VNU Hanoiの学生によって❤️を込めて作成**
-
-⭐ **このリポジトリが役に立ったらスターをお願いします！**
-
-</div>
+バックエンドの `01-backend-nodejs` で `npm test`、フロントエンドの `00-frontend-react` で `npm run build` を実行します。ブラウザーテストはアプリ起動後に `npx cypress run` を実行します（対応ブラウザーが必要です）。

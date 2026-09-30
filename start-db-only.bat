@@ -7,12 +7,8 @@ echo.
 REM Change to script directory (project root)
 cd /d "%~dp0"
 
-echo Stopping all containers...
-docker-compose down
-
-echo.
 echo Starting database container only...
-docker-compose up -d db
+docker compose up -d db
 
 if %ERRORLEVEL% EQU 0 (
     echo.
@@ -39,7 +35,7 @@ if %ERRORLEVEL% EQU 0 (
     echo   docker ps
     echo.
     echo To view database logs:
-    echo   docker-compose logs -f db
+    echo   docker compose logs -f db
     echo.
 ) else (
     echo ERROR: Failed to start database container

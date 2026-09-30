@@ -35,11 +35,11 @@ if %ERRORLEVEL% EQU 0 (
     echo   - DB_HOST: localhost
     echo   - Backend: Run with 'npm run dev'
     echo   - Frontend: Run with 'npm run dev'
-    echo   - Database: Docker container ^(port 5432^)
+    echo   - Database: Docker container ^(host port 5433^)
     echo.
     echo Next steps:
     echo   1. Make sure database container is running:
-    echo      docker-compose up -d db
+    echo      docker compose -f ..\docker-compose.yml up -d db
     echo.
     echo   2. Start backend:
     echo      npm run dev

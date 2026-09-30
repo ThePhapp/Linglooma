@@ -1,329 +1,92 @@
-# 🚀 Hướng Dẫn Setup Supabase cho Linglooma IELTS
+# Thiết lập PostgreSQL hosted (Supabase)
 
-## 📋 Mục Lục
-1. [Tạo Supabase Project](#1-tạo-supabase-project)
-2. [Lấy Connection String](#2-lấy-connection-string)
-3. [Run Migration](#3-run-migration)
-4. [Cấu hình Environment Variables](#4-cấu-hình-environment-variables)
-5. [Deploy to Render](#5-deploy-to-render)
-6. [Troubleshooting](#6-troubleshooting)
+Hướng dẫn này dùng cho một PostgreSQL database do Supabase quản lý. Giao diện nhà cung cấp có thể thay đổi; hãy lấy connection URI hiện tại trực tiếp từ dashboard của project.
 
-> Nếu credentials thật đã từng được commit, hãy rotate chúng ngay. Xóa khỏi các file hiện tại không vô hiệu hóa credentials đã lộ.
+> Nếu credentials thật từng được commit, hãy rotate chúng ngay. Không commit `.env`, connection URI, JWT secret hoặc API key.
 
----
+## 1. Chuẩn bị connection
 
-## 1. Tạo Supabase Project
+Tạo project, đặt database password mạnh, rồi sao chép PostgreSQL connection URI do Supabase cung cấp. Nếu password có ký tự đặc biệt, dùng URI đã được URL-encode. Với ứng dụng triển khai dài hạn, dùng connection/pooler mode mà nhà cung cấp khuyến nghị cho runtime của bạn.
 
-### Bước 1: Đăng ký/Đăng nhập Supabase
-1. Truy cập: https://supabase.com
-2. Click **"Start your project"** hoặc **"Sign In"**
-3. Đăng nhập bằng GitHub (khuyến nghị)
+Trong PowerShell, chỉ đặt URI cho phiên terminal hiện tại:
 
-### Bước 2: Tạo Project Mới
-1. Click **"New Project"**
-2. Điền thông tin:
-   - **Name**: `linglooma-ielts`
-   - **Database Password**: Tạo password mạnh (LƯU LẠI PASSWORD NÀY!)
-   - **Region**: Chọn **Singapore** hoặc **Southeast Asia** (gần Việt Nam nhất)
-   - **Pricing Plan**: Chọn **Free** (đủ cho development và small production)
-
-3. Click **"Create new project"**
-4. Đợi 2-3 phút để Supabase khởi tạo database
-
----
-
-## 2. Lấy Connection String
-
-### Bước 1: Vào Database Settings
-1. Trong Supabase Dashboard, click **Settings** (⚙️) ở sidebar bên trái
-2. Click **Database** trong menu Settings
-
-### Bước 2: Copy Connection String
-1. Scroll xuống phần **"Connection string"**
-2. Chọn tab **"URI"** (KHÔNG phải Nodejs/psql)
-3. Copy chuỗi có dạng:
-   ```
-   postgresql://postgres.xxxxxxxxxxxxx:[YOUR-PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
-   ```
-
-4. **QUAN TRỌNG**: Thay `[YOUR-PASSWORD]` bằng database password bạn đã tạo ở bước 1.2
-
-### Ví dụ Connection String:
-```
-# Trước khi thay password (từ Supabase)
-postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres
-
-# Sau khi thay password (sử dụng)
-postgresql://postgres.[PROJECT_REF]:[YOUR-URL-ENCODED-PASSWORD]@[POOLER_HOST]:6543/postgres
+```powershell
+$env:DATABASE_URL = "postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
 ```
 
----
+Không ghi URI thật vào script trong repository.
 
-## 3. Run Migration
+## 2. Chạy migration an toàn
 
-### Option 1: Sử dụng psql (Khuyến nghị)
+Cài PostgreSQL client để lệnh `psql` có trên `PATH`, sao lưu database, rồi chạy ordered forward-migration workflow:
 
-#### Windows:
-```bash
-# Mở PowerShell hoặc Git Bash
-
-# Set DATABASE_URL
-set DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres
-
-# Run migration
-psql "%DATABASE_URL%" -f 02-database-postgresql/linglooma_update.sql
+```powershell
+cd 02-database-postgresql
+.\run-migration.bat
 ```
 
-#### Mac/Linux:
-```bash
-# Set DATABASE_URL
-export DATABASE_URL="postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres"
+Hoặc:
 
-# Run migration
-psql "$DATABASE_URL" -f 02-database-postgresql/linglooma_update.sql
+```powershell
+pwsh -NoProfile -File .\run-migration.ps1
 ```
 
-### Option 2: Sử dụng Supabase SQL Editor (Dễ nhất cho người mới)
+Runner áp dụng các file additive trong `migrations/` theo thứ tự, lưu SHA-256 trong `schema_migrations`, dừng khi có lỗi và kiểm tra canonical schema sau cùng. Xem [RUN_MIGRATION.md](02-database-postgresql/RUN_MIGRATION.md) trước khi chạy trên database có dữ liệu.
 
-1. Vào Supabase Dashboard
-2. Click **"SQL Editor"** ở sidebar
-3. Click **"New query"**
-4. Mở file `02-database-postgresql/linglooma_update.sql` bằng text editor
-5. Copy toàn bộ nội dung
-6. Paste vào SQL Editor
-7. Click **"Run"** (Ctrl+Enter)
-8. Đợi 5-10 giây để migration chạy xong
+`02-database-postgresql/linglooma_update.sql` là reset script dành riêng cho database phát triển mới. File này chạy `DROP TABLE ... CASCADE`; tuyệt đối không dùng để upgrade Supabase hoặc database đang có dữ liệu. Các file `reading_migration.sql` và `writing_migration.sql` cũng là thiết kế legacy đã bị khóa, không phải entry point.
 
-### Kiểm tra Migration thành công:
+Nếu `psql` chưa được cài, hãy cài PostgreSQL client thay vì copy reset SQL vào SQL Editor. Việc chạy từng migration thủ công sẽ bỏ qua migration ledger và hash verification.
 
-Chạy query này trong SQL Editor:
-```sql
-SELECT 
-    schemaname,
-    tablename 
-FROM pg_tables 
-WHERE schemaname = 'public'
-ORDER BY tablename;
+## 3. Cấu hình backend
+
+Sao chép environment template và điền secrets trong môi trường local/deployment:
+
+```powershell
+Copy-Item 01-backend-nodejs/.env.local.example 01-backend-nodejs/.env
 ```
 
-Kết quả phải có **11 tables**:
-- ✅ incorrectphonemes
-- ✅ lesson
-- ✅ lessonresult
-- ✅ question
-- ✅ questionresult
-- ✅ reading_answers
-- ✅ reading_passages
-- ✅ reading_questions
-- ✅ users
-- ✅ writing_submissions
-- ✅ writing_tasks
+Các biến chính:
 
----
-
-## 4. Cấu hình Environment Variables
-
-### Cho Local Development:
-
-Tạo/Sửa file `.env` trong `01-backend-nodejs/`:
-```properties
-# Supabase Connection
-DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres
-
-# JWT
+```dotenv
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
 JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRE=1d
-
-# Gemini AI
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# Azure Speech
-AZURE_SPEECH_KEY=your_azure_speech_key_here
-AZURE_SPEECH_REGION=eastasia
-
-# Server
+GEMINI_API_KEY=your_own_key
+AZURE_SPEECH_KEY=your_own_key
+AZURE_SPEECH_REGION=your_region
 PORT=3000
 ```
 
-### Test Connection Local:
-```bash
+Khi `DATABASE_URL` tồn tại, backend ưu tiên nó hơn các biến `DB_*`. Kết nối hosted dùng TLS theo cấu hình trong `db.js`.
+
+## 4. Kiểm tra
+
+```powershell
 cd 01-backend-nodejs
-npm install
-npm run dev
+npm ci
+npm test
+npm start
 ```
 
-Nếu thấy:
-```
-✅ Connected to PostgreSQL database successfully!
-   Source: Supabase/Cloud (DATABASE_URL)
-```
-→ **Thành công!** 🎉
+Kiểm tra `GET /api/health`. Endpoint trả `200` khi database kết nối được và `503` khi không kết nối được; nó không trả chi tiết lỗi database.
 
----
+Để kiểm tra schema read-only bằng cùng connection:
 
-## 5. Deploy to Render
-
-### Bước 1: Tạo Render Account
-1. Truy cập: https://render.com
-2. Đăng nhập bằng GitHub
-3. Click **"New +"** → **"Web Service"**
-
-### Bước 2: Connect Repository
-1. Chọn repository `Linglooma-IELTS`
-2. Click **"Connect"**
-
-### Bước 3: Cấu hình Web Service
-- **Name**: `linglooma-backend`
-- **Region**: `Singapore` (gần Việt Nam)
-- **Branch**: `master`
-- **Root Directory**: `01-backend-nodejs`
-- **Runtime**: `Node`
-- **Build Command**: `npm install`
-- **Start Command**: `npm start`
-- **Instance Type**: `Free`
-
-### Bước 4: Add Environment Variables
-
-Click **"Advanced"** → **"Add Environment Variable"**
-
-Thêm các biến sau:
-
-| Key | Value |
-|-----|-------|
-| `DATABASE_URL` | `postgresql://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@[POOLER_HOST]:6543/postgres` |
-| `JWT_SECRET` | `replace_with_a_long_random_secret` |
-| `JWT_EXPIRE` | `1d` |
-| `GEMINI_API_KEY` | `your_gemini_api_key_here` |
-| `AZURE_SPEECH_KEY` | `your_azure_speech_key_here` |
-| `AZURE_SPEECH_REGION` | `eastasia` |
-| `PORT` | `3000` |
-| `NODE_VERSION` | `22.16.0` |
-
-### Bước 5: Deploy
-1. Click **"Create Web Service"**
-2. Đợi 3-5 phút để Render build và deploy
-3. Nếu thành công, bạn sẽ thấy URL: `https://linglooma-backend.onrender.com`
-
-### Bước 6: Test API
-```bash
-# Test health check
-curl https://linglooma-backend.onrender.com/
-
-# Test chat endpoint
-curl -X POST https://linglooma-backend.onrender.com/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello, how can I improve my IELTS score?"}'
+```powershell
+cd 02-database-postgresql
+psql -X -v ON_ERROR_STOP=1 -d $env:DATABASE_URL -f .\check-migration.sql
 ```
 
----
+## 5. Triển khai
 
-## 6. Troubleshooting
+Đặt `DATABASE_URL`, `JWT_SECRET`, provider keys và `PORT=3000` trong secret manager của nền tảng triển khai. Build backend bằng `npm ci` và start bằng `npm start`. Không đưa secrets vào frontend hoặc biến `VITE_*`; các biến đó được đóng gói vào JavaScript gửi tới trình duyệt.
 
-### ❌ Lỗi: "password authentication failed"
+Chat, submission và history/detail APIs yêu cầu JWT. Test health trước, sau đó đăng ký/đăng nhập bằng tài khoản thử nghiệm do bạn tự tạo. Repository không cung cấp production credentials hay demo account mặc định qua forward migrations.
 
-**Nguyên nhân**: Password trong DATABASE_URL sai
+## Khắc phục sự cố
 
-**Giải pháp**:
-1. Vào Supabase Dashboard → Settings → Database
-2. Click **"Reset database password"**
-3. Tạo password mới
-4. Cập nhật DATABASE_URL với password mới
-5. Nếu đã deploy Render, update environment variable
-
----
-
-### ❌ Lỗi: "relation 'users' does not exist"
-
-**Nguyên nhân**: Chưa chạy migration
-
-**Giải pháp**:
-1. Vào Supabase SQL Editor
-2. Run migration theo hướng dẫn [Option 2](#option-2-sử-dụng-supabase-sql-editor-dễ-nhất-cho-người-mới)
-3. Kiểm tra lại bằng query:
-   ```sql
-   SELECT tablename FROM pg_tables WHERE schemaname = 'public';
-   ```
-
----
-
-### ❌ Lỗi: "too many connections"
-
-**Nguyên nhân**: Supabase Free plan giới hạn connections
-
-**Giải pháp**:
-1. Sử dụng **connection pooling** (đã config sẵn trong `db.js`)
-2. Đảm bảo đang dùng **Pooler connection string** (port 6543), KHÔNG phải Direct (port 5432)
-3. Check trong Supabase: Settings → Database → Connection pooling → **Enabled**
-
----
-
-### ❌ Lỗi: "require is not defined"
-
-**Nguyên nhân**: Có file vẫn dùng ES Modules
-
-**Giải pháp**: Đã fix ở các bước trước! Nhưng nếu vẫn gặp:
-```bash
-# Kiểm tra lại
-cd 01-backend-nodejs
-grep -r "import.*from" --include="*.js" .
-grep -r "export default" --include="*.js" .
-
-# Phải không có kết quả nào
-```
-
----
-
-### ❌ Render deployment failed: "Build failed"
-
-**Nguyên nhân**: Thiếu dependencies hoặc lỗi code
-
-**Giải pháp**:
-1. Check Render logs (tab "Logs")
-2. Thường là do:
-   - `package.json` thiếu dependency → Run `npm install` local để test
-   - Node version không khớp → Set `NODE_VERSION=22.16.0` trong Render env vars
-   - Build command sai → Đổi thành `npm install` (không cần build cho Node.js)
-
----
-
-## 🎯 Checklist Hoàn Thành
-
-- [ ] Tạo Supabase project thành công
-- [ ] Lấy được DATABASE_URL
-- [ ] Run migration thành công (11 tables)
-- [ ] Test local với DATABASE_URL (✅ Connected)
-- [ ] Deploy Render thành công
-- [ ] Test API endpoints hoạt động
-- [ ] Frontend connect được backend
-
----
-
-## 📚 Tài Liệu Tham Khảo
-
-- [Supabase Documentation](https://supabase.com/docs)
-- [Render Node.js Deployment](https://render.com/docs/deploy-node-express-app)
-- [PostgreSQL Connection Strings](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING)
-
----
-
-## 💡 Tips
-
-### Tiết Kiệm Chi Phí:
-- Supabase Free plan: 500MB database, 2GB bandwidth/month
-- Render Free plan: 750 giờ/tháng, sleep sau 15 phút inactive
-- Nếu dự án lớn hơn → Nâng cấp Render lên Starter ($7/tháng)
-
-### Bảo Mật:
-- ⚠️ **KHÔNG** commit `.env` vào Git
-- ⚠️ **KHÔNG** share API keys công khai
-- ✅ Sử dụng `.env.example` cho template
-- ✅ Rotate API keys định kỳ
-
-### Performance:
-- Sử dụng **Pooler connection** (port 6543) cho production
-- Enable **Connection pooling** trong Supabase
-- Monitor usage trong Supabase Dashboard
-
----
-
-**Made with ❤️ by Linglooma Team**
+- `password authentication failed`: tạo lại password/URI và cập nhật secret manager; không in URI vào log.
+- `relation ... does not exist`: chạy forward runner và đọc lỗi đầu tiên; không chạy reset SQL.
+- `too many connections`: dùng pooler URI do provider cung cấp và kiểm tra giới hạn connection của project.
+- Migration báo hash thay đổi: không sửa migration đã áp dụng; thêm migration mới. Khôi phục file cũ trước khi tiếp tục.
+- Database chỉ có singular legacy tables: export và map dữ liệu trước; runner cố ý từ chối tự suy diễn migration.

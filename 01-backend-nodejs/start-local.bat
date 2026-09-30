@@ -10,7 +10,7 @@ REM Check if node_modules exists
 if not exist "node_modules" (
     echo node_modules not found! Installing dependencies...
     echo.
-    npm install
+    npm ci
     if %ERRORLEVEL% NEQ 0 (
         echo ERROR: Failed to install dependencies
         pause

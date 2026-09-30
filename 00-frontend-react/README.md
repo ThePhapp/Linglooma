@@ -1,90 +1,24 @@
-# React + Vite + Tailwind CSS Project
+# Linglooma frontend
 
-A modern React-based project utilizing the latest frontend technologies and tools for building responsive web applications.
+The frontend uses React 19, Vite 6, Tailwind CSS 3, and React Router 7. Use Node.js 22 and npm. The API runs separately on port 3000; the Vite development server listens on <http://localhost:4028> and proxies `/api` to <http://localhost:3000>.
 
-## 🚀 Features
+From `00-frontend-react` in PowerShell:
 
-- **React 19** - React version with improved rendering and concurrent features
-- **Vite** - Lightning-fast build tool and development server
-- **TailwindCSS** - Utility-first CSS framework with extensive customization
-- **React Router** - Declarative routing for React applications
-
-## 📋 Prerequisites
-
-- Node.js (v14.x or higher)
-- npm or yarn
-
-## 🛠️ Installation
-
-1. Install dependencies:
-  ```bash
-  npm install
-  # or
-  yarn install
-  ```
-
-2. **Configure Backend URL** - Edit `.env`:
-  ```properties
-  # For Production (Render)
-  VITE_BACKEND_URL=https://linglooma-ielts-2.onrender.com
-  
-  # For Local Development
-  # VITE_BACKEND_URL=http://localhost:3000
-  ```
-
-3. Start the development server:
-  ```bash
-  npm run dev
-  # or
-  yarn dev
-  ```
-  
-  Frontend will run at: **http://localhost:4028**
-
-## 🔧 Environment Variables
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `VITE_BACKEND_URL` | Backend API base URL | `https://linglooma-ielts-2.onrender.com` |
-
-**Note**: Vite auto-detects if backend is localhost and enables proxy accordingly.
-
-## 🐛 Troubleshooting
-
-### ❌ ECONNREFUSED Error
-
-If you see proxy errors like:
-```
-[vite] http proxy error: /api/reading
-AggregateError [ECONNREFUSED]
+```powershell
+Copy-Item .env.example .env
+npm ci
+npm run dev
 ```
 
-**Solutions**:
-1. **Using Render backend**: Make sure `.env` has `VITE_BACKEND_URL=https://linglooma-ielts-2.onrender.com`
-2. **Using local backend**: Start backend first with `npm run dev` in `01-backend-nodejs/`
-3. **Restart Vite** after changing `.env`: Stop (Ctrl+C) and run `npm run dev` again
+The example sets `VITE_BACKEND_URL=http://localhost:3000`. Set this variable to your own backend URL for another environment and restart Vite after changing `.env`. See the [repository setup guide](../README.en.md) for PostgreSQL 15, backend credentials, and Docker instructions. Never put server secrets or API keys in a `VITE_` variable because they are included in the browser build.
 
-### ❌ CORS Error
+Practice catalog reads are public. Chat, submissions, and private results require sign-in and a JWT. The analytics page displays saved speaking results only. Listening exercises currently do not persist progress.
 
-Add your frontend URL to backend CORS whitelist in `01-backend-nodejs/app.js`.
+## Checks
 
-## 📁 Project Structure
-
+```powershell
+npm run build
+npx cypress run
 ```
-/
-├── public/              # Static assets
-├── src/
-│   ├── components/      # Reusable UI components
-│   ├── pages/           # Page components
-│   ├── utils/           # Utilities (axios config)
-│   ├── styles/          # Global styles and Tailwind configuration
-│   ├── App.jsx          # Main application component
-│   ├── main.jsx         # Application entry point
-│   └── Routes.jsx       # Application routes
-├── .env                 # Environment variables (VITE_BACKEND_URL)
-├── index.html           # HTML template
-├── package.json         # Project dependencies and scripts
-├── postcss.config.js    # PostCSS configuration for Tailwind
-├── tailwind.config.js   # Tailwind CSS configuration
-├── vite.config.js       # Vite configuration (with smart proxy)
-```
+
+The production bundle is written to `build/`. Cypress browser tests need a working browser and running app. If the API proxy reports `ECONNREFUSED`, start the backend on port 3000 and confirm its environment settings.
