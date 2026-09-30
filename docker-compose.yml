@@ -3,21 +3,26 @@ services:
     build:
       context: ./01-backend-nodejs
     env_file:
-      - ./01-backend-nodejs/.env
+      - path: ./01-backend-nodejs/.env
+        required: false
+    environment:
+      PORT: 3000
+      DATABASE_URL: ""
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-your_local_database_password}
+      DB_NAME: linglooma
     ports:
       - "3000:3000"
     depends_on:
-      - db
-    volumes:
-      - ./01-backend-nodejs:/app/src
-      - /app/node_modules
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
     build:
       context: ./00-frontend-react
-    env_file:
-      - ./00-frontend-react/.env
     ports:
       - "80:80"
     depends_on:
@@ -26,12 +31,15 @@ services:
 
   db:
     image: postgres:15
-    env_file:
-      - ./01-backend-nodejs/.env
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-your_local_database_password}
       POSTGRES_DB: linglooma
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d linglooma"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./02-database-postgresql/linglooma_update.sql:/docker-entrypoint-initdb.d/init.sql

@@ -26,7 +26,7 @@ export default defineConfig({
     strictPort: true,
      proxy: {
       '/api': {
-        target: 'https://linglooma-ielts-2.onrender.com',  // For local development
+        target: 'http://localhost:3000',
         changeOrigin: true,
       },
     },
