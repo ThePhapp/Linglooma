@@ -4,85 +4,53 @@
 
 @layer base {
   :root {
-    /* Primary Colors */
-    --primary-blue: #2463eb;
-    --primary-background: #e5fdff;
-    --primary-foreground: #000000;
-
-    /* Secondary Colors */
-    --secondary-background: #ffffff;
-    --secondary-foreground: #333333;
-
-    /* Accent Colors */
-    --accent-color: #b7d8ec;
-    --accent-foreground: #ffffff;
-
-    /* Border Colors */
-    --border-primary: #b3b3b3;
-    --border-secondary: #f2010126;
+    color-scheme: light;
+    --color-brand: 37 99 235;
+    --color-text: 15 23 42;
+    --color-muted: 71 85 105;
+    --color-border: 226 232 240;
+    --color-surface: 255 255 255;
   }
 
-  html {
-    scroll-behavior: smooth;
+  ::selection {
+    background: rgb(219 234 254);
+    color: rgb(30 64 175);
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
   }
 
   ::-webkit-scrollbar-track {
-    background-color: #f3f4f6;
-    border-radius: 10px;
+    background: rgb(248 250 252);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, #3b82f6, #9333ea);
-    border-radius: 10px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(to bottom, #2563eb, #7e22ce);
+    border: 3px solid rgb(248 250 252);
+    border-radius: 999px;
+    background: rgb(148 163 184);
   }
 }
 
-@layer utilities {
-  /* Background Color Utilities */
-  .bg-primary-blue {
-    background-color: var(--primary-blue);
+@layer components {
+  .page-shell {
+    @apply mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8;
   }
 
-  .bg-primary-background {
-    background-color: var(--primary-background);
+  .form-label {
+    @apply mb-1.5 block text-sm font-semibold text-slate-700;
   }
 
-  .bg-secondary-background {
-    background-color: var(--secondary-background);
+  .form-control {
+    @apply min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-950 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500;
   }
 
-  .bg-accent {
-    background-color: var(--accent-color);
+  .form-help {
+    @apply mt-1.5 text-sm leading-5 text-slate-500;
   }
 
-  /* Text Color Utilities */
-  .text-primary-foreground {
-    color: var(--primary-foreground);
-  }
-
-  .text-secondary-foreground {
-    color: var(--secondary-foreground);
-  }
-
-  .text-accent-foreground {
-    color: var(--accent-foreground);
-  }
-
-  /* Border Color Utilities */
-  .border-primary {
-    border-color: var(--border-primary);
-  }
-
-  .border-secondary {
-    border-color: var(--border-secondary);
+  .form-error {
+    @apply mt-1.5 text-sm font-medium text-red-700;
   }
 }

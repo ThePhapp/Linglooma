@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { LoaderCircle } from 'lucide-react';
 
 const Button = ({
   children,
@@ -8,33 +9,38 @@ const Button = ({
   size = 'medium',
   className = '',
   disabled = false,
+  isLoading = false,
   type = 'button',
   ...props
 }) => {
-  const baseClasses = 'font-medium rounded transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600';
+  const baseClasses = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-55';
 
   const variants = {
-    primary: 'bg-[#2463eb] text-white hover:bg-blue-700 disabled:bg-gray-400 border border-[#2463eb]',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:bg-gray-100',
-    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:border-gray-200 disabled:text-gray-400',
+    primary: 'border-brand-600 bg-brand-600 text-white shadow-sm hover:border-brand-700 hover:bg-brand-700',
+    secondary: 'border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50',
+    outline: 'border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50',
+    ghost: 'border-transparent bg-transparent text-slate-700 hover:bg-slate-100',
+    danger: 'border-red-600 bg-red-600 text-white shadow-sm hover:border-red-700 hover:bg-red-700',
   };
 
   const sizes = {
-    small: 'px-3 py-1 text-sm',
-    medium: 'px-4 py-2 text-base',
-    large: 'px-6 py-3 text-lg',
+    small: 'min-h-9 px-3 py-1.5 text-sm',
+    medium: 'px-4 py-2.5 text-sm',
+    large: 'px-5 py-3 text-base',
   };
 
-  const buttonClasses = `${baseClasses} ${variants[variant]} ${sizes[size]} ${disabled ? 'cursor-not-allowed' : ''} ${className}`;
+  const buttonClasses = `${baseClasses} ${variants[variant] ?? variants.primary} ${sizes[size] ?? sizes.medium} ${className}`;
 
   return (
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
       className={buttonClasses}
       {...props}
     >
+      {isLoading && <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />}
       {children}
     </button>
   );
@@ -43,10 +49,11 @@ const Button = ({
 Button.propTypes = {
   children: PropTypes.node,
   onClick: PropTypes.func,
-  variant: PropTypes.oneOf(['primary', 'secondary', 'outline']),
+  variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'ghost', 'danger']),
   size: PropTypes.oneOf(['small', 'medium', 'large']),
   className: PropTypes.string,
   disabled: PropTypes.bool,
+  isLoading: PropTypes.bool,
   type: PropTypes.oneOf(['button', 'submit', 'reset']),
 };
 

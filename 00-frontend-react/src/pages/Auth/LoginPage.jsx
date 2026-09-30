@@ -1,182 +1,104 @@
-import { useContext, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useContext, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Home, Lock, Mail } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { AuthContext } from "@/contexts/AuthContext";
-import apiClient from "@/services/apiClient";
-import { Mail, Lock, LogIn, Home, ArrowRight } from "lucide-react";
+import Button from '@/components/ui/Button';
+import { AuthContext } from '@/contexts/AuthContext';
+import apiClient from '@/services/apiClient';
 
-const PageLogin = () => {
-    const { setAuth, setAuthLoading, setAuthError } = useContext(AuthContext);
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+const LoginPage = () => {
+  const { setAuth, setAuthLoading, setAuthError } = useContext(AuthContext);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-    const navigate = useNavigate();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const nextErrors = {};
+    if (!emailPattern.test(email.trim())) nextErrors.email = 'Enter a valid email address.';
+    if (!password) nextErrors.password = 'Enter your password.';
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
 
-    const validateEmail = (email) => {
-        return String(email)
-            .toLowerCase()
-            .match(
-                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-            );
-    };
+    setIsLoading(true);
+    try {
+      const res = await apiClient.post('/api/login', { email: email.trim().toLowerCase(), password });
+      if (!res.success || !res.access_token) throw new Error(res?.msg || res?.message || 'Login failed');
 
-    const handleSubmitLogin = async () => {
-        // validate
-        const isvaliEmail = validateEmail(email);
-        if (!isvaliEmail) {
-            toast.error('Invalid email address');
-            return;
-        }
-        if (!password) {
-            toast.error('Invalid password')
-            return;
-        }
-        if (!isvaliEmail && !password) {
-            toast.error("Invalid email and password");
-        }
-        
-        setIsLoading(true);
-        try {
-            const res = await apiClient.post(`/api/login`, { email: email.trim().toLowerCase(), password });
-
-            if (res.success === true && res?.access_token) {
-                // lưu vào localStorage
-                localStorage.setItem("access_token", res.access_token);
-                toast.success(
-                    "Login success! Welcome to Linglooma", {
-                    position: "top-right",
-                    autoClose: 3000,
-                    theme: "light"
-                }
-                );
-
-                setAuth({
-                    isAuthenticated: true,
-                    user: {
-                        email: res?.user?.email ?? "",
-                        username: res?.user?.name ?? "",
-                        phonenumber: res?.user?.phone ?? "",
-                        gender: res?.user?.gender ?? "",
-                        nationality: res?.user?.nationality ?? ""
-                    }
-                })
-                setAuthError(null);
-                setAuthLoading(false);
-
-                navigate("/admin/dashboard");
-            } else {
-                toast.error(res?.msg || res?.message || "Login failed");
-            }
-        } catch (err) {
-            toast.error(err?.response?.data?.msg || err?.response?.data?.message || "Login failed");
-        } finally {
-            setIsLoading(false);
-        }
+      localStorage.setItem('access_token', res.access_token);
+      setAuth({
+        isAuthenticated: true,
+        user: {
+          email: res?.user?.email ?? '',
+          username: res?.user?.name ?? '',
+          phonenumber: res?.user?.phone ?? '',
+          gender: res?.user?.gender ?? '',
+          nationality: res?.user?.nationality ?? '',
+        },
+      });
+      setAuthError(null);
+      setAuthLoading(false);
+      toast.success('Welcome back to Linglooma.');
+      navigate('/admin/dashboard');
+    } catch (error) {
+      const message = error?.response?.data?.msg || error?.response?.data?.message || error.message || 'We couldn’t sign you in. Please try again.';
+      setErrors({ form: message });
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
-                {/* Logo & Title Section */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 shadow-xl mb-4 transform hover:scale-110 transition-transform duration-300">
-                        <Home className="w-10 h-10 text-white" />
-                    </div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-                        Welcome Back
-                    </h1>
-                    <p className="text-gray-600">Sign in to continue your English journey</p>
-                </div>
+  return (
+    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:flex sm:items-center sm:justify-center sm:py-12">
+      <div className="mx-auto w-full max-w-md">
+        <Link to="/" className="mx-auto flex w-fit items-center gap-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-600 text-white shadow-sm"><Home className="h-5 w-5" aria-hidden="true" /></span>
+          Linglooma
+        </Link>
 
-                {/* Login Card */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20">
-                    {/* Email Input */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Email Address
-                        </label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Mail className="w-5 h-5 text-gray-400" />
-                            </div>
-                            <input
-                                type="email"
-                                placeholder="Enter your email"
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-300 bg-white/50"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                disabled={isLoading}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Password Input */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Password
-                        </label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Lock className="w-5 h-5 text-gray-400" />
-                            </div>
-                            <input
-                                type="password"
-                                placeholder="Enter your password"
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-300 bg-white/50"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !isLoading) {
-                                        handleSubmitLogin();
-                                    }
-                                }}
-                                disabled={isLoading}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Login Button */}
-                    <button
-                        onClick={handleSubmitLogin}
-                        disabled={isLoading}
-                        className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                    >
-                        {isLoading ? (
-                            <>
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                <span>Signing in...</span>
-                            </>
-                        ) : (
-                            <>
-                                <span>Sign In</span>
-                                <LogIn className="w-5 h-5" />
-                            </>
-                        )}
-                    </button>
-
-                    {/* Register Link */}
-                    <div className="mt-6 text-center">
-                        <p className="text-gray-600">
-                            Don't have an account?{' '}
-                            <Link 
-                                to="/register" 
-                                className="font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 inline-flex items-center gap-1 group"
-                            >
-                                Create one now
-                                <ArrowRight className="w-4 h-4 text-purple-600 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </p>
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className="text-center mt-8 text-sm text-gray-600">
-                    <p>© {new Date().getFullYear()} Linglooma.</p>
-                </div>
-            </div>
+        <div className="mt-6 text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Welcome back</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Sign in to continue your IELTS practice.</p>
         </div>
-    )
-}
-export default PageLogin;
+
+        <form onSubmit={handleSubmit} className="mt-7 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7" noValidate>
+          {errors.form && <div role="alert" className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{errors.form}</div>}
+
+          <div>
+            <label htmlFor="email" className="form-label">Email address</label>
+            <div className="relative">
+              <Mail aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input id="email" name="email" type="email" autoComplete="email" className="form-control pl-11" placeholder="you@example.com" value={email} onChange={(event) => { setEmail(event.target.value); setErrors(current => ({ ...current, email: undefined, form: undefined })); }} disabled={isLoading} aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'email-error' : undefined} />
+            </div>
+            {errors.email && <p id="email-error" className="form-error">{errors.email}</p>}
+          </div>
+
+          <div className="mt-5">
+            <label htmlFor="password" className="form-label">Password</label>
+            <div className="relative">
+              <Lock aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" className="form-control pl-11 pr-12" placeholder="Enter your password" value={password} onChange={(event) => { setPassword(event.target.value); setErrors(current => ({ ...current, password: undefined, form: undefined })); }} disabled={isLoading} aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? 'password-error' : undefined} />
+              <button type="button" onClick={() => setShowPassword(value => !value)} className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            {errors.password && <p id="password-error" className="form-error">{errors.password}</p>}
+          </div>
+
+          <Button type="submit" isLoading={isLoading} className="mt-6 w-full">{isLoading ? 'Signing in…' : 'Sign in'}</Button>
+
+          <p className="mt-5 text-center text-sm text-slate-600">
+            Don’t have an account? <Link to="/register" className="font-semibold text-brand-700 hover:text-brand-800">Create one</Link>
+          </p>
+        </form>
+      </div>
+    </main>
+  );
+};
+
+export default LoginPage;

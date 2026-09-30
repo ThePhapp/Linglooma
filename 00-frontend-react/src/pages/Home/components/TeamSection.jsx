@@ -3,29 +3,29 @@ import { Users as UsersIcon } from 'lucide-react';
 
 const TeamMember = ({ image, name, role, description }) => {
   return (
-    <div className="group bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
+    <div className="rounded-2xl border border-slate-200 bg-white p-6">
       <div className="relative mb-6">
-        <div className="w-32 h-32 mx-auto rounded-full overflow-hidden ring-4 ring-purple-100 group-hover:ring-purple-300 transition-all">
+        <div className="mx-auto h-28 w-28 overflow-hidden rounded-full ring-4 ring-brand-50">
           <img 
             src={image} 
             alt={name} 
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            className="h-full w-full object-cover"
             onError={(e) => {
               e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=128`;
             }}
           />
         </div>
         <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-          <div className="px-3 py-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-semibold shadow-lg">
+          <div className="rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">
             Team Member
           </div>
         </div>
       </div>
       
       <div className="text-center space-y-2 mb-4">
-        <h3 className="text-xl font-bold text-gray-800">{name}</h3>
-        <p className="text-sm font-semibold text-purple-600">{role}</p>
-        <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
+        <h3 className="text-xl font-bold text-slate-900">{name}</h3>
+        <p className="text-sm font-semibold text-brand-700">{role}</p>
+        <p className="text-sm leading-relaxed text-slate-600">{description}</p>
       </div>
       
     </div>
@@ -55,26 +55,22 @@ const TeamSection = () => {
   ];
 
   return (
-    <section className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-20">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm shadow-md mb-4">
-            <UsersIcon className="w-4 h-4 text-purple-600" />
-            <span className="text-sm font-semibold text-purple-600">Meet Our Team</span>
+    <section className="bg-white py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-10 text-center sm:mb-12">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5">
+            <UsersIcon className="h-4 w-4 text-brand-600" />
+            <span className="text-sm font-semibold text-brand-700">Meet our team</span>
           </div>
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
-            The People Behind{' '}
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Linglooma
-            </span>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+            The people behind Linglooma
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
             A passionate team dedicated to helping you achieve your English goals
           </p>
         </div>
         
-        {/* First Row - 3 members */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {teamMembers.slice(0, 3).map((member, index) => (
             <TeamMember
               key={index}

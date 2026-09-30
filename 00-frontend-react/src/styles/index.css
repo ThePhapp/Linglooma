@@ -1,7 +1,5 @@
 @import './tailwind.css';
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* Global styles */
 html,
@@ -10,10 +8,19 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', sans-serif;
+  color: #0f172a;
+  background: #f8fafc;
 }
 
-/* Import fonts */
+body {
+  min-width: 320px;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
 
+#root {
+  min-height: 100%;
+}
 
 /* Add smooth scrolling */
 html {
@@ -28,8 +35,19 @@ html {
 
 /* Add transitions for interactive elements */
 button,
-a {
-  transition: all 0.2s ease-in-out;
+a,
+input,
+textarea,
+select {
+  transition-duration: 180ms;
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-timing-function: ease-out;
+}
+
+button,
+a,
+[role='button'] {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Ẩn scrollbar trên tất cả trình duyệt */
@@ -43,4 +61,15 @@ a {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
   /* Chrome, Safari, Opera */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

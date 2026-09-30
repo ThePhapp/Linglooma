@@ -6,6 +6,7 @@ import HomePage from '@/pages/Home/HomePage';
 import LoginPage from '@/pages/Auth/LoginPage';
 import RegisterPage from '@/pages/Auth/RegisterPage';
 import { ToastContainer } from 'react-toastify';
+import { AlertCircle, LoaderCircle } from 'lucide-react';
 
 const AdminLayout = lazy(() => import('@/pages/Admin/AdminLayout'));
 const DashboardPage = lazy(() => import('@/pages/Dashboard/DashboardPage'));
@@ -26,8 +27,9 @@ const SpeakingPracticePage = lazy(() => import('@/pages/Speaking/SpeakingPractic
 const SpeakingFeedbackPage = lazy(() => import('@/pages/Speaking/SpeakingFeedbackPage'));
 
 const RouteLoading = () => (
-  <div role="status" aria-live="polite" className="p-6">
-    Loading page...
+  <div role="status" aria-live="polite" className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-600">
+    <LoaderCircle aria-hidden="true" className="mr-3 h-5 w-5 animate-spin text-brand-600" />
+    Loading your workspace…
   </div>
 );
 
@@ -35,8 +37,28 @@ const RequireAuth = () => {
   const { auth, authLoading, authError } = useContext(AuthContext);
   const location = useLocation();
 
-  if (authLoading) return <div role="status">Checking your session...</div>;
-  if (authError) return <div role="alert">{authError}</div>;
+  if (authLoading) {
+    return (
+      <div role="status" className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-600">
+        <LoaderCircle aria-hidden="true" className="mr-3 h-5 w-5 animate-spin text-brand-600" />
+        Checking your session…
+      </div>
+    );
+  }
+  if (authError) {
+    return (
+      <div role="alert" className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md rounded-xl border border-red-200 bg-white p-6 text-center shadow-sm">
+          <AlertCircle aria-hidden="true" className="mx-auto h-8 w-8 text-red-600" />
+          <h1 className="mt-3 text-lg font-semibold text-slate-950">We couldn’t verify your session</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{authError}</p>
+          <button type="button" onClick={() => window.location.reload()} className="mt-4 min-h-11 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
   return auth.isAuthenticated
     ? <Outlet />
     : <Navigate to="/login" state={{ from: location }} replace />;

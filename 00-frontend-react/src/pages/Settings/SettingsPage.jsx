@@ -4,6 +4,7 @@ import PasswordSettingsForm from "./components/PasswordSettingsForm";
 import Button from "@/components/ui/Button";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "@/contexts/AuthContext";
+import { LockKeyhole, LogOut, Settings, UserRound } from "lucide-react";
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -28,16 +29,16 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-8">
+    <main className="page-shell">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-white text-3xl">⚙️</span>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50">
+              <Settings className="h-6 w-6 text-brand-700" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-slate-950">
                 Account Settings
               </h1>
               <p className="text-gray-600 mt-1">
@@ -46,21 +47,15 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          <button
-            onClick={handleLogout}
-            className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white rounded-xl font-semibold shadow-lg transition-all duration-200 transform active:scale-95 flex items-center gap-2"
-          >
-            <span>🚪</span>
-            <span>Logout</span>
-          </button>
+          <Button variant="danger" onClick={handleLogout}><LogOut className="h-4 w-4" /> Logout</Button>
         </div>
       </div>
 
       {/* User Info Card */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-8 border border-purple-100">
+      <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6">
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-            {username?.charAt(0)?.toUpperCase() || '👤'}
+          <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-brand-600 text-2xl font-bold text-white">
+            {username?.charAt(0)?.toUpperCase() || <UserRound className="h-7 w-7" />}
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-800">{username || 'User'}</h2>
@@ -70,47 +65,43 @@ const SettingsPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg mb-6 border border-purple-100 overflow-hidden">
+      <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex-1 px-6 py-4 font-semibold transition-all duration-200 ${
+            className={`flex-1 border-b-2 px-3 py-4 text-sm font-semibold transition-colors sm:px-6 sm:text-base ${
               activeTab === 'profile'
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'border-brand-600 bg-brand-50 text-brand-700'
+                : 'border-transparent text-slate-600 hover:bg-slate-50'
             }`}
           >
             <span className="flex items-center justify-center gap-2">
-              <span>👤</span>
+              <UserRound className="h-4 w-4" />
               <span>Profile Information</span>
             </span>
           </button>
           <button
             onClick={() => setActiveTab('security')}
-            className={`flex-1 px-6 py-4 font-semibold transition-all duration-200 ${
+            className={`flex-1 border-b-2 px-3 py-4 text-sm font-semibold transition-colors sm:px-6 sm:text-base ${
               activeTab === 'security'
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'border-brand-600 bg-brand-50 text-brand-700'
+                : 'border-transparent text-slate-600 hover:bg-slate-50'
             }`}
           >
             <span className="flex items-center justify-center gap-2">
-              <span>🔒</span>
+              <LockKeyhole className="h-4 w-4" />
               <span>Security & Password</span>
             </span>
           </button>
         </div>
 
-        <div className="p-8">
+        <div className="p-4 sm:p-8">
           {activeTab === 'profile' && <ProfileSettingsForm />}
           {activeTab === 'security' && <PasswordSettingsForm />}
         </div>
       </div>
 
-      {/* Footer Tip */}
-      <div className="text-center text-sm text-gray-500">
-        💡 Tip: Keep your information up to date for the best experience
-      </div>
-    </div>
+    </main>
   );
 };
 

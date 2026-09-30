@@ -13,7 +13,7 @@ const ProfileSettingsForm = () => {
     return (
       <div className="space-y-6">
         {/* Profile Header */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
+        <div className="rounded-2xl bg-brand-700 p-6 text-white">
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-4xl font-bold border-2 border-white/30">
               {username?.charAt(0)?.toUpperCase() || '👤'}

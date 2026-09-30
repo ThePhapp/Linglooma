@@ -11,12 +11,12 @@ const footerLinks = [
 ];
 
 const Footer = () => (
-  <footer className="bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
-    <div className="container mx-auto px-6 py-12">
+  <footer className="bg-slate-950 text-white">
+    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="grid gap-10 md:grid-cols-[1.2fr_2fr]">
         <div>
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-400 to-purple-400 text-2xl font-bold">L</div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500 text-xl font-bold">L</div>
             <div><h2 className="text-2xl font-bold">Linglooma</h2><p className="text-sm text-gray-300">IELTS practice</p></div>
           </div>
           <p className="mt-5 max-w-md leading-7 text-gray-300">
@@ -26,11 +26,11 @@ const Footer = () => (
         <nav aria-label="Footer navigation">
           <h2 className="text-lg font-bold">Practice and progress</h2>
           <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
-            {footerLinks.map((link) => <li key={link.name}><Link to={link.href} className="text-sm text-gray-300 transition-colors hover:text-purple-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300">{link.name}</Link></li>)}
+            {footerLinks.map((link) => <li key={link.name}><Link to={link.href} className="text-sm text-slate-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">{link.name}</Link></li>)}
           </ul>
           <div className="mt-6 flex gap-5 text-sm font-semibold">
-            <Link to="/register" className="text-purple-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300">Create account</Link>
-            <Link to="/login" className="text-purple-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300">Sign in</Link>
+            <Link to="/register" className="text-brand-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">Create account</Link>
+            <Link to="/login" className="text-brand-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">Sign in</Link>
           </div>
         </nav>
       </div>

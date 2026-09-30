@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import MessageBubble from "./components/MessageBubble";
 import apiClient from "@/services/apiClient";
+import { Bot, Mic, Send, Square, Trash2, X } from "lucide-react";
 
 export default function VoiceChat() {
   const [messages, setMessages] = useState([]);
@@ -8,6 +9,7 @@ export default function VoiceChat() {
   const [draftText, setDraftText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [conversationLength, setConversationLength] = useState(0);
+  const [statusMessage, setStatusMessage] = useState("");
   const recognitionRef = useRef(null);
   const messagesEndRef = useRef(null);
   const token = localStorage.getItem("access_token");
@@ -28,7 +30,7 @@ export default function VoiceChat() {
         id: Date.now(),
         who: "ai",
         type: "text",
-        text: "👋 Hello! I'm your English AI assistant. I'm here to help you improve your English skills. How can I assist you today?",
+        text: "Hello! I'm your English AI assistant. How can I help you practise today?",
       }
     ]);
   }, []);
@@ -51,7 +53,8 @@ export default function VoiceChat() {
     recognition.onend = () => setRecording(false);
 
     recognition.onerror = (e) => {
-      console.error("❌ SpeechRecognition error:", e);
+      console.error("SpeechRecognition error:", e);
+      setStatusMessage("Voice input stopped. Check microphone permission and try again.");
       setRecording(false);
     };
 
@@ -68,7 +71,7 @@ export default function VoiceChat() {
 
   const toggleRecording = () => {
     if (!recognitionRef.current) {
-      alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.");
+      setStatusMessage("Voice input is not supported in this browser. You can still type a message.");
       return;
     }
     if (recording) {
@@ -114,7 +117,7 @@ export default function VoiceChat() {
         setConversationLength(data.metadata.conversationLength);
       }
     } catch (err) {
-      console.error("❌ Error calling API:", err);
+      console.error("Error calling API:", err);
       const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message;
       setMessages((prev) => [
         ...prev,
@@ -122,7 +125,7 @@ export default function VoiceChat() {
           id: Date.now() + 1,
           who: "ai",
           type: "text",
-          text: `⚠️ Sorry, I couldn't process your request. ${errorMessage || 'Please try again.'}`,
+          text: `Sorry, I couldn't process your request. ${errorMessage || 'Please try again.'}`,
         },
       ]);
     } finally {
@@ -145,13 +148,13 @@ export default function VoiceChat() {
           id: Date.now(),
           who: "ai",
           type: "text",
-          text: "👋 Hello! I'm your English AI assistant. How can I help you today?",
+          text: "Hello! I'm your English AI assistant. How can I help you today?",
         }
       ]);
       setConversationLength(0);
     } catch (err) {
-      console.error("❌ Error clearing chat:", err);
-      alert("Failed to clear conversation. Please try again.");
+      console.error("Error clearing chat:", err);
+      setStatusMessage("The conversation could not be cleared. Please try again.");
     }
   };
 
@@ -163,15 +166,15 @@ export default function VoiceChat() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div className="flex min-h-0 flex-1 flex-col bg-slate-50">
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur-lg shadow-md px-6 py-4 flex items-center justify-between sticky top-0 z-10 border-b border-purple-100">
+      <header className="sticky top-16 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-xl">🤖</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600">
+            <Bot aria-hidden="true" className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-base font-bold text-slate-950 sm:text-lg">
               English AI Assistant
             </h1>
             <p className="text-xs text-gray-500">
@@ -182,15 +185,15 @@ export default function VoiceChat() {
         
         <button
           onClick={handleClearChat}
-          className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors duration-200 text-sm font-medium flex items-center gap-2"
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
           title="Clear conversation"
         >
-          🗑️ <span className="max-sm:hidden">Clear</span>
+          <Trash2 aria-hidden="true" className="h-4 w-4" /> <span className="max-sm:hidden">Clear</span>
         </button>
       </header>
 
       {/* Chat area */}
-      <main className="flex-1 overflow-y-auto p-6 space-y-4">
+      <main className="mx-auto w-full max-w-4xl flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
         {messages.map((m) => (
           <MessageBubble key={m.id} msg={m} />
         ))}
@@ -198,10 +201,10 @@ export default function VoiceChat() {
         {/* Typing indicator */}
         {isTyping && (
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-sm">🤖</span>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600">
+              <Bot aria-hidden="true" className="h-4 w-4 text-white" />
             </div>
-            <div className="bg-white rounded-2xl px-5 py-3 shadow-md max-w-[70%]">
+            <div className="max-w-[70%] rounded-2xl border border-slate-200 bg-white px-5 py-3">
               <div className="flex gap-1.5">
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -214,7 +217,7 @@ export default function VoiceChat() {
         {/* Draft preview */}
         {draftText && (
           <div className="flex justify-end">
-            <div className="max-w-[70%] rounded-2xl px-5 py-3 shadow-md border-2 border-dashed border-blue-300 bg-blue-50/50 backdrop-blur-sm">
+            <div className="max-w-[85%] rounded-2xl border border-dashed border-brand-300 bg-brand-50 px-4 py-3 sm:max-w-[70%]">
               <div className="flex items-center gap-2">
                 <span className="text-gray-700 italic">{draftText}</span>
                 <button
@@ -222,7 +225,7 @@ export default function VoiceChat() {
                   className="ml-2 text-red-500 hover:text-red-600 transition font-bold"
                   title="Clear draft"
                 >
-                  ✖️
+                  <X aria-label="Clear draft" className="h-4 w-4" />
                 </button>
               </div>
               <span className="text-xs text-gray-500">Press Enter to send...</span>
@@ -234,28 +237,30 @@ export default function VoiceChat() {
       </main>
 
       {/* Controls */}
-      <footer className="bg-white/90 backdrop-blur-lg shadow-lg px-6 py-4 sticky bottom-0 border-t border-purple-100">
+      <footer className="sticky bottom-0 border-t border-slate-200 bg-white px-4 py-3 sm:px-6">
+        {statusMessage && <p role="alert" className="mx-auto mb-2 max-w-4xl text-sm text-red-600">{statusMessage}</p>}
         <div className="flex items-center gap-3 max-w-4xl mx-auto">
           {/* Voice recording button */}
           <button
-            className={`w-12 h-12 flex items-center justify-center rounded-full shadow-lg transition-all duration-200 transform active:scale-95 ${
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
               recording
-                ? "bg-gradient-to-r from-red-500 to-pink-500 animate-pulse text-white scale-110"
-                : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                ? "bg-red-600 text-white focus-visible:ring-red-500"
+                : "bg-brand-600 text-white hover:bg-brand-700 focus-visible:ring-brand-500"
             }`}
             onClick={toggleRecording}
             title={recording ? "Stop recording" : "Start voice input"}
           >
-            {recording ? "⏹️" : "🎙️"}
+            {recording ? <Square aria-hidden="true" className="h-4 w-4 fill-current" /> : <Mic aria-hidden="true" className="h-5 w-5" />}
           </button>
 
           {/* Text input */}
           <textarea
             value={draftText}
             onChange={(e) => setDraftText(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             placeholder="Type your message or use voice input..."
-            className="flex-1 px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none resize-none transition-colors duration-200"
+            aria-label="Message"
+            className="min-h-11 flex-1 resize-none rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             rows="1"
             style={{ maxHeight: '100px' }}
           />
@@ -264,22 +269,22 @@ export default function VoiceChat() {
           <button
             onClick={handleSend}
             disabled={!draftText.trim()}
-            className={`px-6 py-3 rounded-2xl font-semibold shadow-lg transition-all duration-200 transform active:scale-95 ${
+            className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
               draftText.trim()
-                ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                ? "bg-brand-600 text-white hover:bg-brand-700"
+                : "cursor-not-allowed bg-slate-200 text-slate-400"
             }`}
           >
             <span className="flex items-center gap-2">
               <span>Send</span>
-              <span>📤</span>
+              <Send aria-hidden="true" className="h-4 w-4" />
             </span>
           </button>
         </div>
 
         {/* Tips */}
         <div className="text-center mt-2 text-xs text-gray-500">
-          💡 Tip: Press Enter to send, or use 🎙️ voice input for speaking practice
+          Press Enter to send, or use voice input for speaking practice.
         </div>
       </footer>
     </div>

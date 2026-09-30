@@ -1,57 +1,21 @@
-import React from "react";
-import { PracticeCard } from "./components/PracticeCard";
-import SkillsHeader from "./components/SkillsHeader";
+import { BookOpen, Headphones, Mic, PenLine } from 'lucide-react';
+import { PracticeCard } from './components/PracticeCard';
+import SkillsHeader from './components/SkillsHeader';
 
-const Skill4 = () => {
-    return (
-        <main className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-            <div className="flex flex-col lg:flex-row">
-                <section className="w-full px-6 py-8">
-                    <div className="max-w-screen-xl mx-auto">
-            <SkillsHeader />
+const modules = [
+  { title: 'Listening Practice', icon: Headphones, iconStyle: 'bg-rose-100 text-rose-700', description: 'Use the listening exercises currently available. Progress in this module is session-only.', href: '/admin/features/listening' },
+  { title: 'Speaking Practice', icon: Mic, iconStyle: 'bg-violet-100 text-violet-700', description: 'Choose an active speaking lesson, record a response, and review saved results.', href: '/admin/features/lesson' },
+  { title: 'Reading Practice', icon: BookOpen, iconStyle: 'bg-blue-100 text-blue-700', description: 'Choose an active reading passage and submit answers for scoring.', href: '/admin/features/reading' },
+  { title: 'Writing Practice', icon: PenLine, iconStyle: 'bg-emerald-100 text-emerald-700', description: 'Choose an active writing prompt and submit a response for evaluation.', href: '/admin/features/writing' },
+];
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
-                            <PracticeCard
-                                title="Listening Practice"
-                                emoji="🎧"
-                                description="Use the listening exercises currently available. Progress in this module is session-only."
-                                href="/admin/features/listening"
-                                gradient="from-pink-500 to-rose-600"
-                                bgColor="bg-pink-50"
-                            />
+const SkillsPage = () => (
+  <div className="page-shell">
+    <SkillsHeader />
+    <div className="mt-8 grid gap-5 md:grid-cols-2">
+      {modules.map(module => <PracticeCard key={module.title} {...module} />)}
+    </div>
+  </div>
+);
 
-                            <PracticeCard
-                                title="Speaking Practice"
-                                emoji="🎤"
-                                description="Choose an active speaking lesson, record a response, and review saved speaking results."
-                                href="/admin/features/lesson"
-                                gradient="from-purple-500 to-violet-600"
-                                bgColor="bg-purple-50"
-                            />
-
-                            <PracticeCard
-                                title="Reading Practice"
-                                emoji="📖"
-                                description="Choose from the active reading passages and submit answers for scoring."
-                                href="/admin/features/reading"
-                                gradient="from-blue-500 to-cyan-600"
-                                bgColor="bg-blue-50"
-                            />
-
-                            <PracticeCard
-                                title="Writing Practice"
-                                emoji="✍️"
-                                description="Choose an active writing prompt and submit a response for evaluation."
-                                href="/admin/features/writing"
-                                gradient="from-green-500 to-emerald-600"
-                                bgColor="bg-green-50"
-                            />
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
-    );
-};
-
-export default Skill4;
+export default SkillsPage;

@@ -1,41 +1,46 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, UserPlus, Home as HomeIcon } from 'lucide-react';
+import { Home as HomeIcon, LogIn, UserPlus } from 'lucide-react';
 
 const Header = () => {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
-      <div className="container mx-auto flex justify-between items-center px-6 py-4">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-lg">
-            <HomeIcon className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Linglooma
-            </h1>
-            <p className="text-xs text-gray-500">English Excellence</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <button
+          type="button"
+          className="flex min-w-0 items-center gap-2.5 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          onClick={() => navigate('/')}
+          aria-label="Go to Linglooma home"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-600 shadow-sm">
+            <HomeIcon className="h-5 w-5 text-white" aria-hidden="true" />
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-lg font-bold tracking-tight text-slate-950 sm:text-xl">Linglooma</span>
+            <span className="hidden text-xs text-slate-500 sm:block">Focused IELTS practice</span>
+          </span>
+        </button>
+
+        <nav aria-label="Account" className="flex shrink-0 items-center gap-2">
           <button
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 border-gray-200 hover:border-purple-400 hover:bg-purple-50 transition-all duration-300 font-semibold text-gray-700 hover:text-purple-600"
-            onClick={() => navigate("/login")}
+            type="button"
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:px-4"
+            onClick={() => navigate('/login')}
           >
-            <LogIn className="w-4 h-4" />
+            <LogIn className="h-4 w-4" aria-hidden="true" />
             <span>Login</span>
           </button>
           <button
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-            onClick={() => navigate("/register")}
+            type="button"
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-brand-600 bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 sm:px-4"
+            onClick={() => navigate('/register')}
+            aria-label="Create an account"
           >
-            <UserPlus className="w-4 h-4" />
-            <span>Sign Up</span>
+            <UserPlus className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Sign up</span>
           </button>
-        </div>
+        </nav>
       </div>
     </header>
   );

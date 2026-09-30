@@ -274,7 +274,7 @@ const PasswordSettingsForm = () => {
                     className={`w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-200 transform active:scale-95 ${
                         isSubmitting
                             ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'
+                            : 'bg-brand-600 hover:bg-brand-700'
                     }`}
                 >
                     {isSubmitting ? (

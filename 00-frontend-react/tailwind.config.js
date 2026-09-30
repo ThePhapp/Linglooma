@@ -4,6 +4,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        brand: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+        },
         primary: {
           blue: "#2463eb",
           background: "#e5fdff",
@@ -22,11 +31,7 @@ module.exports = {
           secondary: "#f2010126",
         },
       },
-      fontFamily: {
-        inter: ['Inter', 'sans-serif'],
-        poppins: ['Poppins', 'sans-serif'],
-        inria: ['Inria Sans', 'sans-serif'],
-      },
+      fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
       boxShadow: {
         custom: '0px 2px 5px rgba(0, 0, 0, 0.1)',
       },

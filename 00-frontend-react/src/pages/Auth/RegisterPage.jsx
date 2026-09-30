@@ -1,253 +1,112 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Check, Eye, EyeOff, Home, Lock, Mail, X } from 'lucide-react';
 import { toast } from 'react-toastify';
-import apiClient from "@/services/apiClient";
-import { Mail, Lock, UserPlus, Home, ArrowRight, Check, X } from "lucide-react";
+import Button from '@/components/ui/Button';
+import apiClient from '@/services/apiClient';
 
-const PageRegister = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    const navigate = useNavigate();
+const RegisterPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-    // Password strength validation
-    const getPasswordStrength = (pwd) => {
-        if (!pwd) return { strength: 0, label: '', color: '' };
-        
-        let strength = 0;
-        if (pwd.length >= 8) strength++;
-        if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) strength++;
-        if (/\d/.test(pwd)) strength++;
-        if (/[^a-zA-Z0-9]/.test(pwd)) strength++;
+  const requirements = [
+    { label: '8–128 characters', met: [...password].length >= 8 && [...password].length <= 128 },
+    { label: 'Uppercase and lowercase letters', met: /[a-z]/.test(password) && /[A-Z]/.test(password) },
+    { label: 'A number', met: /\d/.test(password) },
+  ];
 
-        const levels = [
-            { strength: 1, label: 'Weak', color: 'bg-red-500' },
-            { strength: 2, label: 'Fair', color: 'bg-yellow-500' },
-            { strength: 3, label: 'Good', color: 'bg-blue-500' },
-            { strength: 4, label: 'Strong', color: 'bg-green-500' }
-        ];
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const nextErrors = {};
+    if (!emailPattern.test(email.trim())) nextErrors.email = 'Enter a valid email address.';
+    if ([...password].length < 8 || [...password].length > 128) nextErrors.password = 'Use between 8 and 128 characters.';
+    if (password !== confirmPassword) nextErrors.confirmPassword = 'Passwords do not match.';
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
 
-        return levels[strength - 1] || { strength: 0, label: '', color: '' };
-    };
+    setIsLoading(true);
+    try {
+      const res = await apiClient.post('/api/register', { email: email.trim().toLowerCase(), password });
+      if (!res.success) throw new Error(res?.msg || res?.message || 'Registration failed');
+      toast.success('Account created. Sign in to continue.');
+      navigate('/login');
+    } catch (error) {
+      setErrors({ form: error?.response?.data?.msg || error?.response?.data?.message || error.message || 'We couldn’t create your account. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const passwordStrength = getPasswordStrength(password);
+  return (
+    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:py-12">
+      <div className="mx-auto w-full max-w-md">
+        <Link to="/" className="mx-auto flex w-fit items-center gap-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-600 text-white shadow-sm"><Home className="h-5 w-5" aria-hidden="true" /></span>
+          Linglooma
+        </Link>
 
-    // validate
-    const validateEmail = (email) => {
-        return String(email)
-            .toLowerCase()
-            .match(
-                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-            );
-    };
-
-    const handleRegister = async () => {
-        if (!email || !password || !confirmPassword) {
-            toast.error("Please fill in all fields");
-            return;
-        }
-
-        // validate
-        const isvaliEmail = validateEmail(email);
-        if (!isvaliEmail) {
-            toast.error('Invalid email address');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            toast.error("Passwords do not match");
-            return;
-        }
-
-        const passwordLength = [...password].length;
-        if (passwordLength < 8 || passwordLength > 128) {
-            toast.error("Password must be between 8 and 128 characters");
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            const res = await apiClient.post(`/api/register`, { email: email.trim().toLowerCase(), password });
-            if (res.success) {
-                toast.success("Account created successfully! Please login.");
-                navigate("/login");
-            } else {
-                toast.error(res?.msg || res?.message || "Register failed");
-            }
-        } catch (err) {
-            // xử lý lỗi trả về từ backend
-            toast.error(err?.response?.data?.msg || err?.response?.data?.message || "Register failed");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
-                {/* Logo & Title Section */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 shadow-xl mb-4 transform hover:scale-110 transition-transform duration-300">
-                        <UserPlus className="w-10 h-10 text-white" />
-                    </div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-                        Create Account
-                    </h1>
-                    <p className="text-gray-600">Start your English learning journey today</p>
-                </div>
-
-                {/* Register Card */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20">
-                    {/* Email Input */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Email Address
-                        </label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Mail className="w-5 h-5 text-gray-400" />
-                            </div>
-                            <input
-                                type="email"
-                                placeholder="Enter your email"
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-300 bg-white/50"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                disabled={isLoading}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Password Input */}
-                    <div className="mb-4">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Password
-                        </label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Lock className="w-5 h-5 text-gray-400" />
-                            </div>
-                            <input
-                                type="password"
-                                placeholder="Create a password"
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-300 bg-white/50"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                maxLength={256}
-                                disabled={isLoading}
-                            />
-                        </div>
-                        
-                        {/* Password Strength Indicator */}
-                        {password && (
-                            <div className="mt-2">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div 
-                                            className={`h-full transition-all duration-300 ${passwordStrength.color}`}
-                                            style={{ width: `${(passwordStrength.strength / 4) * 100}%` }}
-                                        />
-                                    </div>
-                                    <span className={`text-xs font-semibold ${
-                                        passwordStrength.strength === 4 ? 'text-green-600' :
-                                        passwordStrength.strength === 3 ? 'text-blue-600' :
-                                        passwordStrength.strength === 2 ? 'text-yellow-600' :
-                                        'text-red-600'
-                                    }`}>
-                                        {passwordStrength.label}
-                                    </span>
-                                </div>
-                                <div className="space-y-1 text-xs">
-                                    <div className={`flex items-center gap-1 ${password.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
-                                        {password.length >= 8 ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                                        <span>At least 8 characters</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Confirm Password Input */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Confirm Password
-                        </label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Lock className="w-5 h-5 text-gray-400" />
-                            </div>
-                            <input
-                                type="password"
-                                placeholder="Confirm your password"
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-300 bg-white/50"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                maxLength={256}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !isLoading) {
-                                        handleRegister();
-                                    }
-                                }}
-                                disabled={isLoading}
-                            />
-                        </div>
-                        {confirmPassword && password !== confirmPassword && (
-                            <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
-                                <X className="w-3 h-3" />
-                                Passwords do not match
-                            </p>
-                        )}
-                        {confirmPassword && password === confirmPassword && (
-                            <p className="mt-1 text-xs text-green-600 flex items-center gap-1">
-                                <Check className="w-3 h-3" />
-                                Passwords match
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Register Button */}
-                    <button
-                        onClick={handleRegister}
-                        disabled={isLoading}
-                        className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                    >
-                        {isLoading ? (
-                            <>
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                <span>Creating account...</span>
-                            </>
-                        ) : (
-                            <>
-                                <span>Create Account</span>
-                                <UserPlus className="w-5 h-5" />
-                            </>
-                        )}
-                    </button>
-
-                    {/* Login Link */}
-                    <div className="mt-6 text-center">
-                        <p className="text-gray-600">
-                            Already have an account?{' '}
-                            <Link 
-                                to="/login" 
-                                className="font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 inline-flex items-center gap-1 group"
-                            >
-                                Sign in now
-                                <ArrowRight className="w-4 h-4 text-purple-600 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </p>
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className="text-center mt-8 text-sm text-gray-600">
-                    <p>© {new Date().getFullYear()} Linglooma.</p>
-                </div>
-            </div>
+        <div className="mt-6 text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Create your account</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Set up your account and start practicing.</p>
         </div>
-    );
+
+        <form onSubmit={handleSubmit} className="mt-7 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7" noValidate>
+          {errors.form && <div role="alert" className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{errors.form}</div>}
+
+          <div>
+            <label htmlFor="register-email" className="form-label">Email address</label>
+            <div className="relative">
+              <Mail aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input id="register-email" name="email" type="email" autoComplete="email" className="form-control pl-11" placeholder="you@example.com" value={email} onChange={(event) => { setEmail(event.target.value); setErrors(current => ({ ...current, email: undefined, form: undefined })); }} disabled={isLoading} aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'register-email-error' : undefined} />
+            </div>
+            {errors.email && <p id="register-email-error" className="form-error">{errors.email}</p>}
+          </div>
+
+          <div className="mt-5">
+            <label htmlFor="register-password" className="form-label">Password</label>
+            <div className="relative">
+              <Lock aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input id="register-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" className="form-control pl-11 pr-12" placeholder="Create a password" value={password} onChange={(event) => { setPassword(event.target.value); setErrors(current => ({ ...current, password: undefined, form: undefined })); }} maxLength={128} disabled={isLoading} aria-invalid={Boolean(errors.password)} aria-describedby="password-requirements" />
+              <button type="button" onClick={() => setShowPassword(value => !value)} className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100" aria-label={showPassword ? 'Hide passwords' : 'Show passwords'}>
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            {errors.password && <p className="form-error">{errors.password}</p>}
+            <ul id="password-requirements" className="mt-3 grid gap-1.5 text-xs text-slate-600" aria-label="Password requirements">
+              {requirements.map(requirement => (
+                <li key={requirement.label} className={`flex items-center gap-2 ${requirement.met ? 'text-emerald-700' : ''}`}>
+                  {requirement.met ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <X className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />}
+                  {requirement.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-5">
+            <label htmlFor="confirm-password" className="form-label">Confirm password</label>
+            <div className="relative">
+              <Lock aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input id="confirm-password" name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" className="form-control pl-11" placeholder="Repeat your password" value={confirmPassword} onChange={(event) => { setConfirmPassword(event.target.value); setErrors(current => ({ ...current, confirmPassword: undefined, form: undefined })); }} maxLength={128} disabled={isLoading} aria-invalid={Boolean(errors.confirmPassword)} aria-describedby={errors.confirmPassword ? 'confirm-password-error' : undefined} />
+            </div>
+            {errors.confirmPassword && <p id="confirm-password-error" className="form-error">{errors.confirmPassword}</p>}
+          </div>
+
+          <Button type="submit" isLoading={isLoading} className="mt-6 w-full">{isLoading ? 'Creating account…' : 'Create account'}</Button>
+
+          <p className="mt-5 text-center text-sm text-slate-600">
+            Already have an account? <Link to="/login" className="font-semibold text-brand-700 hover:text-brand-800">Sign in</Link>
+          </p>
+        </form>
+      </div>
+    </main>
+  );
 };
 
-export default PageRegister;
+export default RegisterPage;
