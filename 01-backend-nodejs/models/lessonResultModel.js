@@ -40,14 +40,15 @@ async function ownsLessonResult(studentId, lessonResultId) {
 
 
 const getLessonResult = async (studentId, lessonId) => {
-    await client.query(
+    const result = await client.query(
         'SELECT * FROM lessonResult WHERE studentId=$1 AND lessonId=$2',
         [studentId, lessonId]
     );
+    return result.rows;
 }
 
 const getRecentlyLessonResult = async (studentId) => {
-    client.query(
+    const result = await client.query(
         `
         SELECT * 
         FROM lessonresult
@@ -57,6 +58,7 @@ const getRecentlyLessonResult = async (studentId) => {
         `,
         [studentId, lastestScore]
     );
+    return result.rows;
 }
 
 async function getSpeakingHistory(studentId) {

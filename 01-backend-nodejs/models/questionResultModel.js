@@ -11,15 +11,18 @@ const insertQuestionResult = async (
   pronunciation,
   feedback
 ) => {
-  await client.query(
+  const result = await client.query(
     `
     INSERT INTO questionResult
       (studentId, lessonResultId, questionId, ieltsBand, accuracy, fluency, completeness, pronunciation, feedback)
     VALUES
       ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING *
     `,
     [studentId, lessonResultId, questionId, ieltsBand, accuracy, fluency, completeness, pronunciation, feedback]
   );
+
+  return result.rows[0];
 };
 
 

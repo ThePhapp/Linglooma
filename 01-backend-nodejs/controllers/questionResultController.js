@@ -33,7 +33,7 @@ const insertQuestionResultController = async (req, res) => {
         }
 
         console.log('📝 Inserting question result for studentId:', studentId, 'questionId:', questionId);
-        await insertQuestionResult(
+        const inserted = await insertQuestionResult(
             studentId,
             lessonResultId,
             questionId,
@@ -45,7 +45,7 @@ const insertQuestionResultController = async (req, res) => {
             feedback || null
         );
         console.log('✅ Question result inserted successfully');
-        res.status(200).json({ message: "Insert question results successfully" });
+        res.status(201).json(inserted);
     } catch (err) {
         console.error("❌ Insert question results failed: ", err);
         res.status(500).json({ message: "Insert question results failed" });

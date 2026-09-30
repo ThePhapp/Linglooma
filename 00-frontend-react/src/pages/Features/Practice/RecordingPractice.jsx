@@ -115,31 +115,41 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
         setStatus("Results received");
         if (onScore) onScore(data);
 
-        // Backend sẽ tự lấy studentId từ JWT token
-        await axios.post(`/api/lessons/results`, {
-          lessonId: lessonId,
-          finishedTime: new Date().toISOString(),
-          averageScore: data.score,
-          feedback: data.feedback,
-        });
+        try {
+          const lessonResult = await axios.post('/api/lessons/results', {
+            lessonId,
+            finishedTime: new Date().toISOString(),
+            averageScore: data.score,
+            feedback: data.feedback,
+          });
 
-        await axios.post(`api/questions/results`, {
-          lessonResultId: lessonId,
-          questionId: currentIndex + 1,
-          ieltsBand: data.score,
-          accuracy: data.accuracyScore,
-          fluency: data.fluencyScore,
-          completeness: data.completenessScore,
-          pronunciation: data.pronScore,
-          feedback: data.feedback,
-        });
+          if (!lessonResult?.id) throw new Error('Lesson result was not saved');
 
-        await axios.post(`/api/incorrectphonemes/add`, {
-          phoneme: data.err,
-          questionResultId: 1,
-          lessonResultId: lessonId,
-          questionId: currentIndex + 1,
-        });
+          const questionResult = await axios.post('/api/questions/results', {
+            lessonResultId: lessonResult.id,
+            questionId: currentQuestion.id,
+            ieltsBand: data.score,
+            accuracy: data.accuracyScore,
+            fluency: data.fluencyScore,
+            completeness: data.completenessScore,
+            pronunciation: data.pronScore,
+            feedback: data.feedback,
+          });
+
+          if (!questionResult?.id) throw new Error('Question result was not saved');
+
+          if (data.err && Object.keys(data.err).length > 0) {
+            await axios.post('/api/incorrectphonemes/add', {
+              phoneme: data.err,
+              questionResultId: questionResult.id,
+              lessonResultId: lessonResult.id,
+              questionId: currentQuestion.id,
+            });
+          }
+        } catch (historyError) {
+          setStatus("Results received, but history could not be saved");
+          toast.warning(historyError?.response?.data?.message || "Your score is available, but saving history failed.");
+        }
 
       } else {
         setStatus("Error: Invalid response data");

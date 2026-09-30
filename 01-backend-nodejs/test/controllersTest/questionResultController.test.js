@@ -71,14 +71,16 @@ describe('question result controllers', () => {
 
     it('inserts with the authenticated student id', async () => {
       isQuestionInOwnedLessonResult.mockResolvedValue(true);
-      insertQuestionResult.mockResolvedValue();
+      const inserted = { id: 50, studentId: 7, lessonResultId: 10, questionId: 100 };
+      insertQuestionResult.mockResolvedValue(inserted);
 
       await insertQuestionResultController(req, res);
 
       expect(insertQuestionResult).toHaveBeenCalledWith(
         7, 10, 100, 7, 8, 7, 9, 6, 'Good work'
       );
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith(inserted);
     });
   });
 
