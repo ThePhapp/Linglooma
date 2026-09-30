@@ -7,6 +7,40 @@ if (!GEMINI_API_KEY) {
   console.error("GEMINI_API_KEY not found in environment variables!");
 }
 
+class WritingEvaluationError extends Error {
+  constructor() {
+    super('Writing evaluation is temporarily unavailable. Please try again.');
+    this.name = 'WritingEvaluationError';
+    this.code = 'WRITING_EVALUATION_UNAVAILABLE';
+  }
+}
+
+function validateWritingEvaluation(evaluation) {
+  const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+  const isText = value => typeof value === 'string' && value.trim().length > 0;
+  const scoreFields = [
+    'task_achievement', 'coherence_cohesion', 'lexical_resource',
+    'grammar_accuracy', 'overall_band'
+  ];
+  const textFields = [
+    'overall_feedback', 'strengths', 'weaknesses', 'structure_feedback', 'improvement_tips'
+  ];
+  const validItems = (items, fields) => Array.isArray(items) && items.every(
+    item => isObject(item) && fields.every(field => isText(item[field]))
+  );
+
+  if (!isObject(evaluation) || !isObject(evaluation.scores) ||
+      scoreFields.some(field => !Number.isFinite(evaluation.scores[field]) ||
+        evaluation.scores[field] < 0 || evaluation.scores[field] > 9) ||
+      textFields.some(field => !isText(evaluation[field])) ||
+      !validItems(evaluation.grammar_errors, ['error', 'correction', 'explanation']) ||
+      !validItems(evaluation.vocabulary_suggestions, ['word', 'suggestion', 'context'])) {
+    throw new WritingEvaluationError();
+  }
+
+  return evaluation;
+}
+
 /**
  * Chấm bài Writing IELTS bằng AI Gemini
  * @param {Object} params
@@ -76,6 +110,9 @@ Return ONLY a valid JSON object (no markdown, no explanations outside JSON) with
 `;
 
   try {
+    if (!GEMINI_API_KEY) {
+      throw new WritingEvaluationError();
+    }
     console.log("🤖 Calling Gemini API for essay evaluation...");
     console.log("Task Type:", taskType);
     console.log("Word Count:", wordCount);
@@ -97,72 +134,43 @@ Return ONLY a valid JSON object (no markdown, no explanations outside JSON) with
       }
     );
 
-    const data = await res.json();
     console.log("📥 Gemini API response status:", res.status);
     
     if (!res.ok) {
-      console.error("❌ Gemini API error:", data);
-      throw new Error(`Gemini API returned ${res.status}: ${JSON.stringify(data)}`);
+      throw new WritingEvaluationError();
     }
-    
-    const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!responseText) {
-      console.error("❌ No response text from Gemini");
-      console.error("Full API response:", JSON.stringify(data, null, 2));
-      throw new Error("No response from Gemini API");
+    const data = await res.json();
+    const candidate = data?.candidates?.[0];
+    const responseText = candidate?.content?.parts?.[0]?.text;
+
+    if (data?.error || (candidate?.finishReason && candidate.finishReason !== 'STOP') ||
+        typeof responseText !== 'string' || !responseText.trim()) {
+      throw new WritingEvaluationError();
     }
 
     console.log("✅ Got response from Gemini, length:", responseText.length);
     
     // Extract JSON from response (remove markdown code blocks if present)
     let jsonText = responseText.trim();
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.replace(/```\n?/g, '');
+    const fenced = jsonText.match(/^```(?:json)?\s*\r?\n([\s\S]*?)\r?\n```$/i);
+    if (fenced) {
+      jsonText = fenced[1];
     }
 
     console.log("📝 Parsing JSON response...");
-    const evaluation = JSON.parse(jsonText);
-    
-    // Validate response structure
-    if (!evaluation.scores || !evaluation.overall_feedback) {
-      console.error("❌ Invalid response structure");
-      console.error("Evaluation object:", evaluation);
-      throw new Error("Invalid response structure from Gemini");
-    }
+    const evaluation = validateWritingEvaluation(JSON.parse(jsonText));
 
     console.log("✅ Essay evaluated successfully!");
     console.log("Overall band:", evaluation.scores.overall_band);
     return evaluation;
     
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi Gemini API cho Writing evaluation:", error);
-    console.error("Error details:", error.message);
-    console.error("Stack:", error.stack);
-    
-    // Return fallback response
-    return {
-      scores: {
-        task_achievement: 5.0,
-        coherence_cohesion: 5.0,
-        lexical_resource: 5.0,
-        grammar_accuracy: 5.0,
-        overall_band: 5.0
-      },
-      overall_feedback: "Unable to evaluate essay at this time. Please try again. Error: " + error.message,
-      strengths: "N/A",
-      weaknesses: "N/A",
-      grammar_errors: [],
-      vocabulary_suggestions: [],
-      structure_feedback: "Evaluation unavailable",
-      improvement_tips: "Please try submitting again.",
-      error: error.message
-    };
+  } catch {
+    throw new WritingEvaluationError();
   }
 }
 
 module.exports = {
   evaluateWritingWithGemini,
+  validateWritingEvaluation,
+  WritingEvaluationError,
 };

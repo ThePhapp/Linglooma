@@ -1,5 +1,7 @@
 const pool = require('../db');
-const { evaluateWritingWithGemini } = require('../services/geminiWritingService');
+const {
+  evaluateWritingWithGemini, validateWritingEvaluation, WritingEvaluationError
+} = require('../services/geminiWritingService');
 
 /**
  * Lấy danh sách tất cả đề Writing
@@ -32,109 +34,100 @@ async function getPromptById(promptId) {
  * Nộp bài Writing và chấm điểm bằng AI
  */
 async function submitWriting({ promptId, studentId, essayText }) {
-  const client = await pool.connect();
-  
+  // Each pool query commits and releases its client before evaluation starts.
+  const promptQuery = `
+    SELECT task_type, prompt, min_words as word_limit
+    FROM writing_tasks
+    WHERE id = $1
+  `;
+  const promptResult = await pool.query(promptQuery, [promptId]);
+  const prompt = promptResult.rows[0];
+
+  if (!prompt) {
+    throw new Error('Prompt not found');
+  }
+
+  const wordCount = essayText.trim().split(/\s+/).length;
+  const submissionQuery = `
+    INSERT INTO writing_submissions (task_id, user_id, essay_text, word_count, is_completed)
+    VALUES ($1, $2, $3, $4, false)
+    RETURNING id, submitted_at
+  `;
+  const submissionResult = await pool.query(submissionQuery, [
+    promptId,
+    studentId,
+    essayText,
+    wordCount
+  ]);
+  const submission = submissionResult.rows[0];
+
+  let evaluation;
   try {
-    await client.query('BEGIN');
-    
-    // Lấy thông tin đề bài
-    const promptQuery = `
-      SELECT task_type, prompt, min_words as word_limit
-      FROM writing_tasks
-      WHERE id = $1
-    `;
-    const promptResult = await client.query(promptQuery, [promptId]);
-    const prompt = promptResult.rows[0];
-    
-    if (!prompt) {
-      throw new Error('Prompt not found');
-    }
-    
-    // Đếm số từ trong bài viết
-    const wordCount = essayText.trim().split(/\s+/).length;
-    
-    // Lưu bài viết vào database (writing_submissions)
-    const submissionQuery = `
-      INSERT INTO writing_submissions (task_id, user_id, essay_text, word_count)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, submitted_at
-    `;
-    const submissionResult = await client.query(submissionQuery, [
-      promptId,
-      studentId,
-      essayText,
-      wordCount
-    ]);
-    const submission = submissionResult.rows[0];
-    
-    console.log('Calling AI to evaluate essay...');
-    const evaluation = await evaluateWritingWithGemini({
+    evaluation = validateWritingEvaluation(await evaluateWritingWithGemini({
       taskType: prompt.task_type,
       promptText: prompt.prompt,
       essayText,
       wordCount
-    });
-    
-    // Lưu kết quả chấm bài vào writing_submissions (update)
-    const updateQuery = `
-      UPDATE writing_submissions
-      SET 
-        overall_band = $1,
-        task_achievement = $2,
-        coherence_cohesion = $3,
-        lexical_resource = $4,
-        grammatical_range = $5,
-        feedback_overall = $6,
-        feedback_task_achievement = $7,
-        feedback_coherence = $8,
-        feedback_vocabulary = $9,
-        feedback_grammar = $10,
-        suggestions = $11,
-        is_completed = true
-      WHERE id = $12
-      RETURNING id
-    `;
-    const updateValues = [
-      evaluation.scores.overall_band,
-      evaluation.scores.task_achievement,
-      evaluation.scores.coherence_cohesion,
-      evaluation.scores.lexical_resource,
-      evaluation.scores.grammar_accuracy,
-      evaluation.overall_feedback,
-      evaluation.strengths || '',
-      evaluation.structure_feedback || '',
-      JSON.stringify(evaluation.vocabulary_suggestions || []),
-      JSON.stringify(evaluation.grammar_errors || []),
-      evaluation.improvement_tips || '',
-      submission.id
-    ];
-    await client.query(updateQuery, updateValues);
-    
-    await client.query('COMMIT');
-    
-    // Trả về kết quả đầy đủ
-    return {
-      submissionId: submission.id,
-      submittedAt: submission.submitted_at,
-      wordCount,
-      scores: evaluation.scores,
-      feedback: {
-        overall_feedback: evaluation.overall_feedback,
-        strengths: evaluation.strengths,
-        weaknesses: evaluation.weaknesses,
-        grammar_errors: evaluation.grammar_errors,
-        vocabulary_suggestions: evaluation.vocabulary_suggestions,
-        structure_feedback: evaluation.structure_feedback,
-        improvement_tips: evaluation.improvement_tips
-      }
-    };
-    
-  } catch (error) {
-    await client.query('ROLLBACK');
+    }));
+  } catch {
+    const error = new WritingEvaluationError();
+    error.submissionId = submission.id;
     throw error;
-  } finally {
-    client.release();
   }
+
+  // Scores and completion are persisted together, only after validation.
+  const updateQuery = `
+    UPDATE writing_submissions
+    SET
+      overall_band = $1,
+      task_achievement = $2,
+      coherence_cohesion = $3,
+      lexical_resource = $4,
+      grammatical_range = $5,
+      feedback_overall = $6,
+      feedback_task_achievement = $7,
+      feedback_coherence = $8,
+      feedback_vocabulary = $9,
+      feedback_grammar = $10,
+      suggestions = $11,
+      is_completed = true
+    WHERE id = $12
+    RETURNING id
+  `;
+  const updateValues = [
+    evaluation.scores.overall_band,
+    evaluation.scores.task_achievement,
+    evaluation.scores.coherence_cohesion,
+    evaluation.scores.lexical_resource,
+    evaluation.scores.grammar_accuracy,
+    evaluation.overall_feedback,
+    evaluation.strengths,
+    evaluation.structure_feedback,
+    JSON.stringify(evaluation.vocabulary_suggestions),
+    JSON.stringify(evaluation.grammar_errors),
+    evaluation.improvement_tips,
+    submission.id
+  ];
+  const updateResult = await pool.query(updateQuery, updateValues);
+  if (updateResult.rows.length === 0) {
+    throw new Error('Submission not found');
+  }
+
+  return {
+    submissionId: submission.id,
+    submittedAt: submission.submitted_at,
+    wordCount,
+    scores: evaluation.scores,
+    feedback: {
+      overall_feedback: evaluation.overall_feedback,
+      strengths: evaluation.strengths,
+      weaknesses: evaluation.weaknesses,
+      grammar_errors: evaluation.grammar_errors,
+      vocabulary_suggestions: evaluation.vocabulary_suggestions,
+      structure_feedback: evaluation.structure_feedback,
+      improvement_tips: evaluation.improvement_tips
+    }
+  };
 }
 
 /**

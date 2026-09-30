@@ -79,11 +79,19 @@ async function submitWriting(req, res) {
       data: result
     });
   } catch (error) {
+    if (error.code === 'WRITING_EVALUATION_UNAVAILABLE') {
+      return res.status(503).json({
+        success: false,
+        code: 'WRITING_EVALUATION_UNAVAILABLE',
+        message: 'Essay saved, but evaluation is temporarily unavailable. Please try again.',
+        retryable: true,
+        submissionId: error.submissionId
+      });
+    }
     console.error('Error submitting writing:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to submit essay',
-      error: error.message
+      message: 'Failed to submit essay'
     });
   }
 }
