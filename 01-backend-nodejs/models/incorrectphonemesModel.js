@@ -90,10 +90,15 @@ const insertOrUpdateIncorrectPhonemes = async (
 const getIncorrectPhonemesOfLesson = async (studentId, lessonResultId) => {
   const result = await client.query(
     `
-    SELECT * 
+    SELECT ip.*, lr.*, q.*
     FROM incorrectphonemes ip
     INNER JOIN lessonResult lr
-      ON ip.lessonResultId = lr.id
+      ON ip.lessonResultId = lr.id AND ip.studentId = lr.studentId
+    INNER JOIN questionResult qr
+      ON ip.questionResultId = qr.id
+      AND ip.lessonResultId = qr.lessonResultId
+      AND ip.questionId = qr.questionId
+      AND ip.studentId = qr.studentId
     INNER JOIN question q
       ON ip.questionId = q.id
     WHERE ip.studentId = $1 AND ip.lessonResultId = $2
@@ -105,100 +110,67 @@ const getIncorrectPhonemesOfLesson = async (studentId, lessonResultId) => {
 };
 
 const getTopIncorrectPhonemesWithAvgScore = async (studentId, lessonResultId) => {
-  try {
-    // First, get lesson info separately to ensure we always have it
-    const lessonInfoResult = await client.query(
-      `
+  const result = await client.query(
+    `
+    WITH OwnedResult AS (
+      SELECT *
+      FROM lessonresult
+      WHERE id = $1 AND studentId = $2
+    ),
+    LatestResults AS (
+      SELECT DISTINCT ON (qr.questionId) qr.*
+      FROM questionResult qr
+      INNER JOIN OwnedResult lr
+        ON qr.lessonResultId = lr.id AND qr.studentId = lr.studentId
+      ORDER BY qr.questionId, qr.id DESC
+    ),
+    PhonemeCounts AS (
       SELECT
-        lr.id,
-        lr.lessonid,
-        lr.finishedtime,
-        lr.averagescore,
-        l.name as lesson_name,
-        l.type as lesson_type,
-        (SELECT COUNT(*) FROM question WHERE lessonid = lr.lessonid) as question_count
-      FROM lessonresult lr
-      LEFT JOIN lesson l ON lr.lessonid = l.id
-      WHERE lr.id = $1 AND lr.studentId = $2
-      `,
-      [lessonResultId, studentId]
-    );
-
-    const lessonInfo = lessonInfoResult.rows[0] || null;
-
-    // Then get phoneme data
-    const result = await client.query(
-      `
-      WITH PhonemeCounts AS (
-        SELECT
-          questionId,
-          phoneme,  
-          SUM(incorrect_count) AS total_incorrect
-        FROM incorrectphonemes
-        WHERE lessonresultid = $1 AND studentId = $2
-        GROUP BY questionId, phoneme
-      ),
-      TopPhonemes AS (
-        SELECT
-          questionId,
-          phoneme,
-          total_incorrect,
-          RANK() OVER (PARTITION BY questionId ORDER BY total_incorrect DESC) as rank
-        FROM PhonemeCounts
-      ),
-      AvgScores AS (
-        SELECT DISTINCT ON (questionId)
-    questionId,
-    ieltsBand,
-    accuracy,
-    fluency,
-    completeness,
-    pronunciation
-  FROM questionResult
-  WHERE lessonresultid = $1 AND studentId = $2
-  ORDER BY questionId, id DESC
-      ),
-      LatestFeedback AS (
-        SELECT DISTINCT ON (questionId)
-          questionId,
-          feedback
-        FROM questionResult
-        WHERE lessonresultid = $1 AND studentId = $2
-        ORDER BY questionId, id DESC
-      )
-      
-      SELECT
-        tp.questionId,
-        tp.phoneme,
-        tp.total_incorrect,
-        a.ieltsBand,
-        a.accuracy,
-        a.fluency,
-        a.completeness,
-        a.pronunciation,
-        lf.feedback AS avg_feedback
-      FROM TopPhonemes tp
-      LEFT JOIN AvgScores a ON tp.questionId = a.questionId
-      LEFT JOIN LatestFeedback lf ON tp.questionId = lf.questionId
-      WHERE tp.rank <= 3
-      ORDER BY tp.questionId, tp.rank;
+        qr.questionId,
+        ip.phoneme,
+        SUM(ip.incorrect_count) AS total_incorrect
+      FROM LatestResults qr
+      INNER JOIN incorrectphonemes ip
+        ON ip.questionResultId = qr.id
+        AND ip.lessonResultId = qr.lessonResultId
+        AND ip.questionId = qr.questionId
+        AND ip.studentId = qr.studentId
+      WHERE ip.phoneme IS NOT NULL AND ip.incorrect_count > 0
+      GROUP BY qr.questionId, ip.phoneme
+    ),
+    TopPhonemes AS (
+      SELECT *,
+        ROW_NUMBER() OVER (
+          PARTITION BY questionId ORDER BY total_incorrect DESC, phoneme
+        ) AS rank
+      FROM PhonemeCounts
+    )
+    SELECT
+      l.name AS lesson_name,
+      l.type AS lesson_type,
+      lr.finishedtime,
+      lr.averagescore AS lesson_score,
+      (SELECT COUNT(*) FROM question WHERE lessonid = lr.lessonid) AS question_count,
+      qr.questionId,
+      qr.ieltsBand,
+      qr.accuracy,
+      qr.fluency,
+      qr.completeness,
+      qr.pronunciation,
+      qr.feedback AS avg_feedback,
+      tp.phoneme,
+      tp.total_incorrect
+    FROM OwnedResult lr
+    LEFT JOIN lesson l ON l.id = lr.lessonId
+    LEFT JOIN LatestResults qr ON qr.lessonResultId = lr.id
+    LEFT JOIN TopPhonemes tp ON tp.questionId = qr.questionId AND tp.rank <= 3
+    ORDER BY qr.questionId, tp.rank
     `,
-      [lessonResultId, studentId]
-    );
+    [lessonResultId, studentId]
+  );
 
-    // Attach lesson info to each row
-    return result.rows.map(row => ({
-      ...row,
-      lesson_name: lessonInfo?.lesson_name,
-      lesson_type: lessonInfo?.lesson_type,
-      finishedtime: lessonInfo?.finishedtime,
-      lesson_score: lessonInfo?.averagescore,
-      question_count: lessonInfo?.question_count
-    }));
-  } catch (error) {
-    console.error("Error in getTopIncorrectPhonemesWithAvgScore:", error);
-    throw error;
-  }
+  // LEFT JOIN preserves lesson metadata even when there are no question results.
+  return result.rows;
 };
 
 const getResultViews = async (studentId) => {

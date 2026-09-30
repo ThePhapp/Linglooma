@@ -62,6 +62,11 @@ const getIncorrectPhonemesOfLessonController = async (req, res) => {
   }
 };
 
+const isValidResultId = value =>
+  (typeof value === "string" || typeof value === "number") &&
+  /^[1-9]\d*$/.test(String(value)) &&
+  Number(value) <= 2147483647;
+
 const getFeedbackSummaryController = async (req, res) => {
   const studentId = req.user?.id;
   const { lessonResultId } = req.query;
@@ -69,9 +74,8 @@ const getFeedbackSummaryController = async (req, res) => {
   if (!studentId) {
     return res.status(401).json({ message: "Invalid authentication token" });
   }
-  
-  if (!lessonResultId) {
-    return res.status(400).json({ message: "lessonResultId is required" });
+  if (!isValidResultId(lessonResultId)) {
+    return res.status(400).json({ message: "A valid lessonResultId is required" });
   }
 
   try {
@@ -81,179 +85,49 @@ const getFeedbackSummaryController = async (req, res) => {
     }
 
     const rows = await getTopIncorrectPhonemesWithAvgScore(studentId, lessonResultId);
-    
-    console.log('📊 Feedback summary rows:', rows.length);
-    
-    // Extract lesson info (will be in every row, or we fetch it separately)
-    let lessonInfo = null;
-    
-    if (rows.length > 0 && rows[0].lesson_name) {
-      lessonInfo = {
-        lessonName: rows[0].lesson_name,
-        lessonType: rows[0].lesson_type,
-        finishedTime: rows[0].finishedtime,
-        lessonScore: rows[0].lesson_score,
-        questionCount: rows[0].question_count
-      };
-      console.log('Lesson info from rows:', lessonInfo);
-    } else {
-      // Return demo data if no real data exists
-      console.log('⚠️ No data found, returning demo data');
-      
-      const demoLessonInfo = {
-        lessonName: "Technology and Innovation",
-        lessonType: "Speaking Practice",
-        finishedTime: new Date().toISOString(),
-        lessonScore: 6.5,
-        questionCount: 6
-      };
-
-      const demoQuestions = [
-        {
-          questionId: 1,
-          averageScores: {
-            ieltsBand: 6.5,
-            accuracy: 85,
-            fluency: 80,
-            completeness: 90,
-            pronunciation: 75
-          },
-          feedback: "Good pronunciation overall. Pay attention to stress patterns in longer words.",
-          topIncorrectPhonemes: [
-            { phoneme: "/θ/", count: 3 },
-            { phoneme: "/ð/", count: 2 },
-            { phoneme: "/v/", count: 1 }
-          ]
-        },
-        {
-          questionId: 2,
-          averageScores: {
-            ieltsBand: 7.0,
-            accuracy: 90,
-            fluency: 85,
-            completeness: 88,
-            pronunciation: 82
-          },
-          feedback: "Excellent fluency! Work on the 'th' sounds for better clarity.",
-          topIncorrectPhonemes: [
-            { phoneme: "/ʃ/", count: 2 },
-            { phoneme: "/r/", count: 1 }
-          ]
-        },
-        {
-          questionId: 3,
-          averageScores: {
-            ieltsBand: 6.0,
-            accuracy: 78,
-            fluency: 75,
-            completeness: 80,
-            pronunciation: 70
-          },
-          feedback: "Try to maintain consistent pacing. Practice word stress in multi-syllable words.",
-          topIncorrectPhonemes: [
-            { phoneme: "/æ/", count: 4 },
-            { phoneme: "/ɜː/", count: 2 },
-            { phoneme: "/ŋ/", count: 1 }
-          ]
-        },
-        {
-          questionId: 4,
-          averageScores: {
-            ieltsBand: 6.5,
-            accuracy: 82,
-            fluency: 78,
-            completeness: 85,
-            pronunciation: 77
-          },
-          feedback: "Good content delivery. Focus on intonation patterns for questions vs statements.",
-          topIncorrectPhonemes: [
-            { phoneme: "/w/", count: 2 },
-            { phoneme: "/j/", count: 1 }
-          ]
-        },
-        {
-          questionId: 5,
-          averageScores: {
-            ieltsBand: 7.5,
-            accuracy: 92,
-            fluency: 88,
-            completeness: 95,
-            pronunciation: 85
-          },
-          feedback: "Excellent performance! Very natural and confident delivery.",
-          topIncorrectPhonemes: [
-            { phoneme: "/l/", count: 1 }
-          ]
-        },
-        {
-          questionId: 6,
-          averageScores: {
-            ieltsBand: 6.0,
-            accuracy: 75,
-            fluency: 72,
-            completeness: 78,
-            pronunciation: 73
-          },
-          feedback: "Good effort. Practice connected speech and linking sounds between words.",
-          topIncorrectPhonemes: [
-            { phoneme: "/ð/", count: 3 },
-            { phoneme: "/θ/", count: 2 },
-            { phoneme: "/z/", count: 1 }
-          ]
-        }
-      ];
-
-      return res.json({
-        lessonInfo: demoLessonInfo,
-        questions: demoQuestions,
-        isDemo: true
-      });
+    // An owned result with no answers still has a metadata-only row.
+    // No rows means it disappeared or ownership changed after the check.
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Lesson result not found" });
     }
 
-    const feedbackSummary = {};
-    rows.forEach(
-      ({
-        questionid,
-        phoneme,
-        total_incorrect,
-        ieltsband,
-        accuracy,
-        fluency,
-        completeness,
-        pronunciation,
-        avg_feedback,
-      }) => {
-        if (!feedbackSummary[questionid]) {
-          feedbackSummary[questionid] = {
-            questionId: questionid,
-            averageScores: {
-              ieltsBand: ieltsband || null,
-              accuracy: accuracy || null,
-              fluency: fluency || null,
-              completeness: completeness || null,
-              pronunciation: pronunciation || null,
-            },
-            feedback: avg_feedback || "",
-            topIncorrectPhonemes: [],
-          };
-        }
-        feedbackSummary[questionid].topIncorrectPhonemes.push({
-          phoneme,
-          count: total_incorrect,
+    const lessonInfo = {
+      lessonName: rows[0].lesson_name ?? null,
+      lessonType: rows[0].lesson_type ?? null,
+      finishedTime: rows[0].finishedtime ?? null,
+      lessonScore: rows[0].lesson_score ?? null,
+      questionCount: rows[0].question_count,
+    };
+
+    const questions = new Map();
+    rows.forEach(row => {
+      if (row.questionid == null) return;
+
+      if (!questions.has(row.questionid)) {
+        questions.set(row.questionid, {
+          questionId: row.questionid,
+          averageScores: {
+            ieltsBand: row.ieltsband ?? null,
+            accuracy: row.accuracy ?? null,
+            fluency: row.fluency ?? null,
+            completeness: row.completeness ?? null,
+            pronunciation: row.pronunciation ?? null,
+          },
+          feedback: row.avg_feedback ?? "",
+          topIncorrectPhonemes: [],
         });
       }
-    );
+      if (row.phoneme != null) {
+        questions.get(row.questionid).topIncorrectPhonemes.push({
+          phoneme: row.phoneme,
+          count: row.total_incorrect,
+        });
+      }
+    });
 
-    const response = {
-      lessonInfo,
-      questions: Object.values(feedbackSummary),
-      isDemo: false
-    };
-    
-    console.log('📤 Sending response with', response.questions.length, 'questions');
-    res.json(response);
+    res.json({ lessonInfo, questions: Array.from(questions.values()) });
   } catch (err) {
-    console.error("❌ Failed to get feedback summary:", err);
+    console.error("Failed to get feedback summary:", err);
     res.status(500).json({ message: "Failed to get feedback summary" });
   }
 };
