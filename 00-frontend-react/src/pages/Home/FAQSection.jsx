@@ -20,7 +20,7 @@ const FAQSection = () => {
     { question: "What is Linglooma?", answer: "Linglooma provides Reading, Listening, Speaking, and Writing practice modules. Saved progress and analytics are currently limited: speaking results can be reviewed, while listening progress is session-only." },
     { question: "What feedback is available?", answer: "Speaking attempts can be saved with feedback and reviewed in speaking history and speaking analytics. Writing submissions can receive an evaluation. Feedback and saved progress are not available in the same way for every module." },
     { question: "How can I track my progress?", answer: "The history and analytics pages use saved speaking results. Listening progress is session-only and is not included in account history or analytics." },
-    { question: "What does Linglooma cost?", answer: "Please check the current sign-up and practice experience for availability. This page does not describe a free trial, premium plan, or feature limits." },
+    { question: "What does Linglooma cost?", answer: "No pricing plans or paid feature limits are documented on this page. Check the current sign-up and practice experience for availability." },
     { question: "Can I use Linglooma on mobile devices?", answer: "The interface is designed to adapt to phone, tablet, and desktop screen sizes. The practice experience may vary by device and browser." },
   ];
 

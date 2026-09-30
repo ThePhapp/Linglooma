@@ -1,4 +1,3 @@
-import { FaGoogle, FaFacebook } from "react-icons/fa";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from 'react-toastify';
@@ -62,8 +61,9 @@ const PageRegister = () => {
             return;
         }
 
-        if (password.length < 6) {
-            toast.error("Password must be at least 6 characters");
+        const passwordLength = [...password].length;
+        if (passwordLength < 8 || passwordLength > 128) {
+            toast.error("Password must be between 8 and 128 characters");
             return;
         }
 
@@ -135,6 +135,7 @@ const PageRegister = () => {
                                 className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-300 bg-white/50"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                maxLength={256}
                                 disabled={isLoading}
                             />
                         </div>
@@ -183,6 +184,7 @@ const PageRegister = () => {
                                 className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-300 bg-white/50"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
+                                maxLength={256}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !isLoading) {
                                         handleRegister();
@@ -224,30 +226,8 @@ const PageRegister = () => {
                         )}
                     </button>
 
-                    {/* Divider */}
-                    <div className="relative my-8">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-300"></div>
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-4 bg-white/80 text-gray-500 font-medium">Or sign up with</span>
-                        </div>
-                    </div>
-
-                    {/* Social Login Buttons */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                        <button className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 group">
-                            <FaGoogle className="w-5 h-5 text-gray-600 group-hover:text-blue-600 transition-colors" />
-                            <span className="font-medium text-gray-700 group-hover:text-blue-600 transition-colors">Google</span>
-                        </button>
-                        <button className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 group">
-                            <FaFacebook className="w-5 h-5 text-gray-600 group-hover:text-blue-600 transition-colors" />
-                            <span className="font-medium text-gray-700 group-hover:text-blue-600 transition-colors">Facebook</span>
-                        </button>
-                    </div>
-
                     {/* Login Link */}
-                    <div className="text-center">
+                    <div className="mt-6 text-center">
                         <p className="text-gray-600">
                             Already have an account?{' '}
                             <Link 
@@ -263,7 +243,7 @@ const PageRegister = () => {
 
                 {/* Footer */}
                 <div className="text-center mt-8 text-sm text-gray-600">
-                    <p>© 2024 Linglooma. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} Linglooma.</p>
                 </div>
             </div>
         </div>

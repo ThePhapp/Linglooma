@@ -50,9 +50,12 @@ const PasswordSettingsForm = () => {
             return;
         }
 
-        if (formData.newPassword && formData.newPassword.length < 6) {
-            toast.error('Password must be at least 6 characters long');
-            return;
+        if (formData.newPassword) {
+            const passwordLength = [...formData.newPassword].length;
+            if (passwordLength < 8 || passwordLength > 128) {
+                toast.error('Password must be between 8 and 128 characters');
+                return;
+            }
         }
 
         if (formData.newPassword && !formData.currentPassword) {
@@ -69,8 +72,6 @@ const PasswordSettingsForm = () => {
             nationality: formData.nationality,
             phonenumber: formData.phonenumber
         };
-
-        console.log("Payload:", payload);
 
         try {
             setIsSubmitting(true);
@@ -103,7 +104,6 @@ const PasswordSettingsForm = () => {
                 toast.error(data.message || 'Update failed');
             }
         } catch (err) {
-            console.error('Update error:', err);
             if (err.response) {
                 toast.error('❌ ' + (err.response.data.message || 'Unknown error'));
             } else if (err.request) {
@@ -179,8 +179,9 @@ const PasswordSettingsForm = () => {
                                 id="newPassword"
                                 value={formData.newPassword}
                                 onChange={handleChange}
+                                maxLength={256}
                                 className="w-full px-4 py-3 pl-10 border-2 border-gray-200 rounded-xl focus:border-purple-400 focus:outline-none transition-colors duration-200"
-                                placeholder="Enter new password (min 6 characters)"
+                                placeholder="Enter new password (8–128 characters)"
                             />
                             <span className="absolute left-3 top-1/2 transform -translate-y-1/2">🔐</span>
                         </div>
@@ -196,6 +197,7 @@ const PasswordSettingsForm = () => {
                                 id="confirmPassword"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
+                                maxLength={256}
                                 className="w-full px-4 py-3 pl-10 border-2 border-gray-200 rounded-xl focus:border-purple-400 focus:outline-none transition-colors duration-200"
                                 placeholder="Re-enter new password"
                             />
@@ -296,7 +298,7 @@ const PasswordSettingsForm = () => {
                     <div>
                         <h4 className="font-semibold text-yellow-800 mb-2">Security Tips</h4>
                         <ul className="text-sm text-yellow-700 space-y-1 list-disc list-inside">
-                            <li>Use a strong password with at least 6 characters</li>
+                            <li>Use a unique password with 8–128 characters</li>
                             <li>Don't share your password with anyone</li>
                             <li>Change your password regularly</li>
                             <li>Use a unique password for this account</li>

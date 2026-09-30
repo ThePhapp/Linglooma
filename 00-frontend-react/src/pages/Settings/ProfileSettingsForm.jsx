@@ -10,13 +10,6 @@ const ProfileSettingsForm = () => {
     const phone = auth?.user?.phonenumber;
     const nationality = auth?.user?.nationality;
 
-    const socialLinks = [
-      { name: 'Facebook', icon: '👥', url: 'https://www.facebook.com/?locale=vi_VN', color: 'from-blue-500 to-blue-600' },
-      { name: 'Instagram', icon: '📷', url: 'https://www.instagram.com/', color: 'from-pink-500 to-purple-600' },
-      { name: 'LinkedIn', icon: '💼', url: 'https://www.linkedin.com/', color: 'from-blue-600 to-blue-700' },
-      { name: 'Twitter', icon: '🐦', url: 'https://x.com/?lang=vi', color: 'from-sky-400 to-sky-600' },
-    ];
-
     return (
       <div className="space-y-6">
         {/* Profile Header */}
@@ -114,29 +107,6 @@ const ProfileSettingsForm = () => {
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2">🌍</span>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Social Media */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <span>🔗</span>
-            <span>Social Media</span>
-          </h3>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {socialLinks.map((social) => (
-              <a
-                key={social.name}
-                href={social.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`bg-gradient-to-br ${social.color} hover:opacity-90 text-white rounded-xl p-4 flex flex-col items-center gap-2 transition-all duration-200 transform hover:scale-105 shadow-lg`}
-              >
-                <span className="text-3xl">{social.icon}</span>
-                <span className="text-sm font-medium">{social.name}</span>
-              </a>
-            ))}
           </div>
         </div>
 

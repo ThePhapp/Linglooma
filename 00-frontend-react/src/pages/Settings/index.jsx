@@ -65,23 +65,6 @@ const SettingsPage = () => {
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-800">{username || 'User'}</h2>
             <p className="text-gray-600">{email || 'No email'}</p>
-            <div className="flex gap-2 mt-2">
-              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                ✓ Active
-              </span>
-              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
-                IELTS Student
-              </span>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500">Member since</p>
-            <p className="text-lg font-semibold text-gray-800">
-              {new Date().toLocaleDateString("en-US", {
-                month: "short",
-                year: "numeric"
-              })}
-            </p>
           </div>
         </div>
       </div>
