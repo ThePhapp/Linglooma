@@ -283,9 +283,10 @@ const ListeningPractice = () => {
                 {!mode ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Dictation Mode */}
-                        <div
+                        <button
+                            type="button"
                             onClick={() => setMode('dictation')}
-                            className="group cursor-pointer bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-pink-300 transform hover:scale-105 overflow-hidden"
+                            className="group cursor-pointer overflow-hidden rounded-2xl border-2 border-transparent bg-white/80 text-left shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-pink-300 hover:shadow-2xl focus-visible:border-pink-500"
                         >
                             <div className="h-2 bg-gradient-to-r from-pink-500 to-rose-600"></div>
                             <div className="p-8">
@@ -303,12 +304,13 @@ const ListeningPractice = () => {
                                     <ArrowLeft className="h-4 w-4 rotate-180 group-hover:translate-x-2 transition-transform" />
                                 </div>
                             </div>
-                        </div>
+                        </button>
 
                         {/* Questions Mode */}
-                        <div
+                        <button
+                            type="button"
                             onClick={() => setMode('questions')}
-                            className="group cursor-pointer bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-purple-300 transform hover:scale-105 overflow-hidden"
+                            className="group cursor-pointer overflow-hidden rounded-2xl border-2 border-transparent bg-white/80 text-left shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-purple-300 hover:shadow-2xl focus-visible:border-purple-500"
                         >
                             <div className="h-2 bg-gradient-to-r from-purple-500 to-violet-600"></div>
                             <div className="p-8">
@@ -326,7 +328,7 @@ const ListeningPractice = () => {
                                     <ArrowLeft className="h-4 w-4 rotate-180 group-hover:translate-x-2 transition-transform" />
                                 </div>
                             </div>
-                        </div>
+                        </button>
                     </div>
                 ) : mode === 'dictation' ? (
                     <DictationMode onBack={() => setMode(null)} />
@@ -408,6 +410,8 @@ const DictationMode = ({ onBack }) => {
                 {/* Exercise Navigation */}
                 <div className="flex items-center gap-3">
                     <button
+                        type="button"
+                        aria-label="Previous dictation exercise"
                         onClick={previousExercise}
                         disabled={currentExerciseIndex === 0}
                         className={`p-2 rounded-lg transition-all ${
@@ -427,6 +431,8 @@ const DictationMode = ({ onBack }) => {
                     </div>
 
                     <button
+                        type="button"
+                        aria-label="Next dictation exercise"
                         onClick={nextExercise}
                         disabled={currentExerciseIndex === DICTATION_EXERCISES.length - 1}
                         className={`p-2 rounded-lg transition-all ${
@@ -601,6 +607,8 @@ const QuestionsMode = ({ onBack }) => {
                 {/* Exercise Navigation */}
                 <div className="flex items-center gap-3">
                     <button
+                        type="button"
+                        aria-label="Previous question exercise"
                         onClick={previousExercise}
                         disabled={currentExerciseIndex === 0}
                         className={`p-2 rounded-lg transition-all ${
@@ -619,6 +627,8 @@ const QuestionsMode = ({ onBack }) => {
                     </div>
 
                     <button
+                        type="button"
+                        aria-label="Next question exercise"
                         onClick={nextExercise}
                         disabled={currentExerciseIndex === QUESTION_EXERCISES.length - 1}
                         className={`p-2 rounded-lg transition-all ${
