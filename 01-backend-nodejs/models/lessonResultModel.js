@@ -14,6 +14,30 @@ async function insertLessonResult({ studentId, lessonId, finishedTime, averageSc
   return res.rows[0];
 }
 
+async function isQuestionInOwnedLessonResult(studentId, lessonResultId, questionId) {
+  const result = await client.query(
+    `
+      SELECT 1
+      FROM lessonResult lr
+      INNER JOIN question q ON q.lessonId = lr.lessonId
+      WHERE lr.id = $1 AND lr.studentId = $2 AND q.id = $3
+      LIMIT 1
+    `,
+    [lessonResultId, studentId, questionId]
+  );
+
+  return result.rows.length > 0;
+}
+
+async function ownsLessonResult(studentId, lessonResultId) {
+  const result = await client.query(
+    'SELECT 1 FROM lessonResult WHERE id = $1 AND studentId = $2 LIMIT 1',
+    [lessonResultId, studentId]
+  );
+
+  return result.rows.length > 0;
+}
+
 
 const getLessonResult = async (studentId, lessonId) => {
     await client.query(
@@ -64,6 +88,8 @@ async function getSpeakingHistory(studentId) {
 
 module.exports = {
     insertLessonResult,
+    isQuestionInOwnedLessonResult,
+    ownsLessonResult,
     getLessonResult,
     getRecentlyLessonResult,
     getSpeakingHistory

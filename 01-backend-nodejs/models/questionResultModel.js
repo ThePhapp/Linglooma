@@ -38,7 +38,27 @@ const getQuestionResultOfLesson = async (studentId, lessonResultId) => {
     return result;
 };
 
+const isOwnedQuestionResult = async (studentId, questionResultId, lessonResultId, questionId) => {
+  const result = await client.query(
+    `
+      SELECT 1
+      FROM questionResult qr
+      INNER JOIN lessonResult lr
+        ON lr.id = qr.lessonResultId AND lr.studentId = qr.studentId
+      WHERE qr.id = $1
+        AND qr.studentId = $2
+        AND qr.lessonResultId = $3
+        AND qr.questionId = $4
+      LIMIT 1
+    `,
+    [questionResultId, studentId, lessonResultId, questionId]
+  );
+
+  return result.rows.length > 0;
+};
+
 module.exports = {
     insertQuestionResult, 
     getQuestionResultOfLesson, 
+    isOwnedQuestionResult,
 };

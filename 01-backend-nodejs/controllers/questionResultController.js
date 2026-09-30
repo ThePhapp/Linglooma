@@ -1,4 +1,5 @@
 const { insertQuestionResult, getQuestionResultOfLesson } = require('../models/questionResultModel');
+const { isQuestionInOwnedLessonResult } = require('../models/lessonResultModel');
 
 // Thêm kết quả một câu hỏi sau khi làm bài
 const insertQuestionResultController = async (req, res) => {
@@ -26,6 +27,11 @@ const insertQuestionResultController = async (req, res) => {
             return res.status(400).json({ message: "lessonResultId and questionId are required" });
         }
 
+        const canAttachResult = await isQuestionInOwnedLessonResult(studentId, lessonResultId, questionId);
+        if (!canAttachResult) {
+            return res.status(404).json({ message: "Lesson result or question not found" });
+        }
+
         console.log('📝 Inserting question result for studentId:', studentId, 'questionId:', questionId);
         await insertQuestionResult(
             studentId,
@@ -47,11 +53,15 @@ const insertQuestionResultController = async (req, res) => {
 };
 
 const getQuestionResultOfLessonController = async (req, res) => {
-    const { studentId, lessonResultId } = req.params;
+    const studentId = req.user?.id;
+    const { lessonResultId } = req.params;
 
-    // Kiểm tra thông tin đầu vào
-    if (!studentId || !lessonResultId) {
-        return res.status(400).json({ message: "Missing parameters studentId or lessonResultId" });
+    if (!studentId) {
+        return res.status(401).json({ message: "Invalid authentication token" });
+    }
+
+    if (!lessonResultId) {
+        return res.status(400).json({ message: "Missing lessonResultId" });
     }
 
     try {

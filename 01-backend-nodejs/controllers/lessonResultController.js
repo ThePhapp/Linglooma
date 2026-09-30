@@ -27,10 +27,15 @@ const insertLessonResultController = async (req, res) => {
 };
 
 const getLessonResultController = async (req, res) => {
-  const { studentId, lessonId } = req.query; // hoặc params tuỳ bạn
+  const studentId = req.user?.id;
+  const { lessonId } = req.query;
 
-  if (!studentId || !lessonId) {
-    return res.status(400).json({ message: "Missing parameters" });
+  if (!studentId) {
+    return res.status(401).json({ message: "Invalid authentication token" });
+  }
+
+  if (!lessonId) {
+    return res.status(400).json({ message: "Missing lessonId" });
   }
 
   try {
@@ -43,10 +48,10 @@ const getLessonResultController = async (req, res) => {
 };
 
 const getRecentlyLessonResultController = async (req, res) => {
-  const { studentId } = req.params;
+  const studentId = req.user?.id;
 
   if (!studentId) {
-    return res.status(400).json({ message: "Missing studentId" });
+    return res.status(401).json({ message: "Invalid authentication token" });
   }
 
   try {

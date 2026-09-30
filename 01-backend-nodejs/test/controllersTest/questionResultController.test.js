@@ -1,22 +1,24 @@
+jest.mock('../../models/questionResultModel');
+jest.mock('../../models/lessonResultModel');
+
 const {
   insertQuestionResultController,
-  getQuestionResultOfLessonController,
+  getQuestionResultOfLessonController
 } = require('../../controllers/questionResultController');
-
 const {
   insertQuestionResult,
-  getQuestionResultOfLesson,
+  getQuestionResultOfLesson
 } = require('../../models/questionResultModel');
+const { isQuestionInOwnedLessonResult } = require('../../models/lessonResultModel');
 
-jest.mock('../../models/questionResultModel');
-
-describe('Kiểm thử insertQuestionResultController', () => {
-  let req, res;
+describe('question result controllers', () => {
+  let req;
+  let res;
 
   beforeEach(() => {
     req = {
+      user: { id: 7 },
       body: {
-        studentId: 1,
         lessonResultId: 10,
         questionId: 100,
         ieltsBand: 7,
@@ -24,109 +26,81 @@ describe('Kiểm thử insertQuestionResultController', () => {
         fluency: 7,
         completeness: 9,
         pronunciation: 6,
-        feedback: 'Làm tốt lắm'
-      }
-    };
-
-    res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn()
-    };
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('Chèn kết quả câu hỏi thành công', async () => {
-    insertQuestionResult.mockResolvedValue();
-
-    await insertQuestionResultController(req, res);
-
-    expect(insertQuestionResult).toHaveBeenCalledWith(
-      1, 10, 100, 7, 8, 7, 9, 6, 'Làm tốt lắm'
-    );
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ message: "Insert question results successfully" });
-  });
-
-  it('Thiếu các trường bắt buộc (studentId) → lỗi 400', async () => {
-    req.body.studentId = undefined;
-
-    await insertQuestionResultController(req, res);
-
-    expect(insertQuestionResult).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: "All fields are required" });
-  });
-
-  it('Lỗi server khi insert → trả về lỗi 500', async () => {
-    insertQuestionResult.mockRejectedValue(new Error('Lỗi DB'));
-
-    await insertQuestionResultController(req, res);
-
-    expect(insertQuestionResult).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ message: "Insert question results failed" });
-  });
-});
-
-describe('Kiểm thử getQuestionResultOfLessonController', () => {
-  let req, res;
-
-  beforeEach(() => {
-    req = {
+        feedback: 'Good work'
+      },
       params: {
-        studentId: '1',
+        studentId: '99',
         lessonResultId: '10'
       }
     };
-
     res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn()
     };
-  });
-
-  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('Lấy kết quả câu hỏi thành công', async () => {
-    const fakeData = {
-      rows: [
-        { questionId: 1, ieltsBand: 6.5 },
-        { questionId: 2, ieltsBand: 7.0 }
-      ]
-    };
-    getQuestionResultOfLesson.mockResolvedValue(fakeData);
+  describe('insertQuestionResultController', () => {
+    it('requires an authenticated user', async () => {
+      req.user = undefined;
 
-    await getQuestionResultOfLessonController(req, res);
+      await insertQuestionResultController(req, res);
 
-    expect(getQuestionResultOfLesson).toHaveBeenCalledWith('1', '10');
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(fakeData.rows);
-  });
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(insertQuestionResult).not.toHaveBeenCalled();
+    });
 
-  it('Thiếu studentId hoặc lessonResultId → lỗi 400', async () => {
-    req.params.studentId = undefined;
+    it('requires the parent and question ids', async () => {
+      delete req.body.lessonResultId;
 
-    await getQuestionResultOfLessonController(req, res);
+      await insertQuestionResultController(req, res);
 
-    expect(getQuestionResultOfLesson).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      message: "Missing parameters studentId or lessonResultId"
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(isQuestionInOwnedLessonResult).not.toHaveBeenCalled();
+    });
+
+    it('rejects a question outside the authenticated result', async () => {
+      isQuestionInOwnedLessonResult.mockResolvedValue(false);
+
+      await insertQuestionResultController(req, res);
+
+      expect(isQuestionInOwnedLessonResult).toHaveBeenCalledWith(7, 10, 100);
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(insertQuestionResult).not.toHaveBeenCalled();
+    });
+
+    it('inserts with the authenticated student id', async () => {
+      isQuestionInOwnedLessonResult.mockResolvedValue(true);
+      insertQuestionResult.mockResolvedValue();
+
+      await insertQuestionResultController(req, res);
+
+      expect(insertQuestionResult).toHaveBeenCalledWith(
+        7, 10, 100, 7, 8, 7, 9, 6, 'Good work'
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
     });
   });
 
-  it('Lỗi server khi truy vấn → trả về lỗi 500', async () => {
-    getQuestionResultOfLesson.mockRejectedValue(new Error('Lỗi DB'));
+  describe('getQuestionResultOfLessonController', () => {
+    it('requires an authenticated user', async () => {
+      req.user = undefined;
 
-    await getQuestionResultOfLessonController(req, res);
+      await getQuestionResultOfLessonController(req, res);
 
-    expect(getQuestionResultOfLesson).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ message: "Get question results failed" });
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(getQuestionResultOfLesson).not.toHaveBeenCalled();
+    });
+
+    it('uses the token identity instead of the route student id', async () => {
+      const result = { rows: [{ questionId: 100 }] };
+      getQuestionResultOfLesson.mockResolvedValue(result);
+
+      await getQuestionResultOfLessonController(req, res);
+
+      expect(getQuestionResultOfLesson).toHaveBeenCalledWith(7, '10');
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(result.rows);
+    });
   });
 });

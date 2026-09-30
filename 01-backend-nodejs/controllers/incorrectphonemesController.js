@@ -4,6 +4,8 @@ const {
   getTopIncorrectPhonemesWithAvgScore,
   getResultViews,
 } = require("../models/incorrectphonemesModel");
+const { ownsLessonResult } = require("../models/lessonResultModel");
+const { isOwnedQuestionResult } = require("../models/questionResultModel");
 
 const insertIncorrectPhonemeController = async (req, res) => {
   try {
@@ -21,6 +23,16 @@ const insertIncorrectPhonemeController = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
+    const ownsQuestionResult = await isOwnedQuestionResult(
+      studentId,
+      questionResultId,
+      lessonResultId,
+      questionId
+    );
+    if (!ownsQuestionResult) {
+      return res.status(404).json({ message: "Speaking result not found" });
+    }
+
     console.log('📝 Inserting incorrect phonemes for studentId:', studentId, 'questionId:', questionId);
     await insertOrUpdateIncorrectPhonemes(errorMap, questionResultId, lessonResultId, questionId, studentId);
     console.log('✅ Incorrect phonemes inserted successfully');
@@ -32,9 +44,13 @@ const insertIncorrectPhonemeController = async (req, res) => {
 };
 
 const getIncorrectPhonemesOfLessonController = async (req, res) => {
-  const { studentId, lessonResultId } = req.params;
-  if (!studentId || !lessonResultId) {
-    return res.status(400).json({ message: "Missing parameters studentId or lessonResultId" });
+  const studentId = req.user?.id;
+  const { lessonResultId } = req.params;
+  if (!studentId) {
+    return res.status(401).json({ message: "Invalid authentication token" });
+  }
+  if (!lessonResultId) {
+    return res.status(400).json({ message: "Missing lessonResultId" });
   }
 
   try {
@@ -47,14 +63,24 @@ const getIncorrectPhonemesOfLessonController = async (req, res) => {
 };
 
 const getFeedbackSummaryController = async (req, res) => {
+  const studentId = req.user?.id;
   const { lessonResultId } = req.query;
+
+  if (!studentId) {
+    return res.status(401).json({ message: "Invalid authentication token" });
+  }
   
   if (!lessonResultId) {
     return res.status(400).json({ message: "lessonResultId is required" });
   }
 
   try {
-    const rows = await getTopIncorrectPhonemesWithAvgScore(lessonResultId);
+    const canReadResult = await ownsLessonResult(studentId, lessonResultId);
+    if (!canReadResult) {
+      return res.status(404).json({ message: "Lesson result not found" });
+    }
+
+    const rows = await getTopIncorrectPhonemesWithAvgScore(studentId, lessonResultId);
     
     console.log('📊 Feedback summary rows:', rows.length);
     
@@ -233,8 +259,13 @@ const getFeedbackSummaryController = async (req, res) => {
 };
 
 const getLessonsSummaryController = async (req, res) => {
+  const studentId = req.user?.id;
+  if (!studentId) {
+    return res.status(401).json({ message: "Invalid authentication token" });
+  }
+
   try {
-    const data = await getResultViews();
+    const data = await getResultViews(studentId);
 
     // Format latestFinishedTime thành ISO string nếu có
     const formattedData = data.map(item => ({

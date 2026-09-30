@@ -104,7 +104,7 @@ const getIncorrectPhonemesOfLesson = async (studentId, lessonResultId) => {
   return result.rows;
 };
 
-const getTopIncorrectPhonemesWithAvgScore = async (lessonResultId) => {
+const getTopIncorrectPhonemesWithAvgScore = async (studentId, lessonResultId) => {
   try {
     // First, get lesson info separately to ensure we always have it
     const lessonInfoResult = await client.query(
@@ -119,9 +119,9 @@ const getTopIncorrectPhonemesWithAvgScore = async (lessonResultId) => {
         (SELECT COUNT(*) FROM question WHERE lessonid = lr.lessonid) as question_count
       FROM lessonresult lr
       LEFT JOIN lesson l ON lr.lessonid = l.id
-      WHERE lr.id = $1
+      WHERE lr.id = $1 AND lr.studentId = $2
       `,
-      [lessonResultId]
+      [lessonResultId, studentId]
     );
 
     const lessonInfo = lessonInfoResult.rows[0] || null;
@@ -135,7 +135,7 @@ const getTopIncorrectPhonemesWithAvgScore = async (lessonResultId) => {
           phoneme,  
           SUM(incorrect_count) AS total_incorrect
         FROM incorrectphonemes
-        WHERE lessonresultid = $1
+        WHERE lessonresultid = $1 AND studentId = $2
         GROUP BY questionId, phoneme
       ),
       TopPhonemes AS (
@@ -155,7 +155,7 @@ const getTopIncorrectPhonemesWithAvgScore = async (lessonResultId) => {
     completeness,
     pronunciation
   FROM questionResult
-  WHERE lessonresultid = $1
+  WHERE lessonresultid = $1 AND studentId = $2
   ORDER BY questionId, id DESC
       ),
       LatestFeedback AS (
@@ -163,7 +163,7 @@ const getTopIncorrectPhonemesWithAvgScore = async (lessonResultId) => {
           questionId,
           feedback
         FROM questionResult
-        WHERE lessonresultid = $1
+        WHERE lessonresultid = $1 AND studentId = $2
         ORDER BY questionId, id DESC
       )
       
@@ -183,7 +183,7 @@ const getTopIncorrectPhonemesWithAvgScore = async (lessonResultId) => {
       WHERE tp.rank <= 3
       ORDER BY tp.questionId, tp.rank;
     `,
-      [lessonResultId]
+      [lessonResultId, studentId]
     );
 
     // Attach lesson info to each row
@@ -201,7 +201,7 @@ const getTopIncorrectPhonemesWithAvgScore = async (lessonResultId) => {
   }
 };
 
-const getResultViews = async () => {
+const getResultViews = async (studentId) => {
   const query = `
 SELECT
   l.id AS "lessonId",
@@ -210,11 +210,12 @@ SELECT
   AVG(lr."averagescore") AS "averageScore"
 FROM lesson l
 INNER JOIN lessonResult lr ON l.id = lr.lessonid
+WHERE lr.studentId = $1
 GROUP BY l.id, l.name
 ORDER BY l.id;
   `;
 
-  const { rows } = await client.query(query);
+  const { rows } = await client.query(query, [studentId]);
   return rows.map(row => ({
     lessonId: row.lessonId,
     lessonName: row.lessonName,
