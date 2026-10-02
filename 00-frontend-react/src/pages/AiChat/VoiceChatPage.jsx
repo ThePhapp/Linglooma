@@ -10,7 +10,7 @@ export default function VoiceChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [conversationLength, setConversationLength] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
-  const [useLearnerContext, setUseLearnerContext] = useState(true);
+  const [useLearnerContext, setUseLearnerContext] = useState(false);
   const recognitionRef = useRef(null);
   const messagesEndRef = useRef(null);
   const token = localStorage.getItem("access_token");

@@ -92,6 +92,8 @@ const WritingListPage = () => {
 
 export default WritingListPage;
   const savePrompt = async prompt => {
-    await apiClient.post('/api/learning/bookmarks', { itemType: 'writing', sourceId: prompt.id, title: prompt.title, href: `/admin/features/writing/${prompt.id}` });
-    setSaved(value => ({ ...value, [prompt.id]: true }));
+    try {
+      await apiClient.post('/api/learning/bookmarks', { itemType: 'writing', sourceId: prompt.id, title: prompt.title, href: `/admin/features/writing/${prompt.id}` });
+      setSaved(value => ({ ...value, [prompt.id]: true }));
+    } catch { setSaved(value => ({ ...value, [prompt.id]: false })); }
   };

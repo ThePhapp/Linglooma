@@ -9,6 +9,9 @@ const WritingDetail = () => {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [versions, setVersions] = useState([]);
+  const [revisionText, setRevisionText] = useState('');
+  const [revisionStatus, setRevisionStatus] = useState('');
 
   useEffect(() => {
     fetchDetail();
@@ -34,6 +37,10 @@ const WritingDetail = () => {
       const detailObj = payload?.data ?? payload;
       if (detailObj) {
         setDetail(detailObj);
+        setRevisionText(detailObj.essay_text || '');
+        apiClient.get(`/api/writing/submissions/${submissionId}/versions`)
+          .then(result => setVersions(result.data || []))
+          .catch(() => setVersions([]));
       } else {
         setError('Failed to load submission detail');
       }
@@ -68,6 +75,17 @@ const WritingDetail = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const saveRevision = async () => {
+    setRevisionStatus('Saving revision...');
+    try {
+      const result = await apiClient.post(`/api/writing/submissions/${submissionId}/versions`, { essayText: revisionText });
+      setVersions(items => [...items, result.data]);
+      setRevisionStatus('Revision saved. Compare it with your first submission below.');
+    } catch (err) {
+      setRevisionStatus(err?.response?.data?.message || 'Revision could not be saved.');
+    }
   };
 
   if (loading) {
@@ -129,6 +147,22 @@ const WritingDetail = () => {
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
             <p className="text-gray-800 whitespace-pre-line leading-relaxed">{detail.essay_text}</p>
           </div>
+        </div>
+
+        <div className="mb-8 rounded-xl border border-brand-200 bg-brand-50 p-5">
+          <h3 className="text-xl font-semibold text-slate-900">Improve My Essay</h3>
+          <p className="mt-1 text-sm text-slate-600">Use the feedback below, revise the essay yourself, then save a version to compare your progress.</p>
+          <textarea value={revisionText} onChange={event => setRevisionText(event.target.value)} className="mt-4 min-h-56 w-full rounded-lg border border-slate-300 bg-white p-4 leading-relaxed focus:border-brand-500 focus:outline-none" />
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button type="button" onClick={saveRevision} disabled={revisionText.trim().length < 50} className="rounded-lg bg-brand-700 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">Save revised version</button>
+            <span role="status" className="text-sm text-slate-600">{revisionStatus}</span>
+          </div>
+          {versions.length > 1 && (
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div className="rounded-lg bg-white p-4"><h4 className="font-semibold">First submission</h4><p className="mt-2 whitespace-pre-line text-sm text-slate-700">{versions[0].essay_text}</p></div>
+              <div className="rounded-lg bg-white p-4"><h4 className="font-semibold">Latest revision (v{versions.at(-1).version_no})</h4><p className="mt-2 whitespace-pre-line text-sm text-slate-700">{versions.at(-1).essay_text}</p></div>
+            </div>
+          )}
         </div>
 
         {/* Evaluation Results */}

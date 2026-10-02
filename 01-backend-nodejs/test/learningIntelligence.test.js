@@ -54,3 +54,18 @@ test('validates vocabulary before saving and uses authenticated ownership', asyn
   expect(model.saveVocabulary).toHaveBeenCalledWith(8, expect.objectContaining({ word: 'coherent', meaning: 'logical' }));
   expect(res.status).toHaveBeenCalledWith(201);
 });
+
+test('starts a bounded practice session using authenticated ownership', async () => {
+  model.startSession.mockResolvedValue({ id: 12, skill: 'listening' });
+  const res = response();
+  await controller.startSession({ user: { id: 8 }, body: { skill: 'listening', mode: 'dictation', sourceId: 2, metadata: { title: 'Daily Routine' }, userId: 99 } }, res);
+  expect(model.startSession).toHaveBeenCalledWith(8, expect.objectContaining({ skill: 'listening', sourceId: 2 }));
+  expect(res.status).toHaveBeenCalledWith(201);
+});
+
+test('rejects unsafe bookmark links before persistence', async () => {
+  const res = response();
+  await controller.saveBookmark({ user: { id: 8 }, body: { itemType: 'reading', sourceId: 2, title: 'Passage', href: 'https://untrusted.example' } }, res);
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(model.saveBookmark).not.toHaveBeenCalled();
+});

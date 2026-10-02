@@ -168,6 +168,23 @@ async function getSubmissionDetail(req, res) {
   }
 }
 
+async function getWritingVersions(req, res) {
+  if (!isPositiveId(req.params.submissionId)) return res.status(400).json({ success: false, message: 'Invalid submission ID' });
+  try { return res.json({ success: true, data: await writingModel.getWritingVersions(req.params.submissionId, req.user.id) }); }
+  catch { return res.status(500).json({ success: false, message: 'Writing versions could not be loaded' }); }
+}
+
+async function addWritingRevision(req, res) {
+  const essayText = typeof req.body?.essayText === 'string' ? req.body.essayText.trim() : '';
+  if (!isPositiveId(req.params.submissionId) || essayText.length < 50 || essayText.length > 12000) {
+    return res.status(400).json({ success: false, message: 'A revision between 50 and 12,000 characters is required' });
+  }
+  try {
+    const revision = await writingModel.addWritingRevision(req.params.submissionId, req.user.id, essayText);
+    return revision ? res.status(201).json({ success: true, data: revision }) : res.status(404).json({ success: false, message: 'Submission not found' });
+  } catch { return res.status(500).json({ success: false, message: 'Revision could not be saved' }); }
+}
+
 function isPositiveId(value) {
   return /^(?:[1-9]\d*)$/.test(String(value)) && Number.isSafeInteger(Number(value));
 }
@@ -178,5 +195,7 @@ module.exports = {
   submitWriting,
   retryWritingEvaluation,
   getStudentSubmissions,
-  getSubmissionDetail
+  getSubmissionDetail,
+  getWritingVersions,
+  addWritingRevision
 };

@@ -48,8 +48,20 @@ const normalizeReading = row => ({
   href: row.passage_id ? `/admin/features/reading/${row.passage_id}` : '/admin/features/reading'
 });
 
+const normalizeListening = row => ({
+  id: `listening-${row.id}`,
+  sourceId: row.id,
+  skill: 'listening',
+  activity: row.activity || 'Listening practice',
+  score: toNumber(row.score),
+  scoreScale: 100,
+  status: 'completed',
+  completedAt: toIsoString(row.completed_at),
+  href: '/admin/features/listening'
+});
+
 async function getPracticeHistory(userId) {
-  const [speaking, writing, reading] = await Promise.all([
+  const [speaking, writing, reading, listening] = await Promise.all([
     db.query(
       `SELECT lr.id, lr.lessonid AS lesson_id, l.name AS activity,
               lr.averagescore AS score, lr.finishedtime AS completed_at
@@ -76,13 +88,20 @@ async function getPracticeHistory(userId) {
        INNER JOIN reading_passages rp ON rp.id = ra.passage_id
        WHERE ra.user_id = $1`,
       [userId]
+    ),
+    db.query(
+      `SELECT id, metadata->>'title' AS activity, score, completed_at
+       FROM practice_sessions
+       WHERE user_id = $1 AND skill = 'listening' AND status = 'completed'`,
+      [userId]
     )
   ]);
 
   return [
     ...speaking.rows.map(normalizeSpeaking),
     ...writing.rows.map(normalizeWriting),
-    ...reading.rows.map(normalizeReading)
+    ...reading.rows.map(normalizeReading),
+    ...listening.rows.map(normalizeListening)
   ].sort((a, b) => (Date.parse(b.completedAt) || 0) - (Date.parse(a.completedAt) || 0));
 }
 
@@ -96,7 +115,7 @@ function calculateProgress(history) {
     return {
       skill,
       score,
-      scoreScale: skill === 'reading' ? 100 : 9,
+      scoreScale: ['reading', 'listening'].includes(skill) ? 100 : 9,
       attempts: attempts.length,
       latestAt: attempts[0]?.completedAt || null,
       hasData: attempts.length > 0
@@ -126,7 +145,8 @@ function buildRecommendations(progress, history) {
     const config = {
       speaking: { title: 'Build speaking consistency', reason: 'Speaking is currently your lowest saved result.', href: '/admin/features/lesson' },
       writing: { title: 'Strengthen your next essay', reason: 'Writing is currently your lowest saved result.', href: '/admin/features/writing' },
-      reading: { title: 'Target reading accuracy', reason: 'Reading is currently your lowest saved result.', href: '/admin/features/reading' }
+      reading: { title: 'Target reading accuracy', reason: 'Reading is currently your lowest saved result.', href: '/admin/features/reading' },
+      listening: { title: 'Build listening accuracy', reason: 'Listening is currently your lowest saved result.', href: '/admin/features/listening' }
     }[weakest.skill];
     recommendations.push({ id: `focus-${weakest.skill}`, skill: weakest.skill, ...config, priority: 'high' });
   }
@@ -135,7 +155,8 @@ function buildRecommendations(progress, history) {
   const unpracticed = [
     { skill: 'reading', title: 'Complete your first reading practice', href: '/admin/features/reading' },
     { skill: 'writing', title: 'Complete your first writing practice', href: '/admin/features/writing' },
-    { skill: 'speaking', title: 'Complete your first speaking practice', href: '/admin/features/lesson' }
+    { skill: 'speaking', title: 'Complete your first speaking practice', href: '/admin/features/lesson' },
+    { skill: 'listening', title: 'Complete your first listening practice', href: '/admin/features/listening' }
   ].find(item => !practiced.has(item.skill));
   if (unpracticed) {
     recommendations.push({ ...unpracticed, id: `start-${unpracticed.skill}`, reason: 'There is no saved result for this skill yet.', priority: 'normal' });

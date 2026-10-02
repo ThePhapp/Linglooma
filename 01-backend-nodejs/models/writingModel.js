@@ -150,6 +150,11 @@ async function submitWriting({ promptId, studentId, essayText }) {
     wordCount
   ]);
   const submission = submissionResult.rows[0];
+  await pool.query(
+    `INSERT INTO writing_versions (submission_id, user_id, version_no, version_type, essay_text, word_count)
+     VALUES ($1,$2,1,'submission',$3,$4) ON CONFLICT (submission_id, version_no) DO NOTHING`,
+    [submission.id, studentId, essayText, wordCount]
+  ).catch(() => {});
 
   return evaluateAndPersistSubmission({ submission: { ...submission, user_id: studentId }, prompt, essayText, wordCount });
 }
@@ -274,11 +279,35 @@ async function getSubmissionDetail(submissionId, studentId) {
   };
 }
 
+async function getWritingVersions(submissionId, studentId) {
+  const result = await pool.query(
+    `SELECT id, version_no, version_type, essay_text, word_count, created_at
+     FROM writing_versions WHERE submission_id = $1 AND user_id = $2 ORDER BY version_no`,
+    [submissionId, studentId]
+  );
+  return result.rows;
+}
+
+async function addWritingRevision(submissionId, studentId, essayText) {
+  const wordCount = essayText.trim().split(/\s+/).length;
+  const result = await pool.query(
+    `INSERT INTO writing_versions (submission_id, user_id, version_no, version_type, essay_text, word_count)
+     SELECT ws.id, ws.user_id, COALESCE(MAX(wv.version_no), 0) + 1, 'revision', $3, $4
+     FROM writing_submissions ws LEFT JOIN writing_versions wv ON wv.submission_id = ws.id
+     WHERE ws.id = $1 AND ws.user_id = $2 GROUP BY ws.id, ws.user_id
+     RETURNING id, version_no, version_type, essay_text, word_count, created_at`,
+    [submissionId, studentId, essayText, wordCount]
+  );
+  return result.rows[0] || null;
+}
+
 module.exports = {
   getAllPrompts,
   getPromptById,
   submitWriting,
   retryWritingEvaluation,
   getStudentSubmissions,
-  getSubmissionDetail
+  getSubmissionDetail,
+  getWritingVersions,
+  addWritingRevision
 };

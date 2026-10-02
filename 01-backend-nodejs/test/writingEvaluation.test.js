@@ -170,6 +170,7 @@ describe('writing submission persistence and controller', () => {
     pool.query
       .mockResolvedValueOnce({ rows: [{ task_type: 'Task 2', prompt: 'Discuss education.' }] })
       .mockResolvedValueOnce({ rows: [submission] })
+      .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ id: submission.id }] });
     req = { params: { id: 10 }, body: { essayText: submissionArgs.essayText }, user: { id: 20 } };
     res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
@@ -187,7 +188,7 @@ describe('writing submission persistence and controller', () => {
     const pendingSubmission = model.submitWriting(submissionArgs);
     await started;
     expect(pool.connect).not.toHaveBeenCalled();
-    expect(pool.query).toHaveBeenCalledTimes(2);
+    expect(pool.query).toHaveBeenCalledTimes(3);
     expect(pool.query.mock.calls[1]).toEqual([
       expect.stringMatching(/INSERT INTO writing_submissions[\s\S]*is_completed[\s\S]*VALUES \(\$1, \$2, \$3, \$4, false\)/),
       [10, 20, submissionArgs.essayText, 3]
@@ -198,8 +199,8 @@ describe('writing submission persistence and controller', () => {
     await expect(pendingSubmission).resolves.toEqual({
       submissionId: 30, submittedAt: submission.submitted_at, wordCount: 3, scores, feedback
     });
-    expect(pool.query).toHaveBeenCalledTimes(3);
-    expect(pool.query.mock.calls[2]).toEqual([
+    expect(pool.query).toHaveBeenCalledTimes(4);
+    expect(pool.query.mock.calls[3]).toEqual([
       expect.stringMatching(/UPDATE writing_submissions[\s\S]*is_completed = true/),
       [6.5, 6, 6.5, 7, 6.5, evaluation.overall_feedback, evaluation.strengths,
         evaluation.structure_feedback, JSON.stringify(evaluation.vocabulary_suggestions),
@@ -212,7 +213,7 @@ describe('writing submission persistence and controller', () => {
     evaluation.scores.grammar_accuracy = 12;
     service.evaluateWritingWithGemini.mockResolvedValue(evaluation);
     await expect(model.submitWriting(submissionArgs)).rejects.toMatchObject({ ...unavailable, submissionId: 30 });
-    expect(pool.query).toHaveBeenCalledTimes(2);
+    expect(pool.query).toHaveBeenCalledTimes(3);
   });
 
   test.each(['network', 'HTTP', 'body parse', 'malformed output', 'invalid score'])(
@@ -234,7 +235,7 @@ describe('writing submission persistence and controller', () => {
         retryable: true, submissionId: 30
       });
       expect(pool.connect).not.toHaveBeenCalled();
-      expect(pool.query).toHaveBeenCalledTimes(2);
+      expect(pool.query).toHaveBeenCalledTimes(3);
       expect(pool.query.mock.calls[1][0]).toMatch(/is_completed[\s\S]*false/);
     }
   );

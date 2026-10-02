@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Headphones, Mic2, MessageCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import apiClient from "@/services/apiClient";
 
 // Data bank với nhiều bài tập
 const DICTATION_EXERCISES = [
@@ -248,6 +249,24 @@ const QUESTION_EXERCISES = [
 const ListeningPractice = () => {
     const navigate = useNavigate();
     const [mode, setMode] = useState(null); // 'dictation' or 'questions'
+    const [saveNotice, setSaveNotice] = useState("");
+
+    const saveAttempt = async ({ exercise, score, answers, answer }) => {
+        setSaveNotice("Saving result...");
+        try {
+            const started = await apiClient.post('/api/learning/sessions', {
+                skill: 'listening', mode, sourceId: exercise.id,
+                metadata: { title: exercise.title, difficulty: exercise.difficulty || 'Medium' }
+            });
+            await apiClient.patch(`/api/learning/sessions/${started.data.id}`, {
+                status: 'completed', score,
+                metadata: { title: exercise.title, answers: answers || undefined, answer: answer || undefined }
+            });
+            setSaveNotice("Result saved to your learning history.");
+        } catch {
+            setSaveNotice("Result shown below, but history sync is temporarily unavailable.");
+        }
+    };
 
     return (
         <main className="page-shell">
@@ -278,6 +297,8 @@ const ListeningPractice = () => {
                         </button>
                     </div>
                 </div>
+
+                {saveNotice && <p role="status" className="mb-4 rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-700">{saveNotice}</p>}
 
                 {/* Mode Selection */}
                 {!mode ? (
@@ -329,9 +350,9 @@ const ListeningPractice = () => {
                         </button>
                     </div>
                 ) : mode === 'dictation' ? (
-                    <DictationMode onBack={() => setMode(null)} />
+                    <DictationMode onBack={() => setMode(null)} onComplete={saveAttempt} />
                 ) : (
-                    <QuestionsMode onBack={() => setMode(null)} />
+                    <QuestionsMode onBack={() => setMode(null)} onComplete={saveAttempt} />
                 )}
             </div>
         </main>
@@ -339,7 +360,7 @@ const ListeningPractice = () => {
 };
 
 // Dictation Mode Component
-const DictationMode = ({ onBack }) => {
+const DictationMode = ({ onBack, onComplete }) => {
     const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
     const [userInput, setUserInput] = useState("");
     const [showAnswer, setShowAnswer] = useState(false);
@@ -375,6 +396,7 @@ const DictationMode = ({ onBack }) => {
         
         setScore(accuracy);
         setShowAnswer(true);
+        onComplete({ exercise: currentExercise, score: accuracy, answer: userInput });
     };
 
     const highlightDifferences = () => {
@@ -551,7 +573,7 @@ const DictationMode = ({ onBack }) => {
 };
 
 // Questions Mode Component
-const QuestionsMode = ({ onBack }) => {
+const QuestionsMode = ({ onBack, onComplete }) => {
     const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
     const [answers, setAnswers] = useState({});
     const [showResults, setShowResults] = useState(false);
@@ -589,6 +611,7 @@ const QuestionsMode = ({ onBack }) => {
 
     const submitAnswers = () => {
         setShowResults(true);
+        onComplete({ exercise: currentExercise, score: calculateScore(), answers });
     };
 
     return (

@@ -28,8 +28,10 @@ const ReadingListPage = () => {
   const [saved, setSaved] = useState({});
 
   const savePassage = async passage => {
-    await apiClient.post('/api/learning/bookmarks', { itemType: 'reading', sourceId: passage.id, title: passage.title, href: `/admin/features/reading/${passage.id}` });
-    setSaved(value => ({ ...value, [passage.id]: true }));
+    try {
+      await apiClient.post('/api/learning/bookmarks', { itemType: 'reading', sourceId: passage.id, title: passage.title, href: `/admin/features/reading/${passage.id}` });
+      setSaved(value => ({ ...value, [passage.id]: true }));
+    } catch { setSaved(value => ({ ...value, [passage.id]: false })); }
   };
 
   const fetchPassages = async () => {
