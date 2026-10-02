@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import apiClient from '@/services/apiClient';
 import { AlertCircle, ArrowLeft, Clock, FileText, Lightbulb, LoaderCircle, Save } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -20,6 +20,9 @@ const WritingEditor = () => {
   const [lastSaved, setLastSaved] = useState(null);
   const [showTips, setShowTips] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [pendingSubmissionId, setPendingSubmissionId] = useState(null);
+  const [retryingFeedback, setRetryingFeedback] = useState(false);
+  const [draftStatus, setDraftStatus] = useState('idle');
 
   useEffect(() => {
     fetchPrompt();
@@ -39,9 +42,11 @@ useEffect(() => {
   // Auto-save to localStorage
   useEffect(() => {
     if (essayText && prompt) {
+      setDraftStatus('saving');
       const saveTimeout = setTimeout(() => {
         localStorage.setItem(`essay_draft_${id}`, essayText);
         setLastSaved(new Date());
+        setDraftStatus('saved');
       }, 2000);
       return () => clearTimeout(saveTimeout);
     }
@@ -155,12 +160,15 @@ useEffect(() => {
       const resultData = submitPayload?.data ?? submitPayload;
       setResult(resultData);
       setTimerStarted(false);
+      setPendingSubmissionId(null);
+      localStorage.removeItem(`essay_draft_${id}`);
     } catch (err) {
       console.error('Error submitting essay:', err);
       if (err.response?.status === 401) {
         localStorage.removeItem('access_token');
         navigate('/login');
       } else {
+        setPendingSubmissionId(err.response?.data?.submissionId || null);
         setSubmitError(err.response?.data?.message || 'We couldn’t evaluate your essay. Your draft is still saved; please try again.');
       }
     } finally {
@@ -169,10 +177,28 @@ useEffect(() => {
   };
 
   const handleRetry = () => {
+    localStorage.removeItem(`essay_draft_${id}`);
     setEssayText('');
     setResult(null);
     setTimeRemaining(prompt.time_limit * 60);
     setTimerStarted(false);
+  };
+
+  const retrySavedFeedback = async () => {
+    if (!pendingSubmissionId) return;
+    try {
+      setRetryingFeedback(true);
+      setSubmitError('');
+      const response = await apiClient.post(`/api/writing/submissions/${pendingSubmissionId}/retry-evaluation`);
+      setResult(response?.data || response);
+      setPendingSubmissionId(null);
+      setTimerStarted(false);
+      localStorage.removeItem(`essay_draft_${id}`);
+    } catch (err) {
+      setSubmitError(err.response?.data?.message || 'Feedback is still unavailable. Your submitted essay remains saved.');
+    } finally {
+      setRetryingFeedback(false);
+    }
   };
 
   const getBandColor = (band) => {
@@ -378,7 +404,7 @@ useEffect(() => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div><h2 id="essay-heading" className="font-bold text-slate-950">Your response</h2><p className="mt-1 text-xs text-slate-500">Drafts are saved in this browser while you type.</p></div>
             <div className="flex items-center gap-3 text-sm">
-              {lastSaved && <span className="inline-flex items-center gap-1.5 text-slate-500"><Save className="h-4 w-4" aria-hidden="true" /> Saved</span>}
+              {draftStatus !== 'idle' && <span className="inline-flex items-center gap-1.5 text-slate-500" title={lastSaved ? `Saved at ${lastSaved.toLocaleTimeString()}` : undefined}><Save className="h-4 w-4" aria-hidden="true" /> {draftStatus === 'saving' ? 'Saving…' : 'Saved'}</span>}
               <span className={`rounded-full px-3 py-1 font-semibold ${getWordCount() >= prompt.word_limit ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>{getWordCount()} / {prompt.word_limit} words</span>
             </div>
           </div>
@@ -391,7 +417,7 @@ useEffect(() => {
             {essayText && getWordCount() < prompt.word_limit && <span className="font-medium text-amber-700">{prompt.word_limit - getWordCount()} more words to reach the minimum</span>}
           </div>
 
-          {submitError && <div role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{submitError}</div>}
+          {submitError && <div role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"><p>{submitError}</p>{pendingSubmissionId && <div className="mt-3 flex flex-wrap gap-3"><Button size="small" onClick={retrySavedFeedback} isLoading={retryingFeedback}>Retry feedback</Button><Link to={`/admin/features/writing/submissions/${pendingSubmissionId}`} className="inline-flex min-h-9 items-center text-sm font-semibold text-red-800 underline">Open saved submission</Link></div>}</div>}
           {submitting && <div role="status" className="mt-4 flex items-center gap-3 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800"><LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" /><span><strong>Analyzing your response…</strong><br />This may take a moment. Keep this page open.</span></div>}
 
           <div className="mt-5 flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">

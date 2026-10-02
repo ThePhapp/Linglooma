@@ -98,6 +98,22 @@ async function submitWriting(req, res) {
   }
 }
 
+async function retryWritingEvaluation(req, res) {
+  const { submissionId } = req.params;
+  if (!isPositiveId(submissionId)) return res.status(400).json({ success: false, message: 'Invalid submission ID' });
+  try {
+    const result = await writingModel.retryWritingEvaluation(submissionId, req.user.id);
+    if (!result) return res.status(404).json({ success: false, message: 'Submission not found or access denied' });
+    return res.json({ success: true, message: 'Essay feedback is ready', data: result });
+  } catch (error) {
+    if (error.code === 'WRITING_EVALUATION_UNAVAILABLE') {
+      return res.status(503).json({ success: false, code: error.code, message: 'Your essay is still saved, but feedback remains unavailable.', retryable: true, submissionId: error.submissionId });
+    }
+    if (error.statusCode === 409) return res.status(409).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to retry essay feedback' });
+  }
+}
+
 /**
  * Lấy lịch sử làm bài Writing của học sinh
  */
@@ -160,6 +176,7 @@ module.exports = {
   getAllPrompts,
   getPromptById,
   submitWriting,
+  retryWritingEvaluation,
   getStudentSubmissions,
   getSubmissionDetail
 };

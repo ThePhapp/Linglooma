@@ -23,6 +23,9 @@ router.get('/submissions/history', jwtauth, writingController.getStudentSubmissi
 // GET /api/writing/submissions/:submissionId - Chi tiết kết quả
 router.get('/submissions/:submissionId', jwtauth, writingController.getSubmissionDetail);
 
+// POST /api/writing/submissions/:submissionId/retry-evaluation - Retry AI without duplicating the essay
+router.post('/submissions/:submissionId/retry-evaluation', jwtauth, writingController.retryWritingEvaluation);
+
 // POST /api/writing/:id/submit - Nộp bài Writing
 router.post('/:id/submit', jwtauth, writingController.submitWriting);
 

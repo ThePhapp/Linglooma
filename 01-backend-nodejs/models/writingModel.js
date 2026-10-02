@@ -30,6 +30,73 @@ async function getPromptById(promptId) {
   return result.rows[0];
 }
 
+async function evaluateAndPersistSubmission({ submission, prompt, essayText, wordCount }) {
+  let evaluation;
+  try {
+    evaluation = validateWritingEvaluation(await evaluateWritingWithGemini({
+      taskType: prompt.task_type,
+      promptText: prompt.prompt,
+      essayText,
+      wordCount
+    }));
+  } catch {
+    const error = new WritingEvaluationError();
+    error.submissionId = submission.id;
+    throw error;
+  }
+
+  const updateQuery = `
+    UPDATE writing_submissions
+    SET
+      overall_band = $1,
+      task_achievement = $2,
+      coherence_cohesion = $3,
+      lexical_resource = $4,
+      grammatical_range = $5,
+      feedback_overall = $6,
+      feedback_task_achievement = $7,
+      feedback_coherence = $8,
+      feedback_vocabulary = $9,
+      feedback_grammar = $10,
+      suggestions = $11,
+      is_completed = true
+    WHERE id = $12 AND is_completed = false
+    RETURNING id
+  `;
+  const updateValues = [
+    evaluation.scores.overall_band,
+    evaluation.scores.task_achievement,
+    evaluation.scores.coherence_cohesion,
+    evaluation.scores.lexical_resource,
+    evaluation.scores.grammar_accuracy,
+    evaluation.overall_feedback,
+    evaluation.strengths,
+    evaluation.structure_feedback,
+    JSON.stringify(evaluation.vocabulary_suggestions),
+    JSON.stringify(evaluation.grammar_errors),
+    evaluation.improvement_tips,
+    submission.id
+  ];
+  const updateResult = await pool.query(updateQuery, updateValues);
+  if (updateResult.rows.length === 0) throw new Error('Submission is no longer pending');
+
+  return {
+    submissionId: submission.id,
+    submittedAt: submission.submitted_at,
+    wordCount,
+    scores: evaluation.scores,
+    feedback: {
+      overall_feedback: evaluation.overall_feedback,
+      strengths: evaluation.strengths,
+      weaknesses: evaluation.weaknesses,
+      grammar_errors: evaluation.grammar_errors,
+      vocabulary_suggestions: evaluation.vocabulary_suggestions,
+      structure_feedback: evaluation.structure_feedback,
+      improvement_tips: evaluation.improvement_tips
+    }
+  };
+}
+
 /**
  * Nộp bài Writing và chấm điểm bằng AI
  */
@@ -61,73 +128,31 @@ async function submitWriting({ promptId, studentId, essayText }) {
   ]);
   const submission = submissionResult.rows[0];
 
-  let evaluation;
-  try {
-    evaluation = validateWritingEvaluation(await evaluateWritingWithGemini({
-      taskType: prompt.task_type,
-      promptText: prompt.prompt,
-      essayText,
-      wordCount
-    }));
-  } catch {
-    const error = new WritingEvaluationError();
-    error.submissionId = submission.id;
+  return evaluateAndPersistSubmission({ submission, prompt, essayText, wordCount });
+}
+
+async function retryWritingEvaluation(submissionId, studentId) {
+  const result = await pool.query(
+    `SELECT ws.id, ws.submitted_at, ws.essay_text, ws.word_count, ws.is_completed,
+            wt.task_type, wt.prompt
+     FROM writing_submissions ws
+     INNER JOIN writing_tasks wt ON wt.id = ws.task_id
+     WHERE ws.id = $1 AND ws.user_id = $2`,
+    [submissionId, studentId]
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  if (row.is_completed) {
+    const error = new Error('Feedback is already available for this submission');
+    error.statusCode = 409;
     throw error;
   }
-
-  // Scores and completion are persisted together, only after validation.
-  const updateQuery = `
-    UPDATE writing_submissions
-    SET
-      overall_band = $1,
-      task_achievement = $2,
-      coherence_cohesion = $3,
-      lexical_resource = $4,
-      grammatical_range = $5,
-      feedback_overall = $6,
-      feedback_task_achievement = $7,
-      feedback_coherence = $8,
-      feedback_vocabulary = $9,
-      feedback_grammar = $10,
-      suggestions = $11,
-      is_completed = true
-    WHERE id = $12
-    RETURNING id
-  `;
-  const updateValues = [
-    evaluation.scores.overall_band,
-    evaluation.scores.task_achievement,
-    evaluation.scores.coherence_cohesion,
-    evaluation.scores.lexical_resource,
-    evaluation.scores.grammar_accuracy,
-    evaluation.overall_feedback,
-    evaluation.strengths,
-    evaluation.structure_feedback,
-    JSON.stringify(evaluation.vocabulary_suggestions),
-    JSON.stringify(evaluation.grammar_errors),
-    evaluation.improvement_tips,
-    submission.id
-  ];
-  const updateResult = await pool.query(updateQuery, updateValues);
-  if (updateResult.rows.length === 0) {
-    throw new Error('Submission not found');
-  }
-
-  return {
-    submissionId: submission.id,
-    submittedAt: submission.submitted_at,
-    wordCount,
-    scores: evaluation.scores,
-    feedback: {
-      overall_feedback: evaluation.overall_feedback,
-      strengths: evaluation.strengths,
-      weaknesses: evaluation.weaknesses,
-      grammar_errors: evaluation.grammar_errors,
-      vocabulary_suggestions: evaluation.vocabulary_suggestions,
-      structure_feedback: evaluation.structure_feedback,
-      improvement_tips: evaluation.improvement_tips
-    }
-  };
+  return evaluateAndPersistSubmission({
+    submission: { id: row.id, submitted_at: row.submitted_at },
+    prompt: { task_type: row.task_type, prompt: row.prompt },
+    essayText: row.essay_text,
+    wordCount: Number(row.word_count) || row.essay_text.trim().split(/\s+/).length
+  });
 }
 
 /**
@@ -229,6 +254,7 @@ module.exports = {
   getAllPrompts,
   getPromptById,
   submitWriting,
+  retryWritingEvaluation,
   getStudentSubmissions,
   getSubmissionDetail
 };

@@ -256,6 +256,33 @@ describe('writing submission persistence and controller', () => {
     expect(service.evaluateWritingWithGemini).not.toHaveBeenCalled();
   });
 
+  test('retries evaluation against the existing pending submission without inserting a duplicate', async () => {
+    pool.query.mockReset()
+      .mockResolvedValueOnce({ rows: [{
+        id: 30, submitted_at: submission.submitted_at, essay_text: evaluationArgs.essayText,
+        word_count: 3, is_completed: false, task_type: 'Task 2', prompt: 'Discuss education.'
+      }] })
+      .mockResolvedValueOnce({ rows: [{ id: 30 }] });
+
+    const result = await model.retryWritingEvaluation(30, 20);
+
+    expect(result).toMatchObject({ submissionId: 30, scores: { overall_band: 6.5 } });
+    expect(pool.query).toHaveBeenCalledTimes(2);
+    expect(pool.query.mock.calls[0]).toEqual([expect.stringMatching(/WHERE ws.id = \$1 AND ws.user_id = \$2/), [30, 20]]);
+    expect(pool.query.mock.calls.some(([sql]) => /INSERT INTO writing_submissions/.test(sql))).toBe(false);
+    expect(pool.query.mock.calls[1][0]).toMatch(/WHERE id = \$12 AND is_completed = false/);
+  });
+
+  test('does not reevaluate completed or unowned submissions', async () => {
+    pool.query.mockReset().mockResolvedValueOnce({ rows: [] });
+    await expect(model.retryWritingEvaluation(30, 99)).resolves.toBeNull();
+    expect(service.evaluateWritingWithGemini).not.toHaveBeenCalled();
+
+    pool.query.mockReset().mockResolvedValueOnce({ rows: [{ id: 30, is_completed: true }] });
+    await expect(model.retryWritingEvaluation(30, 20)).rejects.toMatchObject({ statusCode: 409 });
+    expect(service.evaluateWritingWithGemini).not.toHaveBeenCalled();
+  });
+
   test('rejects invalid writing IDs and oversized essays before persistence', async () => {
     req.params.id = '1;DROP';
     await controller.submitWriting(req, res);
