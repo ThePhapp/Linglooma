@@ -53,7 +53,8 @@ async function updatePlanItem(req, res) {
     return item ? res.json({ success: true, data: item }) : res.status(404).json({ success: false, message: 'Plan item not found' });
   } catch (error) {
     console.error('Study plan update failed', { code: error.code || 'UNKNOWN', constraint: error.constraint || null });
-    return res.status(500).json({ success: false, message: 'Plan item could not be updated' });
+    const code = ['23514', '42501', '42703'].includes(error.code) ? error.code : 'STUDY_PLAN_UPDATE_FAILED';
+    return res.status(500).json({ success: false, code, message: 'Plan item could not be updated' });
   }
 }
 
