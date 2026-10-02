@@ -51,7 +51,10 @@ async function updatePlanItem(req, res) {
   try {
     const item = await model.updatePlanItem(req.user.id, req.params.id, req.body.status);
     return item ? res.json({ success: true, data: item }) : res.status(404).json({ success: false, message: 'Plan item not found' });
-  } catch { return res.status(500).json({ success: false, message: 'Plan item could not be updated' }); }
+  } catch (error) {
+    console.error('Study plan update failed', { code: error.code || 'UNKNOWN', constraint: error.constraint || null });
+    return res.status(500).json({ success: false, message: 'Plan item could not be updated' });
+  }
 }
 
 async function replacePlanItem(req, res) {
@@ -59,7 +62,10 @@ async function replacePlanItem(req, res) {
   try {
     const item = await model.replacePlanItem(req.user.id, req.params.id);
     return item ? res.json({ success: true, data: item }) : res.status(404).json({ success: false, message: 'Plan item not found' });
-  } catch { return res.status(500).json({ success: false, message: 'Plan item could not be replaced' }); }
+  } catch (error) {
+    console.error('Study plan replacement failed', { code: error.code || 'UNKNOWN', constraint: error.constraint || null });
+    return res.status(500).json({ success: false, message: 'Plan item could not be replaced' });
+  }
 }
 
 async function getMistakes(req, res) {

@@ -2,6 +2,7 @@
 BEGIN;
 
 ALTER TABLE writing_submissions ADD COLUMN IF NOT EXISTS evaluation_prompt_version VARCHAR(80);
+ALTER TABLE study_plan_items ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP;
 
 CREATE TABLE IF NOT EXISTS learning_bookmarks (
     id SERIAL PRIMARY KEY,

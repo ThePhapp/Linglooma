@@ -79,13 +79,24 @@ async function getStudyPlan(userId, fromDate, toDate) {
 }
 
 async function updatePlanItem(userId, itemId, status) {
-  const { rows } = await db.query(
-    `UPDATE study_plan_items SET status = $1,
-       completed_at = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP ELSE NULL END
-     WHERE id = $2 AND user_id = $3 RETURNING *`,
-    [status, itemId, userId]
-  );
-  return rows[0] || null;
+  try {
+    const { rows } = await db.query(
+      `UPDATE study_plan_items SET status = $1,
+         completed_at = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP ELSE NULL END
+       WHERE id = $2 AND user_id = $3 RETURNING *`,
+      [status, itemId, userId]
+    );
+    return rows[0] || null;
+  } catch (error) {
+    // Older installations may have the plan table but not completed_at yet.
+    if (error?.code !== '42703') throw error;
+    const { rows } = await db.query(
+      `UPDATE study_plan_items SET status = $1
+       WHERE id = $2 AND user_id = $3 RETURNING *`,
+      [status, itemId, userId]
+    );
+    return rows[0] || null;
+  }
 }
 
 async function replacePlanItem(userId, itemId) {
@@ -95,11 +106,21 @@ async function replacePlanItem(userId, itemId) {
   const skills = Object.keys(skillConfig);
   const nextSkill = skills[(skills.indexOf(current.skill) + 1) % skills.length];
   const config = skillConfig[nextSkill];
-  const updated = await db.query(
-    `UPDATE study_plan_items SET skill = $1, title = $2, href = $3, status = 'planned', completed_at = NULL
-     WHERE id = $4 AND user_id = $5 RETURNING *`,
-    [nextSkill, config.title, config.href, itemId, userId]
-  );
+  let updated;
+  try {
+    updated = await db.query(
+      `UPDATE study_plan_items SET skill = $1, title = $2, href = $3, status = 'planned', completed_at = NULL
+       WHERE id = $4 AND user_id = $5 RETURNING *`,
+      [nextSkill, config.title, config.href, itemId, userId]
+    );
+  } catch (error) {
+    if (error?.code !== '42703') throw error;
+    updated = await db.query(
+      `UPDATE study_plan_items SET skill = $1, title = $2, href = $3, status = 'planned'
+       WHERE id = $4 AND user_id = $5 RETURNING *`,
+      [nextSkill, config.title, config.href, itemId, userId]
+    );
+  }
   return updated.rows[0];
 }
 

@@ -46,6 +46,9 @@ CREATE TABLE IF NOT EXISTS public.study_plan_items (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT study_plan_user_date_title_key UNIQUE (user_id, scheduled_date, title)
 );
+-- CREATE TABLE IF NOT EXISTS does not repair an older existing table.
+ALTER TABLE public.study_plan_items
+  ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP;
 
 CREATE TABLE IF NOT EXISTS public.learning_mistakes (
   id SERIAL PRIMARY KEY,

@@ -48,12 +48,24 @@ export default function StudyPlanPage() {
   };
 
   const updateItem = async (item, status) => {
-    const response = await apiClient.patch(`/api/learning/study-plan/${item.id}`, { status });
-    setPlan(items => items.map(value => value.id === item.id ? response.data : value));
+    setError(''); setMessage('');
+    try {
+      const response = await apiClient.patch(`/api/learning/study-plan/${item.id}`, { status });
+      setPlan(items => items.map(value => value.id === item.id ? response.data : value));
+      setMessage(status === 'completed' ? 'Plan item marked complete.' : 'Plan item skipped.');
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'The plan item could not be updated.');
+    }
   };
   const replaceItem = async item => {
-    const response = await apiClient.post(`/api/learning/study-plan/${item.id}/replace`);
-    setPlan(items => items.map(value => value.id === item.id ? response.data : value));
+    setError(''); setMessage('');
+    try {
+      const response = await apiClient.post(`/api/learning/study-plan/${item.id}/replace`);
+      setPlan(items => items.map(value => value.id === item.id ? response.data : value));
+      setMessage('Plan item replaced.');
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'The plan item could not be replaced.');
+    }
   };
 
   if (loading) return <main className="page-shell"><Skeleton className="h-48" /><Skeleton className="mt-6 h-80" /></main>;
