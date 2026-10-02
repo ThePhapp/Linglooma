@@ -79,24 +79,14 @@ async function getStudyPlan(userId, fromDate, toDate) {
 }
 
 async function updatePlanItem(userId, itemId, status) {
-  try {
-    const { rows } = await db.query(
-      `UPDATE study_plan_items SET status = $1,
-         completed_at = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP ELSE NULL END
-       WHERE id = $2 AND user_id = $3 RETURNING *`,
-      [status, itemId, userId]
-    );
-    return rows[0] || null;
-  } catch (error) {
-    // Older installations may have the plan table but not completed_at yet.
-    if (error?.code !== '42703') throw error;
-    const { rows } = await db.query(
-      `UPDATE study_plan_items SET status = $1
-       WHERE id = $2 AND user_id = $3 RETURNING *`,
-      [status, itemId, userId]
-    );
-    return rows[0] || null;
-  }
+  // Status is the only field required for Complete/Skip, so this remains
+  // compatible with older plan tables that predate completed_at.
+  const { rows } = await db.query(
+    `UPDATE study_plan_items SET status = $1
+     WHERE id = $2 AND user_id = $3 RETURNING *`,
+    [status, itemId, userId]
+  );
+  return rows[0] || null;
 }
 
 async function replacePlanItem(userId, itemId) {

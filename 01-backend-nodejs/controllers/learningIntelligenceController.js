@@ -53,8 +53,14 @@ async function updatePlanItem(req, res) {
     return item ? res.json({ success: true, data: item }) : res.status(404).json({ success: false, message: 'Plan item not found' });
   } catch (error) {
     console.error('Study plan update failed', { code: error.code || 'UNKNOWN', constraint: error.constraint || null });
-    const code = ['23514', '42501', '42703'].includes(error.code) ? error.code : 'STUDY_PLAN_UPDATE_FAILED';
-    return res.status(500).json({ success: false, code, message: 'Plan item could not be updated' });
+    const code = ['42P01', '23514', '42501', '42703'].includes(error.code) ? error.code : 'STUDY_PLAN_UPDATE_FAILED';
+    const messageByCode = {
+      '42P01': 'The study plan table is missing. Run the Supabase migration.',
+      '23514': 'The study plan status constraint is outdated. Run the Supabase repair SQL.',
+      '42501': 'Supabase denied the study plan update. Check database permissions or RLS policies.',
+      '42703': 'The study plan schema is missing a required column. Run the Supabase migration.'
+    };
+    return res.status(500).json({ success: false, code, message: messageByCode[error.code] || 'Plan item could not be updated' });
   }
 }
 
