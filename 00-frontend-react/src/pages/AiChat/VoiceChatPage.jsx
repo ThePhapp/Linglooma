@@ -10,6 +10,7 @@ export default function VoiceChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [conversationLength, setConversationLength] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
+  const [useLearnerContext, setUseLearnerContext] = useState(true);
   const recognitionRef = useRef(null);
   const messagesEndRef = useRef(null);
   const token = localStorage.getItem("access_token");
@@ -82,14 +83,16 @@ export default function VoiceChat() {
     }
   };
 
-  const handleSend = async () => {
-    if (!draftText.trim()) return;
+  const handleSend = async (action = null, actionMessage = null) => {
+    if (isTyping) return;
+    const outgoingText = actionMessage || draftText;
+    if (!outgoingText.trim()) return;
 
     const newMsg = {
       id: Date.now(),
       who: "user",
       type: "text",
-      text: draftText,
+      text: outgoingText,
     };
     setMessages((prev) => [...prev, newMsg]);
     setDraftText("");
@@ -97,7 +100,7 @@ export default function VoiceChat() {
 
     try {
       const data = await apiClient.post("/api/chat", 
-        { message: newMsg.text },
+        { message: newMsg.text, action, useLearnerContext },
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         }
@@ -239,6 +242,12 @@ export default function VoiceChat() {
       {/* Controls */}
       <footer className="sticky bottom-0 border-t border-slate-200 bg-white px-4 py-3 sm:px-6">
         {statusMessage && <p role="alert" className="mx-auto mb-2 max-w-4xl text-sm text-red-600">{statusMessage}</p>}
+        <div className="mx-auto mb-3 flex max-w-4xl gap-2 overflow-x-auto pb-1">
+          <button type="button" onClick={() => handleSend('explain_mistake', 'Explain my most recent mistake.')} className="shrink-0 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">Explain a mistake</button>
+          <button type="button" onClick={() => handleSend('another_example', 'Give me another IELTS example.')} className="shrink-0 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">Another example</button>
+          <button type="button" onClick={() => handleSend('practice_topic', 'Create a short practice activity for my weakest skill.')} className="shrink-0 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">Practice weakness</button>
+          <label className="ml-auto flex shrink-0 items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={useLearnerContext} onChange={event => setUseLearnerContext(event.target.checked)} /> Use my learning context</label>
+        </div>
         <div className="flex items-center gap-3 max-w-4xl mx-auto">
           {/* Voice recording button */}
           <button
@@ -267,7 +276,7 @@ export default function VoiceChat() {
 
           {/* Send button */}
           <button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={!draftText.trim()}
             className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
               draftText.trim()

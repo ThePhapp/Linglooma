@@ -86,11 +86,34 @@ async function getSpeakingHistory(studentId) {
   }
 }
 
+async function getRetryComparison(studentId, lessonResultId) {
+  const result = await client.query(
+    `WITH target AS (
+       SELECT lessonid FROM lessonresult WHERE id = $1 AND studentid = $2
+     ), recent AS (
+       SELECT lr.id, lr.finishedtime, lr.averagescore, lr.feedback
+       FROM lessonresult lr INNER JOIN target t ON t.lessonid = lr.lessonid
+       WHERE lr.studentid = $2 ORDER BY lr.finishedtime DESC, lr.id DESC LIMIT 2
+     )
+     SELECT r.id, r.finishedtime AS completed_at, r.averagescore AS score, r.feedback,
+            ROUND(AVG(qr.accuracy)::numeric, 1) AS accuracy,
+            ROUND(AVG(qr.fluency)::numeric, 1) AS fluency,
+            ROUND(AVG(qr.pronunciation)::numeric, 1) AS pronunciation,
+            STRING_AGG(qr.transcription, ' ' ORDER BY qr.id) FILTER (WHERE qr.transcription IS NOT NULL) AS transcript
+     FROM recent r LEFT JOIN questionresult qr ON qr.lessonresultid = r.id AND qr.studentid = $2
+     GROUP BY r.id, r.finishedtime, r.averagescore, r.feedback
+     ORDER BY r.finishedtime ASC, r.id ASC`,
+    [lessonResultId, studentId]
+  );
+  return result.rows;
+}
+
 module.exports = {
     insertLessonResult,
     isQuestionInOwnedLessonResult,
     ownsLessonResult,
     getLessonResult,
     getRecentlyLessonResult,
-    getSpeakingHistory
+    getSpeakingHistory,
+    getRetryComparison
 };

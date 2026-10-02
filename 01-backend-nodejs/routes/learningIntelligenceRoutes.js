@@ -12,5 +12,11 @@ router.patch('/mistakes/:id/review', controller.reviewMistake);
 router.get('/vocabulary', controller.getVocabulary);
 router.post('/vocabulary', controller.saveVocabulary);
 router.patch('/vocabulary/:id/review', controller.reviewVocabulary);
+router.get('/sessions/active', controller.getActiveSessions);
+router.post('/sessions', controller.startSession);
+router.patch('/sessions/:id', controller.updateSession);
+router.get('/bookmarks', controller.getBookmarks);
+router.post('/bookmarks', controller.saveBookmark);
+router.delete('/bookmarks/:id', controller.removeBookmark);
 
 module.exports = router;

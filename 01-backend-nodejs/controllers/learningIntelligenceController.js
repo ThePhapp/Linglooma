@@ -4,6 +4,8 @@ const skills = new Set(['speaking', 'writing', 'reading', 'listening']);
 const levels = new Set(['beginner', 'intermediate', 'advanced']);
 const statuses = new Set(['planned', 'completed', 'skipped']);
 const difficulties = new Set(['easy', 'medium', 'hard']);
+const sessionSkills = new Set(['speaking', 'writing', 'reading', 'listening', 'vocabulary']);
+const bookmarkTypes = new Set(['reading', 'writing', 'question', 'feedback', 'mistake', 'vocabulary']);
 const positiveId = value => /^(?:[1-9]\d*)$/.test(String(value)) && Number.isSafeInteger(Number(value));
 const dateValue = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
 
@@ -98,4 +100,54 @@ async function reviewVocabulary(req, res) {
   } catch { return res.status(500).json({ success: false, message: 'Vocabulary review could not be saved' }); }
 }
 
-module.exports = { getProfile, saveProfile, getPlan, updatePlanItem, replacePlanItem, getMistakes, reviewMistake, getVocabulary, saveVocabulary, reviewVocabulary };
+async function getActiveSessions(req, res) {
+  try { return res.json({ success: true, data: await model.getActiveSessions(req.user.id) }); }
+  catch { return res.status(500).json({ success: false, message: 'Active sessions could not be loaded' }); }
+}
+
+async function startSession(req, res) {
+  const body = req.body || {};
+  if (!sessionSkills.has(body.skill) || typeof body.mode !== 'string' || body.mode.length > 40 ||
+      (body.sourceId != null && !positiveId(body.sourceId)) || JSON.stringify(body.metadata || {}).length > 20000) {
+    return res.status(400).json({ success: false, message: 'Invalid practice session' });
+  }
+  try { return res.status(201).json({ success: true, data: await model.startSession(req.user.id, body) }); }
+  catch { return res.status(500).json({ success: false, message: 'Practice session could not be started' }); }
+}
+
+async function updateSession(req, res) {
+  const body = req.body || {};
+  if (!positiveId(req.params.id) || (body.status && !['in_progress', 'completed', 'abandoned'].includes(body.status)) ||
+      (body.score != null && !Number.isFinite(Number(body.score))) || JSON.stringify(body.metadata || {}).length > 20000) {
+    return res.status(400).json({ success: false, message: 'Invalid practice session update' });
+  }
+  try {
+    const item = await model.updateSession(req.user.id, req.params.id, body);
+    return item ? res.json({ success: true, data: item }) : res.status(404).json({ success: false, message: 'Practice session not found' });
+  } catch { return res.status(500).json({ success: false, message: 'Practice session could not be updated' }); }
+}
+
+async function getBookmarks(req, res) {
+  try { return res.json({ success: true, data: await model.listBookmarks(req.user.id) }); }
+  catch { return res.status(500).json({ success: false, message: 'Saved items could not be loaded' }); }
+}
+
+async function saveBookmark(req, res) {
+  const body = req.body || {};
+  if (!bookmarkTypes.has(body.itemType) || !positiveId(body.sourceId) || typeof body.title !== 'string' || !body.title.trim() || body.title.length > 300 ||
+      typeof body.href !== 'string' || !body.href.startsWith('/admin/') || body.href.length > 500 || JSON.stringify(body.metadata || {}).length > 5000) {
+    return res.status(400).json({ success: false, message: 'Invalid saved item' });
+  }
+  try { return res.status(201).json({ success: true, data: await model.saveBookmark(req.user.id, { ...body, title: body.title.trim() }) }); }
+  catch { return res.status(500).json({ success: false, message: 'Item could not be saved' }); }
+}
+
+async function removeBookmark(req, res) {
+  if (!positiveId(req.params.id)) return res.status(400).json({ success: false, message: 'Invalid saved item ID' });
+  try {
+    const item = await model.removeBookmark(req.user.id, req.params.id);
+    return item ? res.json({ success: true }) : res.status(404).json({ success: false, message: 'Saved item not found' });
+  } catch { return res.status(500).json({ success: false, message: 'Saved item could not be removed' }); }
+}
+
+module.exports = { getProfile, saveProfile, getPlan, updatePlanItem, replacePlanItem, getMistakes, reviewMistake, getVocabulary, saveVocabulary, reviewVocabulary, getActiveSessions, startSession, updateSession, getBookmarks, saveBookmark, removeBookmark };

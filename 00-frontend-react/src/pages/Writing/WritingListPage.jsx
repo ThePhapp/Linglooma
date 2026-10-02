@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Clock, Edit3, FileText, Filter, History, RefreshCw, Search, X } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowRight, Bookmark, Clock, Edit3, FileText, Filter, History, RefreshCw, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import PageHeader from '@/components/ui/PageHeader';
 import Skeleton from '@/components/ui/Skeleton';
@@ -18,7 +18,10 @@ const WritingListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [difficulty, setDifficulty] = useState('all');
   const [topic, setTopic] = useState('all');
+  const [saved, setSaved] = useState({});
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const examMode = searchParams.get('mode') === 'exam';
 
   const fetchPrompts = async () => {
     setLoading(true);
@@ -77,7 +80,7 @@ const WritingListPage = () => {
                 <p className="mt-2 line-clamp-3 flex-1 text-sm leading-6 text-slate-600">{prompt.prompt_text}</p>
                 <div className="mt-4 flex flex-wrap gap-2">{prompt.difficulty && <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${difficultyStyles[prompt.difficulty] || 'border-slate-200 bg-slate-50 text-slate-700'}`}>{prompt.difficulty}</span>}{prompt.topic && <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">{prompt.topic}</span>}</div>
                 <div className="mt-4 flex items-center justify-between rounded-lg bg-slate-50 p-3 text-xs text-slate-600"><span className="inline-flex items-center gap-1.5"><Edit3 className="h-3.5 w-3.5" /> Min {prompt.word_limit} words</span><span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {prompt.time_limit} min</span></div>
-                <button type="button" onClick={() => navigate(`/admin/features/writing/${prompt.id}`)} className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700">Start writing <ArrowRight className="h-4 w-4" aria-hidden="true" /></button>
+                <div className="mt-5 flex gap-2"><button type="button" onClick={() => navigate(`/admin/features/writing/${prompt.id}${examMode ? '?mode=exam' : ''}`)} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700">{examMode ? 'Start mock' : 'Start writing'} <ArrowRight className="h-4 w-4" aria-hidden="true" /></button><button type="button" onClick={() => savePrompt(prompt)} className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50" aria-label={`Save ${prompt.title}`}><Bookmark className={`h-4 w-4 ${saved[prompt.id] ? 'fill-brand-600 text-brand-600' : ''}`} /></button></div>
               </article>
             ))}
           </div>
@@ -88,3 +91,7 @@ const WritingListPage = () => {
 };
 
 export default WritingListPage;
+  const savePrompt = async prompt => {
+    await apiClient.post('/api/learning/bookmarks', { itemType: 'writing', sourceId: prompt.id, title: prompt.title, href: `/admin/features/writing/${prompt.id}` });
+    setSaved(value => ({ ...value, [prompt.id]: true }));
+  };

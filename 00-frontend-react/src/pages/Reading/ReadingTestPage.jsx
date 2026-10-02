@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '@/services/apiClient';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, BookOpen, CheckCircle, XCircle, Award, TrendingUp, RefreshCw, Eye } from 'lucide-react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Clock, BookOpen, CheckCircle, XCircle, Award, TrendingUp, RefreshCw, Eye, Flag } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import StatePanel from '@/components/ui/StatePanel';
 
 const ReadingTest = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const examMode = searchParams.get('mode') === 'exam';
   const [loading, setLoading] = useState(true);
   const [passage, setPassage] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
+  const [flagged, setFlagged] = useState({});
   const [result, setResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
@@ -59,6 +62,7 @@ const ReadingTest = () => {
       setPassage(passage);
       setQuestions(questions || []);
       setAnswers({});
+      setFlagged({});
       setResult(null);
       setTimeElapsed(0);
       setTimerActive(false);
@@ -283,17 +287,18 @@ const ReadingTest = () => {
               </button>
             </div>
             <nav aria-label="Question progress" className="mb-6 flex flex-wrap gap-2">
-              {questions.map((question, index) => <button key={question.id} type="button" onClick={() => document.getElementById(`reading-question-${question.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className={`flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-semibold ${answers[question.id] ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'}`} aria-label={`Question ${index + 1}, ${answers[question.id] ? 'answered' : 'unanswered'}`}>{index + 1}</button>)}
+              {questions.map((question, index) => <button key={question.id} type="button" onClick={() => document.getElementById(`reading-question-${question.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className={`relative flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-semibold ${flagged[question.id] ? 'border-amber-500 bg-amber-50 text-amber-800' : answers[question.id] ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'}`} aria-label={`Question ${index + 1}, ${answers[question.id] ? 'answered' : 'unanswered'}${flagged[question.id] ? ', flagged' : ''}`}>{index + 1}{flagged[question.id] && <Flag className="absolute -right-1.5 -top-1.5 h-3.5 w-3.5 fill-amber-500 text-amber-600" />}</button>)}
             </nav>
             
             <div className="space-y-6">
               {questions.map((question, qIdx) => (
                 <fieldset id={`reading-question-${question.id}`} key={question.id} className="scroll-mt-48 border-b border-slate-200 pb-6 last:border-0">
-                  <legend className="mb-4 flex items-start gap-2 font-semibold text-slate-900">
+                  <legend className="mb-4 flex w-full items-start gap-2 font-semibold text-slate-900">
                     <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
                       {qIdx + 1}
                     </span>
                     <span className="flex-1">{question.question_text}</span>
+                    {!result && !examMode && <button type="button" onClick={() => setFlagged(value => ({ ...value, [question.id]: !value[question.id] }))} className={`inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold ${flagged[question.id] ? 'bg-amber-100 text-amber-800' : 'text-slate-500 hover:bg-slate-100'}`}><Flag className={`h-4 w-4 ${flagged[question.id] ? 'fill-current' : ''}`} /> {flagged[question.id] ? 'Flagged' : 'Flag'}</button>}
                   </legend>
                   
                   <div className="space-y-2 ml-9">
@@ -353,6 +358,11 @@ const ReadingTest = () => {
                       );
                     })}
                   </div>
+                  {result && (() => {
+                    const detail = result.details?.find(value => String(value.questionId) === String(question.id));
+                    if (!detail) return null;
+                    return <div className={`ml-9 mt-4 rounded-lg border p-4 text-sm leading-6 ${detail.isCorrect ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}><p className="font-semibold text-slate-900">{detail.isCorrect ? 'Correct' : 'Review this answer'}</p><p className="mt-1 text-slate-700"><strong>Your answer:</strong> {String(detail.userAnswer)}</p><p className="text-slate-700"><strong>Correct answer:</strong> {String(detail.correctAnswer)}</p>{detail.explanation && <p className="mt-2 text-slate-700"><strong>Explanation:</strong> {detail.explanation}</p>}</div>;
+                  })()}
                 </fieldset>
               ))}
             </div>
@@ -395,13 +405,13 @@ const ReadingTest = () => {
                 </div>
                 
                 <div className="flex gap-3">
-                  <button
+                  {!examMode && <button
                     onClick={fetchReading}
                     className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                   >
                     <RefreshCw className="h-5 w-5" />
                     Retry
-                  </button>
+                  </button>}
                   <button
                     onClick={() => navigate('/admin/features/reading')}
                     className="min-h-11 flex-1 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"

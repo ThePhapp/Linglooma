@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Play, ChevronRight, Mic2 } from "lucide-react";
 import PropTypes from 'prop-types';
 
-const CourseCard = ({ title, topic, description, imageUrl, lessonId }) => {
+const CourseCard = ({ title, topic, description, imageUrl, lessonId, mode = 'practice' }) => {
     const navigate = useNavigate();
     const [imageFailed, setImageFailed] = useState(false);
     
     const handleLearnClick = () => {
         if (lessonId) {
-            navigate(`/admin/features/practice/${lessonId}`);
+            navigate(`/admin/features/practice/${lessonId}?mode=${mode}`);
         }
     }
 
@@ -56,6 +56,7 @@ CourseCard.propTypes = {
     description: PropTypes.string,
     imageUrl: PropTypes.string,
     lessonId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    mode: PropTypes.oneOf(['practice', 'part2', 'mock']),
 };
 
 export default CourseCard;

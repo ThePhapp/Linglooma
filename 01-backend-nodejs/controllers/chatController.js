@@ -1,11 +1,13 @@
 const { askGemini, clearConversation, getConversationLength } = require("../services/chatService.js");
+const { getLearnerContext } = require('../models/learnerContextModel');
+const { actionInstructions } = require('../ai/prompts/tutor-v2');
 const rateWindows = new Map();
 const RATE_WINDOW_MS = 60000;
 const RATE_LIMIT = 10;
 const MAX_RATE_WINDOWS = 5000;
 
 async function chatController(req, res) {
-  const { message } = req.body || {};
+  const { message, action, currentSkill, useLearnerContext } = req.body || {};
   
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: "Message is required and must be a string" });
@@ -17,6 +19,9 @@ async function chatController(req, res) {
 
   if (message.length > 2000) {
     return res.status(413).json({ error: "Message too long (max 2000 characters)" });
+  }
+  if (action && !Object.prototype.hasOwnProperty.call(actionInstructions, action)) {
+    return res.status(400).json({ error: 'Unsupported tutor action' });
   }
 
   try {
@@ -38,7 +43,9 @@ async function chatController(req, res) {
       rateWindows.set(sessionId, { start: now, count: 1 });
     }
 
-    const reply = await askGemini(message, sessionId);
+    let context = null;
+    if (useLearnerContext === true) context = await getLearnerContext(req.user.id, currentSkill);
+    const reply = context || action ? await askGemini(message, sessionId, context, action || null) : await askGemini(message, sessionId);
     
     const conversationLength = getConversationLength(sessionId);
 
@@ -46,7 +53,8 @@ async function chatController(req, res) {
       reply,
       metadata: {
         conversationLength,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        contextUsed: Boolean(context)
       }
     });
   } catch (error) {

@@ -154,13 +154,38 @@ function buildRecommendations(progress, history) {
   return recommendations.slice(0, 3);
 }
 
+function buildWeeklyReview(history, progress) {
+  const now = Date.now();
+  const week = history.filter(item => now - Date.parse(item.completedAt) <= 7 * 86400000);
+  const counts = week.reduce((result, item) => ({ ...result, [item.skill]: (result[item.skill] || 0) + 1 }), {});
+  const mostPracticed = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+  const scored = progress.filter(item => item.score !== null).map(item => ({ ...item, normalized: item.score / item.scoreScale }));
+  const needsAttention = scored.sort((a, b) => a.normalized - b.normalized)[0]?.skill || null;
+  return { practicesCompleted: week.filter(item => item.status === 'completed').length, mostPracticed, needsAttention };
+}
+
+function deriveAchievements(history) {
+  const achievements = [];
+  if (history.some(item => item.skill === 'speaking')) achievements.push({ id: 'first-speaking', title: 'First Speaking Practice' });
+  if (history.length >= 10) achievements.push({ id: 'ten-practices', title: '10 Practices Completed' });
+  const days = [...new Set(history.map(item => item.completedAt?.slice(0, 10)).filter(Boolean))].sort().reverse();
+  let streak = 0;
+  for (let index = 0; index < days.length; index += 1) {
+    const expected = new Date(); expected.setUTCHours(0, 0, 0, 0); expected.setUTCDate(expected.getUTCDate() - index);
+    if (days[index] === expected.toISOString().slice(0, 10)) streak += 1; else break;
+  }
+  if (streak >= 7) achievements.push({ id: 'seven-day-streak', title: '7-day Study Streak' });
+  return achievements;
+}
+
 async function getLearningOverview(userId) {
   const today = new Date().toISOString().slice(0, 10);
-  const [history, profile, todayPractice, dueMistakes] = await Promise.all([
+  const [history, profile, todayPractice, dueMistakes, activeSessions] = await Promise.all([
     getPracticeHistory(userId),
     intelligence.getProfile(userId),
     intelligence.getStudyPlan(userId, today, today),
-    intelligence.listMistakes(userId, { status: 'review', skill: null, dueOnly: true, search: '' })
+    intelligence.listMistakes(userId, { status: 'review', skill: null, dueOnly: true, search: '' }),
+    intelligence.getActiveSessions(userId)
   ]);
   const progress = calculateProgress(history);
   return {
@@ -168,8 +193,11 @@ async function getLearningOverview(userId) {
     progress,
     todayPractice,
     dueMistakes: dueMistakes.length,
+    activeSessions,
     recentActivity: history.slice(0, 5),
     recommendations: buildRecommendations(progress, history),
+    weeklyReview: buildWeeklyReview(history, progress),
+    achievements: deriveAchievements(history),
     summary: {
       totalPractices: history.length,
       completedPractices: history.filter(item => item.status === 'completed').length,
@@ -178,4 +206,4 @@ async function getLearningOverview(userId) {
   };
 }
 
-module.exports = { getPracticeHistory, getLearningOverview, calculateProgress, buildRecommendations };
+module.exports = { getPracticeHistory, getLearningOverview, calculateProgress, buildRecommendations, buildWeeklyReview, deriveAchievements };

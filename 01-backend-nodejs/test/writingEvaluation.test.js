@@ -203,7 +203,7 @@ describe('writing submission persistence and controller', () => {
       expect.stringMatching(/UPDATE writing_submissions[\s\S]*is_completed = true/),
       [6.5, 6, 6.5, 7, 6.5, evaluation.overall_feedback, evaluation.strengths,
         evaluation.structure_feedback, JSON.stringify(evaluation.vocabulary_suggestions),
-        JSON.stringify(evaluation.grammar_errors), evaluation.improvement_tips, 30]
+        JSON.stringify(evaluation.grammar_errors), evaluation.improvement_tips, service.PROMPT_VERSION, 30]
     ]);
   });
 
@@ -271,7 +271,7 @@ describe('writing submission persistence and controller', () => {
     expect(pool.query).toHaveBeenCalledTimes(2);
     expect(pool.query.mock.calls[0]).toEqual([expect.stringMatching(/WHERE ws.id = \$1 AND ws.user_id = \$2/), [30, 20]]);
     expect(pool.query.mock.calls.some(([sql]) => /INSERT INTO writing_submissions/.test(sql))).toBe(false);
-    expect(pool.query.mock.calls[1][0]).toMatch(/WHERE id = \$12 AND is_completed = false/);
+    expect(pool.query.mock.calls[1][0]).toMatch(/WHERE id = \$13 AND is_completed = false/);
   });
 
   test('does not reevaluate completed or unowned submissions', async () => {

@@ -60,7 +60,7 @@ test('chat limits each account and does not send excess requests to provider', a
   expect(renewed.status).not.toHaveBeenCalled();
   expect(chatService.askGemini).toHaveBeenCalledTimes(11);
   expect(renewed.json).toHaveBeenCalledWith({
-    reply: 'reply', metadata: { conversationLength: 4, timestamp: '2026-09-30T00:01:00.000Z' },
+    reply: 'reply', metadata: { conversationLength: 4, timestamp: '2026-09-30T00:01:00.000Z', contextUsed: false },
   });
 });
 

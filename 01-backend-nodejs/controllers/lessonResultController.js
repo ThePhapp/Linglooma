@@ -1,4 +1,4 @@
-const { insertLessonResult, getLessonResult, getRecentlyLessonResult, getSpeakingHistory } = require('../models/lessonResultModel');
+const { insertLessonResult, getLessonResult, getRecentlyLessonResult, getSpeakingHistory, getRetryComparison } = require('../models/lessonResultModel');
 
 const insertLessonResultController = async (req, res) => {
   try {
@@ -75,9 +75,24 @@ const getSpeakingHistoryController = async (req, res) => {
   }
 };
 
+const getRetryComparisonController = async (req, res) => {
+  if (!/^(?:[1-9]\d*)$/.test(String(req.params.lessonResultId))) return res.status(400).json({ message: 'Invalid speaking result ID' });
+  try {
+    const attempts = await getRetryComparison(req.user.id, req.params.lessonResultId);
+    if (!attempts.length) return res.status(404).json({ message: 'Speaking result not found' });
+    const first = attempts[0];
+    const latest = attempts[attempts.length - 1];
+    const delta = field => attempts.length < 2 || first[field] == null || latest[field] == null ? null : Math.round((Number(latest[field]) - Number(first[field])) * 10) / 10;
+    return res.json({ attempts, comparison: { score: delta('score'), accuracy: delta('accuracy'), fluency: delta('fluency'), pronunciation: delta('pronunciation') } });
+  } catch {
+    return res.status(500).json({ message: 'Speaking comparison could not be loaded' });
+  }
+};
+
 module.exports = {
   insertLessonResultController,
   getLessonResultController,
   getRecentlyLessonResultController,
-  getSpeakingHistoryController
+  getSpeakingHistoryController,
+  getRetryComparisonController
 };

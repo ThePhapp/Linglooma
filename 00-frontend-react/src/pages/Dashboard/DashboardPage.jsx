@@ -55,6 +55,8 @@ export default function DashboardPage() {
             <Link to="/admin/mistakes" className="rounded-xl border border-slate-200 bg-white p-4 hover:border-brand-300"><div className="flex items-center gap-2 text-sm font-semibold text-slate-600"><NotebookPen className="h-4 w-4 text-brand-700" /> Mistakes due</div><p className="mt-2 text-2xl font-bold text-slate-950">{overview.dueMistakes}</p><p className="mt-1 text-xs text-slate-500">Review due mistakes with spaced repetition</p></Link>
           </section>
 
+          {overview.activeSessions?.length > 0 && <section className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5"><p className="text-sm font-semibold text-emerald-800">Continue where you left off</p><div className="mt-3 flex flex-wrap gap-3">{overview.activeSessions.slice(0, 3).map(session => <Link key={session.id} to={session.skill === 'writing' && session.source_id ? `/admin/features/writing/${session.source_id}${session.mode === 'exam' ? '?mode=exam' : ''}` : skillMeta[session.skill]?.href || '/admin/features'} className="inline-flex min-h-11 items-center rounded-lg bg-white px-4 text-sm font-semibold text-emerald-900 shadow-sm">Resume {session.skill}</Link>)}</div></section>}
+
           <section className="mt-8 rounded-xl border border-brand-200 bg-brand-50 p-5 sm:p-6" aria-labelledby="focus-heading">
             <div className="flex items-center gap-2 text-sm font-semibold text-brand-700"><Sparkles className="h-4 w-4" aria-hidden="true" /> Focus next</div>
             <div className="mt-4 grid gap-3 lg:grid-cols-3">
@@ -108,6 +110,11 @@ export default function DashboardPage() {
             ) : (
               <StatePanel icon={<History className="h-5 w-5" />} title="No saved activity yet" description="Complete a reading, writing, or speaking activity to start building your learning history." action={<Link to="/admin/features" className="inline-flex min-h-11 items-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white">Choose a practice</Link>} />
             )}
+          </section>
+
+          <section className="mt-10 grid gap-4 lg:grid-cols-2" aria-label="Weekly learning review">
+            <div className="rounded-xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-brand-700">This week</p><h2 className="mt-1 text-xl font-bold text-slate-950">Weekly review</h2><dl className="mt-4 grid grid-cols-3 gap-3 text-center"><div className="rounded-lg bg-slate-50 p-3"><dt className="text-xs text-slate-500">Completed</dt><dd className="mt-1 text-xl font-bold text-slate-950">{overview.weeklyReview.practicesCompleted}</dd></div><div className="rounded-lg bg-slate-50 p-3"><dt className="text-xs text-slate-500">Most practiced</dt><dd className="mt-1 text-sm font-bold capitalize text-slate-950">{overview.weeklyReview.mostPracticed || '—'}</dd></div><div className="rounded-lg bg-slate-50 p-3"><dt className="text-xs text-slate-500">Focus</dt><dd className="mt-1 text-sm font-bold capitalize text-slate-950">{overview.weeklyReview.needsAttention || 'More data'}</dd></div></dl></div>
+            <div className="rounded-xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-brand-700">Milestones</p><h2 className="mt-1 text-xl font-bold text-slate-950">Useful achievements</h2>{overview.achievements.length ? <ul className="mt-4 space-y-2">{overview.achievements.map(item => <li key={item.id} className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">{item.title}</li>)}</ul> : <p className="mt-4 text-sm leading-6 text-slate-600">Complete your first saved practice to earn a learning milestone.</p>}</div>
           </section>
         </>
       )}

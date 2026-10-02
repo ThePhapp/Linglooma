@@ -2,6 +2,8 @@
 -- Additive and replay-safe; existing learning data is preserved.
 BEGIN;
 
+ALTER TABLE writing_submissions ADD COLUMN IF NOT EXISTS evaluation_prompt_version VARCHAR(80);
+
 CREATE TABLE IF NOT EXISTS learning_profiles (
     user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     target_band NUMERIC(2,1) CHECK (target_band BETWEEN 0 AND 9),
@@ -89,5 +91,18 @@ CREATE TABLE IF NOT EXISTS practice_sessions (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_practice_sessions_resume ON practice_sessions(user_id, status, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS learning_bookmarks (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    item_type VARCHAR(30) NOT NULL CHECK (item_type IN ('reading', 'writing', 'question', 'feedback', 'mistake', 'vocabulary')),
+    source_id INTEGER NOT NULL,
+    title VARCHAR(300) NOT NULL,
+    href VARCHAR(500) NOT NULL,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT learning_bookmarks_source_key UNIQUE (user_id, item_type, source_id)
+);
+CREATE INDEX IF NOT EXISTS idx_learning_bookmarks_user ON learning_bookmarks(user_id, created_at DESC);
 
 COMMIT;

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Award, LoaderCircle, MessageSquareText, Target, TrendingUp, Zap } from 'lucide-react';
 import IncorrectPhonemesTable from './components/IncorrectPhonemesTable';
 import PhonemeDetails from './components/PhonemeDetails';
@@ -10,6 +11,8 @@ const SpeakingPracticePage = () => {
   const [scoreData, setScoreData] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode') === 'part2' ? 'part2' : searchParams.get('mode') === 'mock' ? 'mock' : 'practice';
 
   const scores = scoreData ? [
     { label: 'Accuracy', value: scoreData.accuracyScore, icon: Zap, style: 'bg-blue-50 text-blue-800 border-blue-200' },
@@ -21,15 +24,15 @@ const SpeakingPracticePage = () => {
   return (
     <div className="page-shell max-w-[1440px]">
       <header>
-        <p className="text-sm font-semibold text-brand-700">Speaking</p>
+        <p className="text-sm font-semibold text-brand-700">Speaking · {mode === 'part2' ? 'Part 2 cue card' : mode === 'mock' ? 'Mock mode' : 'Practice mode'}</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">IELTS Speaking Practice</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">Choose a question, record your answer, review the audio, then submit it for pronunciation feedback.</p>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{mode === 'part2' ? 'Prepare for one minute, then speak for up to two minutes before requesting feedback.' : mode === 'mock' ? 'Complete the response under a two-minute limit. Feedback appears after submission.' : 'Choose a question, record your answer, review the audio, then submit it for pronunciation feedback.'}</p>
       </header>
 
       {loading && <div role="status" className="mt-6 flex items-center gap-3 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800"><LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" /><span><strong>Analyzing your response…</strong> Keep this page open while your feedback is prepared.</span></div>}
 
       <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(300px,0.8fr)]">
-        <RecordingPractice currentQuestion={currentQuestion} currentIndex={currentIndex} referenceText={currentQuestion?.content || 'Choose a question from the question panel to begin.'} onScore={setScoreData} setLoading={setLoading} />
+        <RecordingPractice mode={mode} currentQuestion={currentQuestion} currentIndex={currentIndex} referenceText={currentQuestion?.content || 'Choose a question from the question panel to begin.'} onScore={setScoreData} setLoading={setLoading} />
         <SpeakingGrid setCurrentQuestion={setCurrentQuestion} setCurrentIndex={setCurrentIndex} />
       </div>
 

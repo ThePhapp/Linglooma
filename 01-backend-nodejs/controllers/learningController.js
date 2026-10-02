@@ -21,4 +21,16 @@ async function getOverview(req, res) {
   }
 }
 
-module.exports = { getHistory, getOverview };
+async function exportLearningData(req, res) {
+  try {
+    const [history, mistakes, vocabulary] = await Promise.all([
+      learningModel.getPracticeHistory(req.user.id),
+      require('../models/learningIntelligenceModel').listMistakes(req.user.id, { status: null, skill: null, dueOnly: false, search: '' }),
+      require('../models/learningIntelligenceModel').listVocabulary(req.user.id, { status: null, search: '' })
+    ]);
+    res.setHeader('Content-Disposition', `attachment; filename="linglooma-learning-data-${new Date().toISOString().slice(0, 10)}.json"`);
+    return res.type('application/json').send(JSON.stringify({ exportedAt: new Date().toISOString(), history, mistakes, vocabulary }, null, 2));
+  } catch { return res.status(500).json({ success: false, message: 'Learning data could not be exported' }); }
+}
+
+module.exports = { getHistory, getOverview, exportLearningData };

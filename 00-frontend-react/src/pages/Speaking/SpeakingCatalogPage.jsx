@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, BookOpen, History, RefreshCw } from 'lucide-react';
 import apiClient from '@/services/apiClient';
 import CourseCard from './components/CourseCard';
 
 const LessonSpeaking = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [mode, setMode] = useState(searchParams.get('mode') === 'mock' ? 'mock' : 'practice');
 
   const loadLessons = async () => {
     setLoading(true);
@@ -48,6 +50,10 @@ const LessonSpeaking = () => {
           </div>
         </header>
 
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-2" aria-label="Speaking mode">
+          {[['practice', 'Part 1 practice'], ['part2', 'Part 2 cue card'], ['mock', 'Speaking mock']].map(([value, label]) => <button key={value} type="button" aria-pressed={mode === value} onClick={() => setMode(value)} className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-semibold ${mode === value ? 'bg-brand-600 text-white' : 'border border-slate-300 bg-white text-slate-700'}`}>{label}</button>)}
+        </div>
+
         {loading ? (
           <div aria-label="Loading speaking lessons" className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {[0, 1, 2, 3, 4, 5].map(item => <div key={item} className="h-96 animate-pulse rounded-2xl bg-white/80 shadow" />)}
@@ -66,7 +72,7 @@ const LessonSpeaking = () => {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {lessons.map((lesson) => (
-              <CourseCard key={lesson.id} title={lesson.name} topic={lesson.difficulty || 'Speaking'} description={lesson.description} imageUrl={lesson.image} lessonId={lesson.id} />
+              <CourseCard key={lesson.id} title={lesson.name} topic={lesson.difficulty || 'Speaking'} description={lesson.description} imageUrl={lesson.image} lessonId={lesson.id} mode={mode} />
             ))}
           </div>
         )}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpen, Filter, RefreshCw, Search, X } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ArrowRight, Bookmark, BookOpen, Filter, RefreshCw, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import PageHeader from '@/components/ui/PageHeader';
 import Skeleton from '@/components/ui/Skeleton';
@@ -17,12 +17,20 @@ const difficultyClasses = {
 const unwrapPassages = (response) => [response?.data?.data, response?.data, response].find(Array.isArray) ?? [];
 
 const ReadingListPage = () => {
+  const [searchParams] = useSearchParams();
+  const examMode = searchParams.get('mode') === 'exam';
   const [passages, setPassages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [selectedTopic, setSelectedTopic] = useState('all');
+  const [saved, setSaved] = useState({});
+
+  const savePassage = async passage => {
+    await apiClient.post('/api/learning/bookmarks', { itemType: 'reading', sourceId: passage.id, title: passage.title, href: `/admin/features/reading/${passage.id}` });
+    setSaved(value => ({ ...value, [passage.id]: true }));
+  };
 
   const fetchPassages = async () => {
     setLoading(true);
@@ -90,7 +98,7 @@ const ReadingListPage = () => {
                   {passage.topic && <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800">{passage.topic}</span>}
                 </div>
                 <h2 className="mt-4 flex-1 text-lg font-bold text-slate-950">{passage.title}</h2>
-                <Link to={`/admin/features/reading/${passage.id}`} className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700">Start reading <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+                <div className="mt-5 flex gap-2"><Link to={`/admin/features/reading/${passage.id}${examMode ? '?mode=exam' : ''}`} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700">{examMode ? 'Start mock' : 'Start reading'} <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link><button type="button" onClick={() => savePassage(passage)} className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50" aria-label={`Save ${passage.title}`}><Bookmark className={`h-4 w-4 ${saved[passage.id] ? 'fill-brand-600 text-brand-600' : ''}`} /></button></div>
               </article>
             ))}
           </div>

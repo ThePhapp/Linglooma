@@ -29,6 +29,9 @@ const PracticeHistoryPage = lazy(() => import('@/pages/History/PracticeHistoryPa
 const StudyPlanPage = lazy(() => import('@/pages/Plan/StudyPlanPage'));
 const MistakeBookPage = lazy(() => import('@/pages/Mistakes/MistakeBookPage'));
 const VocabularyPage = lazy(() => import('@/pages/Vocabulary/VocabularyPage'));
+const SpeakingComparisonPage = lazy(() => import('@/pages/Speaking/SpeakingComparisonPage'));
+const MockTestPage = lazy(() => import('@/pages/MockTest/MockTestPage'));
+const SavedPage = lazy(() => import('@/pages/Saved/SavedPage'));
 
 const RouteLoading = () => (
   <div role="status" aria-live="polite" className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-600">
@@ -97,9 +100,12 @@ const AppRoutes = () => {
               <Route path="study-plan" element={<StudyPlanPage />} />
               <Route path="mistakes" element={<MistakeBookPage />} />
               <Route path="vocabulary" element={<VocabularyPage />} />
+              <Route path="mock-test" element={<MockTestPage />} />
+              <Route path="saved" element={<SavedPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="features/practice/:lessonId" element={<SpeakingPracticePage />} />
               <Route path="features/feedback/:lessonId" element={<SpeakingFeedbackPage />} />
+              <Route path="features/speaking/compare/:lessonResultId" element={<SpeakingComparisonPage />} />
               <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
             </Route>
           </Route>

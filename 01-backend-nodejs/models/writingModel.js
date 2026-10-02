@@ -1,6 +1,6 @@
 const pool = require('../db');
 const {
-  evaluateWritingWithGemini, validateWritingEvaluation, WritingEvaluationError
+  evaluateWritingWithGemini, validateWritingEvaluation, WritingEvaluationError, PROMPT_VERSION
 } = require('../services/geminiWritingService');
 const { recordMistakes } = require('./learningIntelligenceModel');
 
@@ -60,8 +60,9 @@ async function evaluateAndPersistSubmission({ submission, prompt, essayText, wor
       feedback_vocabulary = $9,
       feedback_grammar = $10,
       suggestions = $11,
+      evaluation_prompt_version = $12,
       is_completed = true
-    WHERE id = $12 AND is_completed = false
+    WHERE id = $13 AND is_completed = false
     RETURNING id
   `;
   const updateValues = [
@@ -76,6 +77,7 @@ async function evaluateAndPersistSubmission({ submission, prompt, essayText, wor
     JSON.stringify(evaluation.vocabulary_suggestions),
     JSON.stringify(evaluation.grammar_errors),
     evaluation.improvement_tips,
+    PROMPT_VERSION,
     submission.id
   ];
   const updateResult = await pool.query(updateQuery, updateValues);
@@ -226,6 +228,7 @@ async function getSubmissionDetail(submissionId, studentId) {
       s.feedback_vocabulary as vocabulary_suggestions,
       s.feedback_grammar as grammar_errors,
       s.suggestions as improvement_tips
+      ,s.evaluation_prompt_version
     FROM writing_submissions s
     JOIN writing_tasks t ON s.task_id = t.id
     WHERE s.id = $1 AND s.user_id = $2

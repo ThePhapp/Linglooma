@@ -165,7 +165,63 @@ async function reviewVocabulary(userId, itemId, known) {
   return rows[0] || null;
 }
 
+async function getActiveSessions(userId) {
+  const { rows } = await db.query(
+    `SELECT * FROM practice_sessions WHERE user_id = $1 AND status = 'in_progress'
+     ORDER BY updated_at DESC LIMIT 20`, [userId]
+  );
+  return rows;
+}
+
+async function startSession(userId, { skill, mode, sourceId, metadata }) {
+  const existing = await db.query(
+    `SELECT * FROM practice_sessions WHERE user_id = $1 AND skill = $2 AND mode = $3
+       AND COALESCE(source_id, 0) = COALESCE($4, 0) AND status = 'in_progress'
+     ORDER BY updated_at DESC LIMIT 1`, [userId, skill, mode, sourceId || null]
+  );
+  if (existing.rows[0]) return existing.rows[0];
+  const { rows } = await db.query(
+    `INSERT INTO practice_sessions (user_id, skill, mode, source_id, metadata)
+     VALUES ($1,$2,$3,$4,$5::jsonb) RETURNING *`,
+    [userId, skill, mode, sourceId || null, JSON.stringify(metadata || {})]
+  );
+  return rows[0];
+}
+
+async function updateSession(userId, sessionId, { status, score, metadata }) {
+  const { rows } = await db.query(
+    `UPDATE practice_sessions SET status = COALESCE($1, status), score = COALESCE($2, score),
+       metadata = COALESCE($3::jsonb, metadata), updated_at = CURRENT_TIMESTAMP,
+       completed_at = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP ELSE completed_at END
+     WHERE id = $4 AND user_id = $5 RETURNING *`,
+    [status || null, score ?? null, metadata ? JSON.stringify(metadata) : null, sessionId, userId]
+  );
+  return rows[0] || null;
+}
+
+async function listBookmarks(userId) {
+  const { rows } = await db.query('SELECT * FROM learning_bookmarks WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
+  return rows;
+}
+
+async function saveBookmark(userId, item) {
+  const { rows } = await db.query(
+    `INSERT INTO learning_bookmarks (user_id, item_type, source_id, title, href, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+     ON CONFLICT (user_id, item_type, source_id) DO UPDATE SET title = EXCLUDED.title, href = EXCLUDED.href, metadata = EXCLUDED.metadata
+     RETURNING *`,
+    [userId, item.itemType, item.sourceId, item.title, item.href, JSON.stringify(item.metadata || {})]
+  );
+  return rows[0];
+}
+
+async function removeBookmark(userId, bookmarkId) {
+  const { rows } = await db.query('DELETE FROM learning_bookmarks WHERE id = $1 AND user_id = $2 RETURNING id', [bookmarkId, userId]);
+  return rows[0] || null;
+}
+
 module.exports = {
   getProfile, saveProfile, generateStudyPlan, getStudyPlan, updatePlanItem, replacePlanItem,
-  listMistakes, reviewMistake, recordMistakes, listVocabulary, saveVocabulary, reviewVocabulary
+  listMistakes, reviewMistake, recordMistakes, listVocabulary, saveVocabulary, reviewVocabulary,
+  getActiveSessions, startSession, updateSession, listBookmarks, saveBookmark, removeBookmark
 };

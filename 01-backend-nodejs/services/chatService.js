@@ -1,20 +1,13 @@
 const fetch = require('node-fetch');
 const { postJsonWithDeadline } = require('../utils/providerRequest');
+const { buildTutorSystemPrompt } = require('../ai/prompts/tutor-v2');
+const { selectModel } = require('../ai/modelRouter');
+const { observeAiCall } = require('../ai/observability');
 
 const conversationHistory = new Map();
 const MAX_SESSIONS = 500;
 const MAX_MESSAGES = 20;
 const IDLE_MS = 30 * 60 * 1000;
-const SYSTEM_PROMPT = `You are an expert IELTS teacher and English language coach. Your role is to:
-- Help students improve their English speaking, writing, reading, and listening skills
-- Provide clear, constructive feedback on grammar, vocabulary, and pronunciation
-- Explain IELTS exam strategies and tips
-- Be encouraging, patient, and supportive
-- Use simple language when explaining complex concepts
-- Give examples when appropriate
-- Keep responses concise but informative (max 150 words unless asked for more)
-
-Always be friendly, professional, and focus on helping students achieve their IELTS goals.`;
 const GREETING = "Hello! I'm your IELTS AI assistant. I'm here to help you improve your English and prepare for the IELTS exam. How can I assist you today? 😊";
 
 function getSession(accountId) {
@@ -27,7 +20,7 @@ function getSession(accountId) {
     if (conversationHistory.size >= MAX_SESSIONS) conversationHistory.delete(conversationHistory.keys().next().value);
     session = {
       history: [
-        { role: 'user', parts: [{ text: SYSTEM_PROMPT }] },
+        { role: 'user', parts: [{ text: buildTutorSystemPrompt() }] },
         { role: 'model', parts: [{ text: GREETING }] },
       ],
       lastUsed: now,
@@ -39,18 +32,23 @@ function getSession(accountId) {
   return session;
 }
 
-async function askGemini(userMessage, accountId) {
+async function askGemini(userMessage, accountId, learnerContext = null, action = null) {
   if (!process.env.GEMINI_API_KEY) throw new Error('Chat provider unavailable');
   const session = getSession(accountId);
+  const systemMessages = [
+    { role: 'user', parts: [{ text: buildTutorSystemPrompt(learnerContext || {}, action) }] },
+    session.history[1]
+  ];
   const history = [
-    ...session.history.slice(0, 2),
+    ...systemMessages,
     ...session.history.slice(2).slice(-(MAX_MESSAGES - 4)),
     { role: 'user', parts: [{ text: userMessage }] },
   ];
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  const model = selectModel(action ? 'tutor_reasoning' : 'tutor_chat');
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
   let data;
   try {
-    data = await postJsonWithDeadline(fetch, url, {
+    data = await observeAiCall({ purpose: action ? 'tutor_action' : 'tutor_chat', model }, () => postJsonWithDeadline(fetch, url, {
       contents: history,
       generationConfig: { temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 1024 },
       safetySettings: [
@@ -59,7 +57,7 @@ async function askGemini(userMessage, accountId) {
         { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
         { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
       ],
-    });
+    }));
   } catch {
     throw new Error('Chat provider unavailable');
   }

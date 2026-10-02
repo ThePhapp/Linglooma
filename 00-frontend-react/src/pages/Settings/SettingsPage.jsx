@@ -5,6 +5,7 @@ import Button from "@/components/ui/Button";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "@/contexts/AuthContext";
 import { LockKeyhole, LogOut, Settings, UserRound } from "lucide-react";
+import apiClient from "@/services/apiClient";
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -26,6 +27,16 @@ const SettingsPage = () => {
     });
     localStorage.clear();
     navigate('/');
+  };
+
+  const exportLearningData = async () => {
+    const blob = await apiClient.get('/api/learning/export', { responseType: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `linglooma-learning-data-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -100,6 +111,7 @@ const SettingsPage = () => {
           {activeTab === 'security' && <PasswordSettingsForm />}
         </div>
       </div>
+      <div className="rounded-xl border border-slate-200 bg-white p-5"><h2 className="font-bold text-slate-950">Learning data</h2><p className="mt-1 text-sm leading-6 text-slate-600">Download your saved history, mistakes, and vocabulary as JSON.</p><Button variant="secondary" className="mt-4" onClick={exportLearningData}>Export learning data</Button></div>
 
     </main>
   );

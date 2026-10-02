@@ -209,6 +209,7 @@ const SpeakingHistory = () => {
                     </div>
                   </div>
                 ) : null}
+                <button type="button" onClick={() => navigate(`/admin/features/speaking/compare/${result.id}`)} className="mt-3 inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Compare attempts</button>
 
                 {/* View Detail Button */}
                 <button

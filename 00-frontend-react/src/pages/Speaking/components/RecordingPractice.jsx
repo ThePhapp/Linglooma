@@ -11,7 +11,7 @@ import TextToSpeechButton from './TextToSpeechButton';
 
 const formatDuration = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 
-const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentIndex, setLoading }) => {
+const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentIndex, setLoading, mode = 'practice' }) => {
   const [recording, setRecording] = useState(false);
   const [audioURL, setAudioURL] = useState(null);
   const [status, setStatus] = useState('Choose a question, then start recording.');
@@ -19,6 +19,9 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
   const [scoreData, setScoreData] = useState(null);
   const [elapsed, setElapsed] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const [prepRemaining, setPrepRemaining] = useState(60);
+  const [notes, setNotes] = useState('');
   const recorderRef = useRef(null);
   const audioURLRef = useRef(null);
   const { lessonId } = useParams();
@@ -42,11 +45,20 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
   }, [recording]);
 
   useEffect(() => {
+    if (!preparing || prepRemaining <= 0) return undefined;
+    const timer = window.setInterval(() => setPrepRemaining(value => Math.max(0, value - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [preparing, prepRemaining]);
+
+  useEffect(() => {
     if (!currentQuestion) return;
     setStatus('Ready to record your response.');
     setStatusTone('neutral');
     setScoreData(null);
     setElapsed(0);
+    setPreparing(false);
+    setPrepRemaining(60);
+    setNotes('');
   }, [currentQuestion?.id]);
 
   const resetRecording = () => {
@@ -73,6 +85,7 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
       if (!stream.active) throw new Error('Microphone stream is unavailable');
       recorderRef.current = new RecordRTC(stream, { type: 'audio', mimeType: 'audio/wav', recorderType: RecordRTC.StereoAudioRecorder, desiredSampRate: 16000, numberOfAudioChannels: 1 });
       recorderRef.current.startRecording();
+      setPreparing(false);
       setRecording(true);
       setStatus('Recording in progress. Speak clearly, then choose Stop recording.');
       setStatusTone('recording');
@@ -96,6 +109,10 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
       stopMediaTracks(recorderRef.current);
     });
   };
+
+  useEffect(() => {
+    if ((mode === 'part2' || mode === 'mock') && recording && elapsed >= 120) stopRecording();
+  }, [elapsed, mode, recording]);
 
   const blobToBase64 = blob => new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -175,6 +192,8 @@ const RecordingPractice = ({ currentQuestion, referenceText, onScore, currentInd
       <div className={`mt-5 rounded-lg border px-4 py-3 text-sm leading-6 ${toneClasses[statusTone]}`} aria-live="polite">
         <span className="flex items-center gap-2">{recording && <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-600" />}{status}</span>
       </div>
+
+      {mode === 'part2' && !recording && !audioURL && <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4"><div className="flex items-center justify-between gap-3"><div><p className="font-semibold text-amber-950">Preparation</p><p className="mt-1 text-sm text-amber-800">Write keywords only. Notes are not submitted.</p></div><span className="text-2xl font-bold text-amber-900">{formatDuration(prepRemaining)}</span></div><textarea value={notes} onChange={event => setNotes(event.target.value)} className="form-control mt-3 min-h-20" placeholder="Keywords and ideas…" /><Button size="small" variant="secondary" className="mt-3" onClick={() => setPreparing(value => !value)} disabled={prepRemaining === 0}>{preparing ? 'Pause preparation' : prepRemaining < 60 ? 'Continue preparation' : 'Start 1-minute preparation'}</Button></div>}
 
       {recording && <div aria-hidden="true" className="mt-5 flex h-12 items-center justify-center gap-1.5">{[3, 7, 5, 10, 6, 12, 8, 4, 9, 5, 11, 7].map((height, index) => <span key={index} className="w-1.5 animate-pulse rounded-full bg-red-500" style={{ height: `${height * 3}px`, animationDelay: `${index * 70}ms` }} />)}</div>}
 

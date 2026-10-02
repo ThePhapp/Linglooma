@@ -11,6 +11,8 @@ router.get('/', lessonResultController.getLessonResultController);
 // GET: Lấy lịch sử speaking của học sinh (requires auth)
 router.get('/history', lessonResultController.getSpeakingHistoryController);
 
+router.get('/comparison/:lessonResultId', lessonResultController.getRetryComparisonController);
+
 // GET: Lấy 7 kết quả gần nhất của học sinh
 router.get('/recent/:studentId', lessonResultController.getRecentlyLessonResultController);
 

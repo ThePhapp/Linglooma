@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '@/services/apiClient';
 import { AlertCircle, ArrowLeft, Clock, FileText, Lightbulb, LoaderCircle, Save } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -8,6 +8,8 @@ import StatePanel from '@/components/ui/StatePanel';
 const WritingEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const examMode = searchParams.get('mode') === 'exam';
   
   const [prompt, setPrompt] = useState(null);
   const [essayText, setEssayText] = useState('');
@@ -23,6 +25,7 @@ const WritingEditor = () => {
   const [pendingSubmissionId, setPendingSubmissionId] = useState(null);
   const [retryingFeedback, setRetryingFeedback] = useState(false);
   const [draftStatus, setDraftStatus] = useState('idle');
+  const [sessionId, setSessionId] = useState(null);
 
   useEffect(() => {
     fetchPrompt();
@@ -47,20 +50,11 @@ useEffect(() => {
         localStorage.setItem(`essay_draft_${id}`, essayText);
         setLastSaved(new Date());
         setDraftStatus('saved');
+        if (sessionId) apiClient.patch(`/api/learning/sessions/${sessionId}`, { metadata: { promptId: Number(id), essayText, wordCount: getWordCount() } }).catch(() => setDraftStatus('local-only'));
       }, 2000);
       return () => clearTimeout(saveTimeout);
     }
-  }, [essayText, id, prompt]);
-
-  // Load saved draft on mount
-  useEffect(() => {
-    if (prompt && !essayText) {
-      const savedDraft = localStorage.getItem(`essay_draft_${id}`);
-      if (savedDraft) {
-        setEssayText(savedDraft);
-      }
-    }
-  }, [prompt, id]);
+  }, [essayText, id, prompt, sessionId]);
 
   const fetchPrompt = async () => {
     try {
@@ -77,6 +71,18 @@ useEffect(() => {
       if (payload) {
         setPrompt(payload);
         if (payload.time_limit) setTimeRemaining(payload.time_limit * 60);
+        const localDraft = localStorage.getItem(`essay_draft_${id}`);
+        try {
+          const active = await apiClient.get('/api/learning/sessions/active');
+          const existing = (active.data || []).find(item => item.skill === 'writing' && String(item.source_id) === String(id));
+          const session = existing || (await apiClient.post('/api/learning/sessions', { skill: 'writing', mode: examMode ? 'exam' : 'practice', sourceId: Number(id), metadata: {} })).data;
+          setSessionId(session.id);
+          const syncedDraft = session.metadata?.essayText;
+          if (localDraft || syncedDraft) setEssayText(localDraft || syncedDraft);
+        } catch {
+          if (localDraft) setEssayText(localDraft);
+          setDraftStatus(localDraft ? 'local-only' : 'idle');
+        }
       } else {
         setError('Failed to load writing prompt');
       }
@@ -162,6 +168,7 @@ useEffect(() => {
       setTimerStarted(false);
       setPendingSubmissionId(null);
       localStorage.removeItem(`essay_draft_${id}`);
+      if (sessionId) apiClient.patch(`/api/learning/sessions/${sessionId}`, { status: 'completed', score: resultData?.scores?.overall_band, metadata: { submissionId: resultData?.submissionId } }).catch(() => {});
     } catch (err) {
       console.error('Error submitting essay:', err);
       if (err.response?.status === 401) {
@@ -194,6 +201,7 @@ useEffect(() => {
       setPendingSubmissionId(null);
       setTimerStarted(false);
       localStorage.removeItem(`essay_draft_${id}`);
+      if (sessionId) apiClient.patch(`/api/learning/sessions/${sessionId}`, { status: 'completed', score: response?.data?.scores?.overall_band, metadata: { submissionId: pendingSubmissionId } }).catch(() => {});
     } catch (err) {
       setSubmitError(err.response?.data?.message || 'Feedback is still unavailable. Your submitted essay remains saved.');
     } finally {
@@ -379,7 +387,7 @@ useEffect(() => {
         <div className="flex min-w-0 items-start gap-3">
           <button type="button" onClick={() => navigate('/admin/features/writing')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100" aria-label="Back to writing prompts"><ArrowLeft className="h-5 w-5" /></button>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-brand-700">{prompt.task_type} · {prompt.difficulty}</p>
+            <p className="text-sm font-semibold text-brand-700">{prompt.task_type} · {prompt.difficulty} · {examMode ? 'Exam mode' : 'Practice mode'}</p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{prompt.title}</h1>
           </div>
         </div>
@@ -396,15 +404,15 @@ useEffect(() => {
             <div className="rounded-lg bg-slate-50 p-3"><dt className="text-slate-500">Minimum</dt><dd className="mt-1 font-semibold text-slate-900">{prompt.word_limit} words</dd></div>
             <div className="rounded-lg bg-slate-50 p-3"><dt className="text-slate-500">Suggested time</dt><dd className="mt-1 font-semibold text-slate-900">{prompt.time_limit} min</dd></div>
           </dl>
-          <button type="button" onClick={() => setShowTips(value => !value)} className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg text-sm font-semibold text-brand-700"><Lightbulb className="h-4 w-4" aria-hidden="true" />{showTips ? 'Hide writing tips' : 'Show writing tips'}</button>
-          {showTips && <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-950">Plan briefly before writing, use clear paragraphs, and leave time to review grammar and word choice.</p>}
+          {!examMode && <button type="button" onClick={() => setShowTips(value => !value)} className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg text-sm font-semibold text-brand-700"><Lightbulb className="h-4 w-4" aria-hidden="true" />{showTips ? 'Hide writing tips' : 'Show writing tips'}</button>}
+          {!examMode && showTips && <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-950">Plan briefly before writing, use clear paragraphs, and leave time to review grammar and word choice.</p>}
         </aside>
 
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="essay-heading">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div><h2 id="essay-heading" className="font-bold text-slate-950">Your response</h2><p className="mt-1 text-xs text-slate-500">Drafts are saved in this browser while you type.</p></div>
             <div className="flex items-center gap-3 text-sm">
-              {draftStatus !== 'idle' && <span className="inline-flex items-center gap-1.5 text-slate-500" title={lastSaved ? `Saved at ${lastSaved.toLocaleTimeString()}` : undefined}><Save className="h-4 w-4" aria-hidden="true" /> {draftStatus === 'saving' ? 'Saving…' : 'Saved'}</span>}
+              {draftStatus !== 'idle' && <span className="inline-flex items-center gap-1.5 text-slate-500" title={lastSaved ? `Saved at ${lastSaved.toLocaleTimeString()}` : undefined}><Save className="h-4 w-4" aria-hidden="true" /> {draftStatus === 'saving' ? 'Saving…' : draftStatus === 'local-only' ? 'Saved on this device' : 'Saved'}</span>}
               <span className={`rounded-full px-3 py-1 font-semibold ${getWordCount() >= prompt.word_limit ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>{getWordCount()} / {prompt.word_limit} words</span>
             </div>
           </div>

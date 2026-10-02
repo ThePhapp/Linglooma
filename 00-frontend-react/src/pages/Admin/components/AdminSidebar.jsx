@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, BookMarked, BookOpen, CalendarDays, History, Home, LogOut, MessageSquare, NotebookPen, Settings, Shapes, X } from 'lucide-react';
+import { Activity, Bookmark, BookMarked, BookOpen, CalendarDays, ClipboardCheck, History, Home, LogOut, MessageSquare, NotebookPen, Settings, Shapes, X } from 'lucide-react';
 import { AuthContext } from '@/contexts/AuthContext';
 import SidebarLink from './SidebarLink';
 
@@ -11,6 +11,8 @@ const primaryLinks = [
   { href: '/admin/study-plan', label: 'Study plan', icon: CalendarDays },
   { href: '/admin/mistakes', label: 'My mistakes', icon: NotebookPen },
   { href: '/admin/vocabulary', label: 'Vocabulary', icon: BookMarked },
+  { href: '/admin/mock-test', label: 'Mock tests', icon: ClipboardCheck },
+  { href: '/admin/saved', label: 'Saved', icon: Bookmark },
   { href: '/admin/ai-chat', label: 'AI chat', icon: MessageSquare },
   { href: '/admin/analytics', label: 'Speaking analytics', icon: Activity },
 ];
