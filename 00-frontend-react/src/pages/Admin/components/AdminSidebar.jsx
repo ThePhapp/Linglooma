@@ -1,12 +1,13 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, BookOpen, Home, LogOut, MessageSquare, Settings, Shapes, X } from 'lucide-react';
+import { Activity, BookOpen, History, Home, LogOut, MessageSquare, Settings, Shapes, X } from 'lucide-react';
 import { AuthContext } from '@/contexts/AuthContext';
 import SidebarLink from './SidebarLink';
 
 const primaryLinks = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
   { href: '/admin/features', label: 'Practice skills', icon: Shapes },
+  { href: '/admin/history', label: 'Practice history', icon: History },
   { href: '/admin/ai-chat', label: 'AI chat', icon: MessageSquare },
   { href: '/admin/analytics', label: 'Speaking analytics', icon: Activity },
 ];
