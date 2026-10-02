@@ -22,3 +22,7 @@ test('allows configured and non-browser requests while rejecting other origins',
   expect(denied.allowed).toBeUndefined();
   expect(denied.error).toEqual(new Error('Not allowed by CORS'));
 });
+
+test('advertises PATCH for authenticated study-plan updates', () => {
+  expect(createCorsOptions('https://app.example.com').methods).toContain('PATCH');
+});
