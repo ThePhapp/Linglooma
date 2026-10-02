@@ -1,6 +1,7 @@
 jest.mock('node-fetch', () => jest.fn());
 jest.mock('dotenv', () => ({ config: jest.fn() }));
 jest.mock('../db', () => ({ query: jest.fn(), connect: jest.fn() }));
+jest.mock('../models/learningIntelligenceModel', () => ({ recordMistakes: jest.fn() }));
 jest.mock('../services/geminiWritingService', () => {
   const service = jest.requireActual('../services/geminiWritingService');
   return { ...service, evaluateWritingWithGemini: jest.fn(service.evaluateWritingWithGemini) };

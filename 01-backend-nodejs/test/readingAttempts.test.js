@@ -1,5 +1,6 @@
 // Offline only: importing the model cannot initialize a real pg pool.
 jest.mock('../db', () => ({ connect: jest.fn(), query: jest.fn() }));
+jest.mock('../models/learningIntelligenceModel', () => ({ recordMistakes: jest.fn() }));
 
 const pool = require('../db');
 const model = require('../models/readingModel');

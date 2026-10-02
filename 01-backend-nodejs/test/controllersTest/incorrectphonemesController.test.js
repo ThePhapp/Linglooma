@@ -223,3 +223,4 @@ describe('incorrect phoneme controllers', () => {
     expect(res.json).toHaveBeenCalledWith([]);
   });
 });
+jest.mock('../../models/learningIntelligenceModel', () => ({ recordMistakes: jest.fn() }));

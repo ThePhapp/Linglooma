@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowRight, BookOpen, Headphones, History, Mic, PenLine, RefreshCw, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, CalendarDays, Headphones, History, Mic, NotebookPen, PenLine, RefreshCw, Sparkles, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import apiClient from '@/services/apiClient';
 import Button from '@/components/ui/Button';
@@ -49,6 +49,12 @@ export default function DashboardPage() {
         <StatePanel className="mt-8" tone="error" icon={<RefreshCw className="h-5 w-5" />} title="Learning overview unavailable" description={error} action={<Button onClick={loadOverview}>Try again</Button>} />
       ) : (
         <>
+          <section className="mt-8 grid gap-4 sm:grid-cols-3" aria-label="Learning summary">
+            <Link to="/admin/study-plan" className="rounded-xl border border-slate-200 bg-white p-4 hover:border-brand-300"><div className="flex items-center gap-2 text-sm font-semibold text-slate-600"><Target className="h-4 w-4 text-brand-700" /> IELTS target</div><p className="mt-2 text-2xl font-bold text-slate-950">{overview.profile?.target_band ? `Band ${Number(overview.profile.target_band).toFixed(1)}` : 'Set your goal'}</p><p className="mt-1 text-xs text-slate-500">{overview.profile?.exam_date ? `Exam ${new Date(overview.profile.exam_date).toLocaleDateString()}` : 'Add an exam date and weekly plan'}</p></Link>
+            <Link to="/admin/study-plan" className="rounded-xl border border-slate-200 bg-white p-4 hover:border-brand-300"><div className="flex items-center gap-2 text-sm font-semibold text-slate-600"><CalendarDays className="h-4 w-4 text-brand-700" /> Today’s practice</div><p className="mt-2 text-2xl font-bold text-slate-950">{overview.todayPractice.length}</p><p className="mt-1 text-xs text-slate-500">{overview.todayPractice.length ? `${overview.todayPractice.reduce((sum, item) => sum + Number(item.duration_minutes || 0), 0)} planned minutes` : 'No tasks planned for today'}</p></Link>
+            <Link to="/admin/mistakes" className="rounded-xl border border-slate-200 bg-white p-4 hover:border-brand-300"><div className="flex items-center gap-2 text-sm font-semibold text-slate-600"><NotebookPen className="h-4 w-4 text-brand-700" /> Mistakes due</div><p className="mt-2 text-2xl font-bold text-slate-950">{overview.dueMistakes}</p><p className="mt-1 text-xs text-slate-500">Review due mistakes with spaced repetition</p></Link>
+          </section>
+
           <section className="mt-8 rounded-xl border border-brand-200 bg-brand-50 p-5 sm:p-6" aria-labelledby="focus-heading">
             <div className="flex items-center gap-2 text-sm font-semibold text-brand-700"><Sparkles className="h-4 w-4" aria-hidden="true" /> Focus next</div>
             <div className="mt-4 grid gap-3 lg:grid-cols-3">

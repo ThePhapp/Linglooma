@@ -1,4 +1,5 @@
 const db = require('../db');
+const intelligence = require('./learningIntelligenceModel');
 
 const toNumber = value => {
   if (value === null || value === undefined || value === '') return null;
@@ -154,10 +155,19 @@ function buildRecommendations(progress, history) {
 }
 
 async function getLearningOverview(userId) {
-  const history = await getPracticeHistory(userId);
+  const today = new Date().toISOString().slice(0, 10);
+  const [history, profile, todayPractice, dueMistakes] = await Promise.all([
+    getPracticeHistory(userId),
+    intelligence.getProfile(userId),
+    intelligence.getStudyPlan(userId, today, today),
+    intelligence.listMistakes(userId, { status: 'review', skill: null, dueOnly: true, search: '' })
+  ]);
   const progress = calculateProgress(history);
   return {
+    profile,
     progress,
+    todayPractice,
+    dueMistakes: dueMistakes.length,
     recentActivity: history.slice(0, 5),
     recommendations: buildRecommendations(progress, history),
     summary: {

@@ -2,6 +2,7 @@ const pool = require('../db');
 const {
   evaluateWritingWithGemini, validateWritingEvaluation, WritingEvaluationError
 } = require('../services/geminiWritingService');
+const { recordMistakes } = require('./learningIntelligenceModel');
 
 /**
  * Lấy danh sách tất cả đề Writing
@@ -80,6 +81,26 @@ async function evaluateAndPersistSubmission({ submission, prompt, essayText, wor
   const updateResult = await pool.query(updateQuery, updateValues);
   if (updateResult.rows.length === 0) throw new Error('Submission is no longer pending');
 
+  const mistakes = [
+    ...evaluation.grammar_errors.map((item, index) => ({
+      skill: 'writing', category: 'grammar', originalAnswer: item.error,
+      problem: item.explanation, suggestion: item.explanation, correctedVersion: item.correction,
+      sourceType: 'writing_submission', sourceId: submission.id, sourceItemId: index + 1
+    })),
+    ...evaluation.vocabulary_suggestions.map((item, index) => ({
+      skill: 'writing', category: 'vocabulary', originalAnswer: item.word,
+      problem: `A stronger word choice is available for “${item.word}”.`, suggestion: item.context,
+      correctedVersion: item.suggestion, sourceType: 'writing_submission', sourceId: submission.id,
+      sourceItemId: evaluation.grammar_errors.length + index + 1
+    }))
+  ];
+  try {
+    await recordMistakes(submission.user_id, mistakes);
+  } catch {
+    // Evaluation is already persisted; mistake extraction must never lose the essay result.
+    console.error('Writing mistakes could not be recorded');
+  }
+
   return {
     submissionId: submission.id,
     submittedAt: submission.submitted_at,
@@ -128,7 +149,7 @@ async function submitWriting({ promptId, studentId, essayText }) {
   ]);
   const submission = submissionResult.rows[0];
 
-  return evaluateAndPersistSubmission({ submission, prompt, essayText, wordCount });
+  return evaluateAndPersistSubmission({ submission: { ...submission, user_id: studentId }, prompt, essayText, wordCount });
 }
 
 async function retryWritingEvaluation(submissionId, studentId) {
@@ -148,7 +169,7 @@ async function retryWritingEvaluation(submissionId, studentId) {
     throw error;
   }
   return evaluateAndPersistSubmission({
-    submission: { id: row.id, submitted_at: row.submitted_at },
+    submission: { id: row.id, submitted_at: row.submitted_at, user_id: studentId },
     prompt: { task_type: row.task_type, prompt: row.prompt },
     essayText: row.essay_text,
     wordCount: Number(row.word_count) || row.essay_text.trim().split(/\s+/).length

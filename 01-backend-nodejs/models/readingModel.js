@@ -1,4 +1,5 @@
 const client = require('../db');
+const { recordMistakes } = require('./learningIntelligenceModel');
 
 const requestError = (message, statusCode = 400) => Object.assign(new Error(message), { statusCode });
 
@@ -130,7 +131,7 @@ const submitReading = async (studentId, passageId, answers) => {
         const passage = await connection.query('SELECT id FROM reading_passages WHERE id = $1 FOR SHARE', [passageId]);
         if (!passage.rows.length) throw requestError('Reading passage not found', 404);
         const questions = await connection.query(
-            `SELECT id, correct_answer, points, question_type, options
+            `SELECT id, question_text, correct_answer, points, question_type, options, explanation
              FROM reading_questions WHERE passage_id = $1 ORDER BY order_number FOR SHARE`,
             [passageId]
         );
@@ -150,6 +151,9 @@ const submitReading = async (studentId, passageId, answers) => {
                 questionId: answer.questionId,
                 userAnswer,
                 correctAnswer: question.correct_answer,
+                questionType: question.question_type,
+                questionText: question.question_text,
+                explanation: question.explanation,
                 isCorrect,
                 points: isCorrect ? (question.points ?? 1) : 0
             };
@@ -170,6 +174,21 @@ const submitReading = async (studentId, passageId, answers) => {
             );
         }
         await connection.query('COMMIT');
+        const mistakes = details.filter(answer => !answer.isCorrect).map(answer => ({
+            skill: 'reading',
+            category: normalizeReadingCategory(answer.questionType),
+            originalAnswer: answer.userAnswer,
+            problem: answer.explanation || `Incorrect answer for: ${answer.questionText}`,
+            suggestion: answer.explanation || 'Review the relevant part of the passage and compare keywords carefully.',
+            correctedVersion: answer.correctAnswer,
+            sourceType: 'reading_attempt', sourceId: resultId, sourceItemId: answer.questionId
+        }));
+        try {
+            await recordMistakes(studentId, mistakes);
+        } catch {
+            // The scored attempt is committed; review extraction is best-effort.
+            console.error('Reading mistakes could not be recorded');
+        }
         return {
             resultId,
             score,
@@ -191,6 +210,14 @@ const submitReading = async (studentId, passageId, answers) => {
     } finally {
         connection.release(releaseError);
     }
+};
+
+const normalizeReadingCategory = type => {
+    const value = String(type || '').toLowerCase();
+    if (value.includes('heading') || value.includes('keyword')) return 'keyword_matching';
+    if (value.includes('inference') || value.includes('true_false')) return 'inference';
+    if (value.includes('main')) return 'main_idea';
+    return 'detail';
 };
 
 // Lấy lịch sử làm bài của học viên

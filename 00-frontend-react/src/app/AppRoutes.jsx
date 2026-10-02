@@ -26,6 +26,9 @@ const SettingsPage = lazy(() => import('@/pages/Settings/SettingsPage'));
 const SpeakingPracticePage = lazy(() => import('@/pages/Speaking/SpeakingPracticePage'));
 const SpeakingFeedbackPage = lazy(() => import('@/pages/Speaking/SpeakingFeedbackPage'));
 const PracticeHistoryPage = lazy(() => import('@/pages/History/PracticeHistoryPage'));
+const StudyPlanPage = lazy(() => import('@/pages/Plan/StudyPlanPage'));
+const MistakeBookPage = lazy(() => import('@/pages/Mistakes/MistakeBookPage'));
+const VocabularyPage = lazy(() => import('@/pages/Vocabulary/VocabularyPage'));
 
 const RouteLoading = () => (
   <div role="status" aria-live="polite" className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-600">
@@ -91,6 +94,9 @@ const AppRoutes = () => {
               <Route path="ai-chat" element={<VoiceChatPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="history" element={<PracticeHistoryPage />} />
+              <Route path="study-plan" element={<StudyPlanPage />} />
+              <Route path="mistakes" element={<MistakeBookPage />} />
+              <Route path="vocabulary" element={<VocabularyPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="features/practice/:lessonId" element={<SpeakingPracticePage />} />
               <Route path="features/feedback/:lessonId" element={<SpeakingFeedbackPage />} />

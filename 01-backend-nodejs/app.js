@@ -34,6 +34,7 @@ const readingRoutes = require("./routes/readingRoutes.js");
 const writingRoutes = require("./routes/writingRoutes.js");
 const chatRoutes = require("./routes/chatRoutes.js");
 const learningRoutes = require("./routes/learningRoutes.js");
+const learningIntelligenceRoutes = require("./routes/learningIntelligenceRoutes.js");
 
 // Ping endpoint - giữ server Render không bị sleep
 app.get("/ping", (req, res) => {
@@ -71,6 +72,7 @@ app.use("/api/questions", questionRoutes);
 app.use("/api/questions/results", questionResultRoutes);
 app.use("/api/incorrectphonemes", incorrectphonemesRoutes);
 app.use("/api/learning", learningRoutes);
+app.use("/api/learning", learningIntelligenceRoutes);
 
 // 404 handler
 app.use((req, res) => {

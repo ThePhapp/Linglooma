@@ -1,4 +1,5 @@
 const client = require("../db");
+const { recordMistakes } = require('./learningIntelligenceModel');
 
 const upsertIncorrectPhoneme = async (
   phoneme,
@@ -59,6 +60,18 @@ const upsertIncorrectPhoneme = async (
         ]
       );
     }
+  }
+
+  try {
+    await recordMistakes(studentId, [{
+      skill: 'speaking', category: 'pronunciation', originalAnswer: phoneme,
+      problem: `The phoneme “${phoneme}” was mispronounced ${count} time${count === 1 ? '' : 's'}.`,
+      suggestion: 'Listen to the model pronunciation, then record the answer again.',
+      correctedVersion: phoneme, sourceType: 'speaking_result', sourceId: lessonResultId,
+      sourceItemId: questionId
+    }]);
+  } catch {
+    console.error('Speaking mistake could not be recorded');
   }
 };
 

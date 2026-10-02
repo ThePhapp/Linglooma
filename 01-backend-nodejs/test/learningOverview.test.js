@@ -1,4 +1,9 @@
 jest.mock('../db', () => ({ query: jest.fn() }));
+jest.mock('../models/learningIntelligenceModel', () => ({
+  getProfile: jest.fn().mockResolvedValue(null),
+  getStudyPlan: jest.fn().mockResolvedValue([]),
+  listMistakes: jest.fn().mockResolvedValue([])
+}));
 
 const db = require('../db');
 const learningModel = require('../models/learningModel');
