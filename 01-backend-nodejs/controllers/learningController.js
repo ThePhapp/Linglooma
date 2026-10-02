@@ -16,7 +16,8 @@ async function getOverview(req, res) {
   try {
     const overview = await learningModel.getLearningOverview(req.user.id);
     return res.json({ success: true, data: overview });
-  } catch {
+  } catch (error) {
+    console.error('Learning overview failed', { code: error.code || 'UNKNOWN' });
     return res.status(500).json({ success: false, message: 'Learning overview could not be loaded' });
   }
 }

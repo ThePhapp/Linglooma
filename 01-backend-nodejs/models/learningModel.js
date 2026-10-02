@@ -1,6 +1,17 @@
 const db = require('../db');
 const intelligence = require('./learningIntelligenceModel');
 
+const isMissingSchemaObject = error => ['42P01', '42703'].includes(error?.code);
+
+async function optionalQuery(query, params) {
+  try {
+    return await db.query(query, params);
+  } catch (error) {
+    if (isMissingSchemaObject(error)) return { rows: [] };
+    throw error;
+  }
+}
+
 const toNumber = value => {
   if (value === null || value === undefined || value === '') return null;
   const number = Number(value);
@@ -62,7 +73,7 @@ const normalizeListening = row => ({
 
 async function getPracticeHistory(userId) {
   const [speaking, writing, reading, listening] = await Promise.all([
-    db.query(
+    optionalQuery(
       `SELECT lr.id, lr.lessonid AS lesson_id, l.name AS activity,
               lr.averagescore AS score, lr.finishedtime AS completed_at
        FROM lessonresult lr
@@ -70,7 +81,7 @@ async function getPracticeHistory(userId) {
        WHERE lr.studentid = $1`,
       [userId]
     ),
-    db.query(
+    optionalQuery(
       `SELECT ws.id, wt.title AS activity, ws.overall_band AS score,
               ws.is_completed, ws.submitted_at AS completed_at
        FROM writing_submissions ws
@@ -78,7 +89,7 @@ async function getPracticeHistory(userId) {
        WHERE ws.user_id = $1`,
       [userId]
     ),
-    db.query(
+    optionalQuery(
       `SELECT ra.id, ra.passage_id, rp.title AS activity,
               CASE WHEN ra.max_score > 0
                 THEN ROUND(100.0 * ra.total_score / ra.max_score, 2)
@@ -89,7 +100,7 @@ async function getPracticeHistory(userId) {
        WHERE ra.user_id = $1`,
       [userId]
     ),
-    db.query(
+    optionalQuery(
       `SELECT id, metadata->>'title' AS activity, score, completed_at
        FROM practice_sessions
        WHERE user_id = $1 AND skill = 'listening' AND status = 'completed'`,

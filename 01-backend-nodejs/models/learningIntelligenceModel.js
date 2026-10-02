@@ -1,6 +1,17 @@
 const db = require('../db');
 
 const REVIEW_DELAYS = [1, 3, 7, 14, 30];
+const isMissingSchemaObject = error => ['42P01', '42703'].includes(error?.code);
+
+async function optionalRows(query, params = []) {
+  try {
+    const { rows } = await db.query(query, params);
+    return rows;
+  } catch (error) {
+    if (isMissingSchemaObject(error)) return [];
+    throw error;
+  }
+}
 const skillConfig = {
   speaking: { title: 'Speaking fluency practice', href: '/admin/features/lesson' },
   writing: { title: 'Writing task practice', href: '/admin/features/writing' },
@@ -10,7 +21,7 @@ const skillConfig = {
 };
 
 async function getProfile(userId) {
-  const { rows } = await db.query('SELECT * FROM learning_profiles WHERE user_id = $1', [userId]);
+  const rows = await optionalRows('SELECT * FROM learning_profiles WHERE user_id = $1', [userId]);
   return rows[0] || null;
 }
 
@@ -58,7 +69,7 @@ async function generateStudyPlan(userId, profile) {
 }
 
 async function getStudyPlan(userId, fromDate, toDate) {
-  const { rows } = await db.query(
+  const rows = await optionalRows(
     `SELECT * FROM study_plan_items
      WHERE user_id = $1 AND scheduled_date BETWEEN $2 AND $3
      ORDER BY scheduled_date, id`,
@@ -99,7 +110,7 @@ async function listMistakes(userId, { status, skill, dueOnly, search }) {
   if (skill) { params.push(skill); clauses.push(`skill = $${params.length}`); }
   if (dueOnly) clauses.push('next_review_at <= CURRENT_TIMESTAMP');
   if (search) { params.push(`%${search}%`); clauses.push(`(problem ILIKE $${params.length} OR original_answer ILIKE $${params.length} OR corrected_version ILIKE $${params.length})`); }
-  const { rows } = await db.query(
+  const rows = await optionalRows(
     `SELECT * FROM learning_mistakes WHERE ${clauses.join(' AND ')} ORDER BY next_review_at, created_at DESC LIMIT 200`,
     params
   );
@@ -139,7 +150,7 @@ async function listVocabulary(userId, { status, search }) {
   const clauses = ['user_id = $1'];
   if (status) { params.push(status); clauses.push(`status = $${params.length}`); }
   if (search) { params.push(`%${search}%`); clauses.push(`(word ILIKE $${params.length} OR meaning ILIKE $${params.length} OR topic ILIKE $${params.length})`); }
-  const { rows } = await db.query(`SELECT * FROM vocabulary_items WHERE ${clauses.join(' AND ')} ORDER BY next_review_at, created_at DESC LIMIT 300`, params);
+  const rows = await optionalRows(`SELECT * FROM vocabulary_items WHERE ${clauses.join(' AND ')} ORDER BY next_review_at, created_at DESC LIMIT 300`, params);
   return rows;
 }
 
@@ -166,11 +177,10 @@ async function reviewVocabulary(userId, itemId, known) {
 }
 
 async function getActiveSessions(userId) {
-  const { rows } = await db.query(
+  return optionalRows(
     `SELECT * FROM practice_sessions WHERE user_id = $1 AND status = 'in_progress'
      ORDER BY updated_at DESC LIMIT 20`, [userId]
   );
-  return rows;
 }
 
 async function startSession(userId, { skill, mode, sourceId, metadata }) {
@@ -200,7 +210,7 @@ async function updateSession(userId, sessionId, { status, score, metadata }) {
 }
 
 async function listBookmarks(userId) {
-  const { rows } = await db.query('SELECT * FROM learning_bookmarks WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
+  const rows = await optionalRows('SELECT * FROM learning_bookmarks WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
   return rows;
 }
 

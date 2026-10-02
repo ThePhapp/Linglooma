@@ -69,3 +69,15 @@ test('history controller rejects unsupported filters before returning data', asy
   expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
   learningModel.getPracticeHistory.mockRestore();
 });
+
+test('keeps legacy overview history available when modernization tables are not migrated yet', async () => {
+  db.query
+    .mockResolvedValueOnce({ rows: [{ id: 1, lesson_id: 3, activity: 'Travel', score: 6.5, completed_at: '2026-09-01T10:00:00Z' }] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockRejectedValueOnce(Object.assign(new Error('relation does not exist'), { code: '42P01' }));
+
+  await expect(learningModel.getPracticeHistory(9)).resolves.toEqual([
+    expect.objectContaining({ id: 'speaking-1', skill: 'speaking' })
+  ]);
+});
