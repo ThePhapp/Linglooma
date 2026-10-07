@@ -10,6 +10,7 @@
     --color-muted: 71 85 105;
     --color-border: 226 232 240;
     --color-surface: 255 255 255;
+    --foreground: rgb(15 23 42);
   }
 
   ::selection {
@@ -17,20 +18,22 @@
     color: rgb(30 64 175);
   }
 
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+  * { --scrollbar-thumb: transparent; }
+  *:hover { --scrollbar-thumb: color-mix(in srgb, var(--foreground) 16%, transparent); }
+  .is-scrolling { --scrollbar-thumb: color-mix(in srgb, var(--foreground) 28%, transparent); }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--foreground) 40%, transparent); }
+
+  @supports not selector(::-webkit-scrollbar) {
+    * { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+    *:hover { scrollbar-color: color-mix(in srgb, var(--foreground) 18%, transparent) transparent; }
+    .is-scrolling { scrollbar-color: color-mix(in srgb, var(--foreground) 28%, transparent) transparent; }
   }
 
-  ::-webkit-scrollbar-track {
-    background: rgb(248 250 252);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    border: 3px solid rgb(248 250 252);
-    border-radius: 999px;
-    background: rgb(148 163 184);
-  }
+  .scrollbar-clean { scrollbar-width: none; }
+  .scrollbar-clean::-webkit-scrollbar { display: none; }
 }
 
 @layer components {
@@ -43,7 +46,7 @@
   }
 
   .form-control {
-    @apply min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-950 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500;
+    @apply min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-950 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500;
   }
 
   .form-help {

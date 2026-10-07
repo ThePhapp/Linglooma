@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
+import { BookOpen, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Home, Lock, Mail } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Button from '@/components/ui/Button';
 import { AuthContext } from '@/contexts/AuthContext';
@@ -14,15 +14,22 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [infoMessage, setInfoMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (event) => {
+  const clearMessages = () => {
+    setErrors(current => ({ ...current, email: undefined, password: undefined, form: undefined }));
+    setInfoMessage('');
+  };
+
+  const handleSubmit = async event => {
     event.preventDefault();
     const nextErrors = {};
     if (!emailPattern.test(email.trim())) nextErrors.email = 'Enter a valid email address.';
     if (!password) nextErrors.password = 'Enter your password.';
     setErrors(nextErrors);
+    setInfoMessage('');
     if (Object.keys(nextErrors).length) return;
 
     setIsLoading(true);
@@ -55,47 +62,106 @@ const LoginPage = () => {
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:flex sm:items-center sm:justify-center sm:py-12">
-      <div className="mx-auto w-full max-w-md">
-        <Link to="/" className="mx-auto flex w-fit items-center gap-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-600 text-white shadow-sm"><Home className="h-5 w-5" aria-hidden="true" /></span>
-          Linglooma
+      <div className="w-full max-w-md">
+        <Link to="/" className="mx-auto flex w-fit items-center gap-2.5 rounded-xl text-sm font-semibold text-slate-700 transition-colors hover:text-brand-700">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white">
+            <BookOpen className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <span className="text-base tracking-tight text-slate-950">Linglooma</span>
         </Link>
 
-        <div className="mt-6 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Welcome back</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Sign in to continue your IELTS practice.</p>
-        </div>
+        <section className="mt-7 rounded-2xl bg-white p-6 shadow-sm sm:p-8">
+          <header>
+            <p className="text-sm font-medium text-brand-700">Your IELTS workspace</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Welcome back</h1>
+            <p className="mt-2 text-sm leading-6 text-pretty text-slate-600">Sign in to continue your IELTS practice.</p>
+          </header>
 
-        <form onSubmit={handleSubmit} className="mt-7 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7" noValidate>
-          {errors.form && <div role="alert" className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{errors.form}</div>}
+          <form onSubmit={handleSubmit} className="mt-7 space-y-5" noValidate>
+            {errors.form && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">{errors.form}</div>}
 
-          <div>
-            <label htmlFor="email" className="form-label">Email address</label>
-            <div className="relative">
-              <Mail aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input id="email" name="email" type="email" autoComplete="email" className="form-control pl-11" placeholder="you@example.com" value={email} onChange={(event) => { setEmail(event.target.value); setErrors(current => ({ ...current, email: undefined, form: undefined })); }} disabled={isLoading} aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'email-error' : undefined} />
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="form-label">Email address</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                autoFocus
+                className={`form-control h-12 min-h-12 rounded-xl text-base md:text-sm ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : ''}`}
+                placeholder="Enter your email"
+                value={email}
+                onChange={event => { setEmail(event.target.value); clearMessages(); }}
+                disabled={isLoading}
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? 'email-error' : undefined}
+              />
+              <p id="email-error" className="min-h-4 text-xs text-red-600">{errors.email}</p>
             </div>
-            {errors.email && <p id="email-error" className="form-error">{errors.email}</p>}
-          </div>
 
-          <div className="mt-5">
-            <label htmlFor="password" className="form-label">Password</label>
-            <div className="relative">
-              <Lock aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" className="form-control pl-11 pr-12" placeholder="Enter your password" value={password} onChange={(event) => { setPassword(event.target.value); setErrors(current => ({ ...current, password: undefined, form: undefined })); }} disabled={isLoading} aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? 'password-error' : undefined} />
-              <button type="button" onClick={() => setShowPassword(value => !value)} className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100" aria-label={showPassword ? 'Hide password' : 'Show password'}>
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="password" className="form-label mb-0">Password</label>
+                <button
+                  type="button"
+                  className="relative inline-flex min-h-8 items-center rounded-lg px-1 text-sm text-slate-700 underline-offset-4 hover:text-slate-950 hover:underline"
+                  onClick={() => setInfoMessage('Password recovery will be available when the reset flow is connected.')}
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  className={`form-control h-12 min-h-12 rounded-xl pr-12 text-base md:text-sm ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : ''}`}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={event => { setPassword(event.target.value); clearMessages(); }}
+                  disabled={isLoading}
+                  aria-invalid={Boolean(errors.password)}
+                  aria-describedby={errors.password ? 'password-error' : undefined}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(value => !value)}
+                  className="absolute inset-y-0 right-1 my-auto flex size-10 items-center justify-center rounded-lg text-slate-500 hover:text-slate-950"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+                </button>
+              </div>
+              <p id="password-error" className="min-h-4 text-xs text-red-600">{errors.password}</p>
             </div>
-            {errors.password && <p id="password-error" className="form-error">{errors.password}</p>}
-          </div>
 
-          <Button type="submit" isLoading={isLoading} className="mt-6 w-full">{isLoading ? 'Signing in…' : 'Sign in'}</Button>
+            {infoMessage && <p role="status" className="-mt-1 text-sm leading-5 text-slate-600">{infoMessage}</p>}
 
-          <p className="mt-5 text-center text-sm text-slate-600">
-            Don’t have an account? <Link to="/register" className="font-semibold text-brand-700 hover:text-brand-800">Create one</Link>
-          </p>
-        </form>
+            <Button type="submit" isLoading={isLoading} className="min-h-12 w-full rounded-xl shadow-none">
+              {isLoading ? 'Signing in…' : 'Sign in'}
+            </Button>
+
+            <div className="flex items-center gap-3" aria-hidden="true">
+              <span className="h-px flex-1 bg-slate-200" />
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">or</span>
+              <span className="h-px flex-1 bg-slate-200" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-12 w-full rounded-xl shadow-none"
+              onClick={() => setInfoMessage('Google sign-in will be available after the provider is configured.')}
+            >
+              Continue with Google
+            </Button>
+
+            <p className="text-center text-sm text-slate-600">
+              Don’t have an account? <Link to="/register" className="font-semibold text-brand-700 underline-offset-4 hover:text-brand-800 hover:underline">Create one</Link>
+            </p>
+          </form>
+        </section>
       </div>
     </main>
   );
